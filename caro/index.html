@@ -314,6 +314,7 @@ kbd { background: var(--chip); border-radius: 6px; padding: 1px 6px; font-family
           <label class="switch"><input type="checkbox" name="allowUndo"><span></span></label>
         </div>
 
+        <div class="field"><span class="lbl">Cell size (finger touch)</span><div class="seg" data-seg="cellSize" data-opts="normal:Normal|large:Large (iPad/iPhone)|huge:Extra Large"></div></div>
         <div class="field"><span class="lbl">Piece style</span><div class="seg" data-seg="pieceStyle" data-opts="auto:Auto|xo:X-O|stones:Stones"></div></div>
         <div class="field"><span class="lbl">Tap-to-confirm</span><div class="seg" data-seg="tapConfirm" data-opts="auto:Auto (touch)|always:Always|never:Never"></div></div>
         <div class="row"><span class="lbl">Show coordinates</span><label class="switch"><input type="checkbox" name="showCoords"><span></span></label></div>
@@ -419,16 +420,25 @@ const DEFAULT_SETTINGS = {
     allowUndo: true,
   },
   audio: { musicOn: true, musicVol: 45, sfxOn: true, sfxVol: 75 },
-  display: { pieceStyle: 'xo', tapConfirm: 'auto', showCoords: true, reduceMotion: 'system' },
+  display: { cellSize: 'normal', pieceStyle: 'xo', tapConfirm: 'auto', showCoords: true, reduceMotion: 'system' },
 };
 const ENUMS = {
   mode: ['pve', 'pvp'], difficulty: ['easy', 'medium', 'hard'], playAs: ['x', 'o', 'random'], rule: ['gomoku', 'caro'],
   boardSize: BOARD_SIZES, timerSeconds: TIME_PRESETS, onTimeout: ['lose', 'skip'],
+  cellSize: ['normal', 'large', 'huge'],
   pieceStyle: ['auto', 'xo', 'stones'], tapConfirm: ['auto', 'always', 'never'], reduceMotion: ['system', 'on', 'off'],
 };
 const AI_DELAY = { easy: 300, medium: 450, hard: 400 };
 const IS_COARSE = matchMedia('(pointer: coarse)').matches;
-const AI_BUDGET = IS_COARSE ? 800 : 1200;
+const IS_TOUCH_DEVICE = (() => {
+  try {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+      IS_COARSE ||
+      (navigator.maxTouchPoints > 0);
+  } catch { return false; }
+})();
+const AI_BUDGET = IS_TOUCH_DEVICE ? 800 : 1200;
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -468,7 +478,9 @@ function mergeKnown(def, src) {
 }
 function loadSettings() {
   const raw = Store.read(LS.settings);
-  const s = mergeKnown(DEFAULT_SETTINGS, raw && raw.v === 1 ? raw : {});
+  const def = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+  if (IS_TOUCH_DEVICE) def.display.cellSize = 'large';
+  const s = mergeKnown(def, raw && raw.v === 1 ? raw : {});
   s.audio.musicVol = clamp(s.audio.musicVol, 0, 100); s.audio.sfxVol = clamp(s.audio.sfxVol, 0, 100);
   return s;
 }
@@ -1793,6 +1805,13 @@ class BoardRenderer {
     this.needsRender = true;
   }
 
+  getTargetZoom() {
+    const size = App.settings?.display?.cellSize || (IS_TOUCH_DEVICE ? 'large' : 'normal');
+    if (size === 'huge') return 64;
+    if (size === 'large') return 48;
+    return 32;
+  }
+
   fitBoard() {
     const w = this.host.clientWidth;
     const h = this.host.clientHeight;
@@ -1800,12 +1819,12 @@ class BoardRenderer {
 
     const boardSize = (this.N + 2.5) * this.cellSize;
     const aspect = w / h;
-    let zoom;
-    if (aspect > 1) {
-      zoom = h / boardSize;
-    } else {
-      zoom = w / boardSize;
-    }
+    const fullFitZoom = aspect > 1 ? (h / boardSize) : (w / boardSize);
+    const targetZoom = this.getTargetZoom();
+
+    // On larger desktop screens, fit whole board if cells are big enough;
+    // on iPad/iPhone/mobile, use targetZoom so cells stay touch-friendly.
+    const zoom = Math.max(fullFitZoom, targetZoom);
     this.camera.zoom = Math.max(0.1, zoom);
     this.camera.position.set(0, 0, 80);
     this.camera.updateProjectionMatrix();
@@ -2026,8 +2045,10 @@ class InputController {
   zoomAtPoint(clientX, clientY, factor) {
     const camera = this.renderer.camera;
     const oldZoom = camera.zoom;
-    const minZoom = Math.min(this.host.clientWidth, this.host.clientHeight) / ((this.renderer.N + 3) * this.renderer.cellSize);
-    const maxZoom = Math.max(this.host.clientWidth, this.host.clientHeight) / (6 * this.renderer.cellSize);
+    const fullFit = Math.min(this.host.clientWidth, this.host.clientHeight) / ((this.renderer.N + 3) * this.renderer.cellSize);
+    const targetZoom = this.renderer.getTargetZoom();
+    const minZoom = IS_TOUCH_DEVICE ? Math.max(fullFit, targetZoom * 0.5) : fullFit;
+    const maxZoom = 120;
     const newZoom = clamp(oldZoom * factor, minZoom, maxZoom);
 
     if (Math.abs(newZoom - oldZoom) < 0.001) return;
@@ -2224,16 +2245,12 @@ class GameController {
 
     App.renderer.buildBoard(s.boardSize);
     App.renderer.setLastMove(null, null);
-    App.renderer.fitBoard();
 
-    // In portrait / mobile, comfortable initial zoom (around center)
-    if (s.boardSize > 19) {
-      const center = Math.floor(s.boardSize / 2);
-      App.renderer.focusCell(center, center, false);
-      const targetZoom = Math.min(window.innerWidth, window.innerHeight) / (16 * App.renderer.cellSize);
-      App.renderer.camera.zoom = targetZoom;
-      App.renderer.camera.updateProjectionMatrix();
-    }
+    // Initial camera positioning with comfortable zoom for finger-touch cell size
+    const center = Math.floor(s.boardSize / 2);
+    App.renderer.focusCell(center, center, false);
+    App.renderer.camera.zoom = App.renderer.getTargetZoom();
+    App.renderer.camera.updateProjectionMatrix();
 
     this.updateHUD();
     this.clearMoveList();
@@ -3131,6 +3148,7 @@ class UIBindings {
     if (sVol) sVol.value = App.settings.audio.sfxVol;
 
     // Display values
+    this.setSegmented(dlg, 'cellSize', App.settings.display.cellSize || (IS_TOUCH_DEVICE ? 'large' : 'normal'));
     this.setSegmented(dlg, 'pieceStyle', App.settings.display.pieceStyle);
     this.setSegmented(dlg, 'tapConfirm', App.settings.display.tapConfirm);
     this.setSegmented(dlg, 'reduceMotion', App.settings.display.reduceMotion);
@@ -3181,12 +3199,13 @@ class UIBindings {
       App.settings.game = { ...App.settings.game, ...gVals, allowUndo };
 
       // Display options
+      const cellSize = form.querySelector('input[name="st_cellSize"]:checked')?.value || 'normal';
       const pieceStyle = form.querySelector('input[name="st_pieceStyle"]:checked')?.value || 'auto';
       const tapConfirm = form.querySelector('input[name="st_tapConfirm"]:checked')?.value || 'auto';
       const reduceMotion = form.querySelector('input[name="st_reduceMotion"]:checked')?.value || 'system';
       const showCoords = !!form.querySelector('input[name="showCoords"]')?.checked;
 
-      App.settings.display = { pieceStyle, tapConfirm, reduceMotion, showCoords };
+      App.settings.display = { cellSize, pieceStyle, tapConfirm, reduceMotion, showCoords };
       saveSettings();
       this.applyDisplaySettings();
       $('#dlg-settings')?.close();
@@ -3281,6 +3300,10 @@ class UIBindings {
       }
       const last = App.game.moves[App.game.moves.length - 1];
       if (last && !last.pass) App.renderer.setLastMove(last.x, last.y);
+      App.renderer.camera.zoom = App.renderer.getTargetZoom();
+      App.renderer.clampCamera();
+      App.renderer.camera.updateProjectionMatrix();
+      App.renderer.needsRender = true;
     }
   }
 
