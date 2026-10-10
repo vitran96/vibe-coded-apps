@@ -336,6 +336,8 @@ kbd { background: var(--chip); border-radius: 6px; padding: 1px 6px; font-family
           <button type="button" class="btn danger" id="btn-reset-settings">Reset all settings</button>
         </div>
         <input type="file" id="import-file" accept="application/json,.json" hidden>
+
+        <div style="text-align:center;margin-top:20px;font-size:0.82rem;color:var(--text-sub);">Version <span id="st-version">1.1.0</span></div>
       </div>
       <div class="dlg-foot"><button type="submit" class="btn primary">Done</button></div>
     </form>
@@ -409,6 +411,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 // ============================================================
 // 01 constants & defaults
 // ============================================================
+const APP_VERSION = '1.1.0';
 const BOARD_SIZES = [30];
 const TIME_PRESETS = [5, 10, 15, 30, 45, 60, 90, 120, 300];
 const LS = { settings: 'caro.settings', current: 'caro.current', records: 'caro.records', iosHint: 'caro.iosHint' };
@@ -3206,6 +3209,9 @@ class UIBindings {
     this.setSegmented(dlg, 'reduceMotion', App.settings.display.reduceMotion);
     const coords = dlg.querySelector('input[name="showCoords"]');
     if (coords) coords.checked = App.settings.display.showCoords;
+
+    const ver = dlg.querySelector('#st-version');
+    if (ver) ver.textContent = APP_VERSION;
 
     dlg.showModal();
   }
