@@ -250,16 +250,16 @@ kbd { background: var(--chip); border-radius: 6px; padding: 1px 6px; font-family
     <div id="movelist" aria-label="Move list"><ol></ol></div>
     <div id="toolbar">
       <div class="tb-inner glass" role="toolbar" aria-label="Game controls">
-        <button class="tb-btn" id="btn-undo" title="Undo (U)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
-        <button class="tb-btn" id="btn-fit" title="Zoom to fit (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Fit</button>
-        <button class="tb-btn" id="btn-menu" title="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menu</button>
+        <button class="tb-btn" id="btn-undo" title="Undo (U)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span data-i18n="undo">Hoàn tác</span></button>
+        <button class="tb-btn" id="btn-fit" title="Zoom to fit (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span data-i18n="fit">Vừa bàn</span></button>
+        <button class="tb-btn" id="btn-menu" title="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span data-i18n="menu">Menu</span></button>
       </div>
     </div>
   </div>
 
   <div id="confirm-bar" class="glass" hidden>
-    <button id="btn-confirm-no" aria-label="Cancel move">✕</button>
-    <button id="btn-confirm-yes" aria-label="Place stone here">✓ Place</button>
+    <button id="btn-confirm-no" aria-label="Cancel move" data-i18n="cancelPlace">✕</button>
+    <button id="btn-confirm-yes" aria-label="Place stone here" data-i18n="confirmPlace">✓ Đặt quân</button>
   </div>
 
   <div id="replay-bar" class="glass" hidden role="region" aria-label="Replay controls">
@@ -275,80 +275,98 @@ kbd { background: var(--chip); border-radius: 6px; padding: 1px 6px; font-family
       <input type="range" id="rb-scrub" min="0" max="0" value="0" aria-label="Replay position">
     </div>
     <div class="rb-row">
-      <label class="rb-opt">Speed <select id="rb-speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
-      <label class="rb-opt"><input type="checkbox" id="rb-real"> Real timing</label>
-      <label class="rb-opt"><input type="checkbox" id="rb-nums"> Numbers</label>
-      <button class="rb-text" id="rb-from">Play from here</button>
-      <button class="rb-text" id="rb-exit">Exit replay</button>
+      <label class="rb-opt"><span data-i18n="speed">Tốc độ</span> <select id="rb-speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+      <label class="rb-opt"><input type="checkbox" id="rb-real"> <span data-i18n="realTiming">Thời gian thực</span></label>
+      <label class="rb-opt"><input type="checkbox" id="rb-nums"> <span data-i18n="numbers">Số thứ tự</span></label>
+      <button class="rb-text" id="rb-from" data-i18n="playFromHere">Chơi từ đây</button>
+      <button class="rb-text" id="rb-exit" data-i18n="exitReplay">Thoát</button>
     </div>
   </div>
 
-  <button id="sound-hint" class="glass" hidden>🔊 Tap to enable sound</button>
+  <button id="sound-hint" class="glass" hidden data-i18n="soundHint">🔊 Chạm để bật âm thanh</button>
   <div id="toasts" aria-live="polite"></div>
   <div id="live" class="sr-only" aria-live="polite"></div>
 
   <!-- ============ dialogs ============ -->
   <dialog id="dlg-new-game" class="sheet" aria-labelledby="ng-title">
     <form method="dialog" id="form-new">
-      <div class="dlg-head"><h2 id="ng-title">New game</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <div class="dlg-head"><h2 id="ng-title" data-i18n="newGame">Ván mới</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
       <div class="dlg-body"><div class="game-fields"></div>
-        <div class="row"><span class="lbl">Save as my default</span><label class="switch"><input type="checkbox" name="saveDefault"><span></span></label></div>
+        <div class="row"><span class="lbl" data-i18n="saveAsDefault">Lưu làm mặc định</span><label class="switch"><input type="checkbox" name="saveDefault"><span></span></label></div>
       </div>
-      <div class="dlg-foot"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn primary" value="start">Start game</button></div>
+      <div class="dlg-foot"><button type="button" class="btn" data-close data-i18n="cancel">Hủy</button><button type="submit" class="btn primary" value="start" data-i18n="startGame">Bắt đầu</button></div>
     </form>
   </dialog>
 
   <dialog id="dlg-settings" class="sheet" aria-labelledby="st-title">
     <form method="dialog" id="form-settings">
-      <div class="dlg-head"><h2 id="st-title">Settings</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <div class="dlg-head"><h2 id="st-title" data-i18n="settingsTitle">Cài đặt</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
       <div class="dlg-body">
-        <div class="sec-title">Game rule settings</div>
-        <p class="note">Applies to new games — in-progress games keep their rules.</p>
+        <div class="sec-title" data-i18n="ruleSettingsSec">Cài đặt luật chơi</div>
+        <p class="note" data-i18n="ruleSettingsNote">Áp dụng cho ván mới — ván đang chơi giữ nguyên luật.</p>
         <div class="game-fields"></div>
 
         <div class="sec-divider"></div>
 
-        <div class="sec-title">Other settings</div>
+        <div class="sec-title" data-i18n="otherSettingsSec">Cài đặt chung</div>
+
+        <div class="field">
+          <span class="lbl" data-i18n="language">Ngôn ngữ</span>
+          <div class="seg" data-seg="lang" data-opts="vn:Tiếng Việt|eng:English"></div>
+        </div>
 
         <div class="row">
-          <div><span class="lbl">Undo button</span><span class="sub">Show undo button in toolbar</span></div>
+          <div><span class="lbl" data-i18n="undoBtn">Nút hoàn tác</span><span class="sub" data-i18n="undoBtnSub">Hiển thị nút hoàn tác trên thanh công cụ</span></div>
           <label class="switch"><input type="checkbox" name="allowUndo"><span></span></label>
         </div>
 
-        <div class="field"><span class="lbl">Cell size (finger touch)</span><div class="seg" data-seg="cellSize" data-opts="normal:Normal|large:Large (iPad/iPhone)|huge:Extra Large"></div></div>
-        <div class="field"><span class="lbl">Piece style</span><div class="seg" data-seg="pieceStyle" data-opts="auto:Auto|xo:X-O|stones:Stones"></div></div>
-        <div class="field"><span class="lbl">Tap-to-confirm</span><div class="seg" data-seg="tapConfirm" data-opts="auto:Auto (touch)|always:Always|never:Never"></div></div>
-        <div class="row"><span class="lbl">Show coordinates</span><label class="switch"><input type="checkbox" name="showCoords"><span></span></label></div>
-        <div class="field"><span class="lbl">Reduce motion</span><div class="seg" data-seg="reduceMotion" data-opts="system:System|on:On|off:Off"></div></div>
+        <div class="field"><span class="lbl" data-i18n="cellSize">Kích thước ô (chạm tay)</span><div class="seg" data-seg="cellSize" data-opts="normal:Vừa|large:Lớn (iPad/iPhone)|huge:Rất lớn"></div></div>
+        <div class="field"><span class="lbl" data-i18n="pieceStyle">Kiểu quân cờ</span><div class="seg" data-seg="pieceStyle" data-opts="auto:Tự động|xo:X-O|stones:Quân tròn"></div></div>
+        <div class="field"><span class="lbl" data-i18n="tapConfirm">Xác nhận khi chạm</span><div class="seg" data-seg="tapConfirm" data-opts="auto:Tự động (cảm ứng)|always:Luôn hỏi|never:Không hỏi"></div></div>
+        <div class="row"><span class="lbl" data-i18n="showCoords">Hiện tọa độ mép bàn</span><label class="switch"><input type="checkbox" name="showCoords"><span></span></label></div>
+        <div class="field"><span class="lbl" data-i18n="reduceMotion">Giảm chuyển động</span><div class="seg" data-seg="reduceMotion" data-opts="system:Hệ thống|on:Bật|off:Tắt"></div></div>
 
-        <div class="sec-title" style="margin-top:14px">Audio</div>
-        <div class="row"><span class="lbl">Music</span><label class="switch"><input type="checkbox" name="musicOn"><span></span></label></div>
+        <div class="sec-title" style="margin-top:14px" data-i18n="audioSec">Âm thanh</div>
+        <div class="row"><span class="lbl" data-i18n="music">Nhạc nền (spa thư giãn)</span><label class="switch"><input type="checkbox" name="musicOn"><span></span></label></div>
         <input type="range" name="musicVol" min="0" max="100" step="1" aria-label="Music volume">
-        <div class="row"><span class="lbl">Sound effects</span><label class="switch"><input type="checkbox" name="sfxOn"><span></span></label></div>
+        <div class="row"><span class="lbl" data-i18n="sfx">Hiệu ứng âm thanh</span><label class="switch"><input type="checkbox" name="sfxOn"><span></span></label></div>
         <input type="range" name="sfxVol" min="0" max="100" step="1" aria-label="Sound effects volume">
-        <p class="note">On iPhone, the hardware silent switch may mute web audio.</p>
+        <p class="note" data-i18n="iphoneNote">Trên iPhone, gạt rung có thể tắt âm thanh web.</p>
 
-        <div class="sec-title" style="margin-top:14px">Data</div>
+        <div class="sec-title" style="margin-top:14px" data-i18n="dataSec">Dữ liệu</div>
         <div class="menu-list">
-          <button type="button" class="btn" id="btn-export">Export history (JSON)</button>
-          <button type="button" class="btn" id="btn-import">Import history (JSON)</button>
-          <button type="button" class="btn danger" id="btn-clear-history">Clear game history</button>
-          <button type="button" class="btn danger" id="btn-reset-settings">Reset all settings</button>
+          <button type="button" class="btn" id="btn-export" data-i18n="exportHist">Xuất lịch sử (JSON)</button>
+          <button type="button" class="btn" id="btn-import" data-i18n="importHist">Nhập lịch sử (JSON)</button>
+          <button type="button" class="btn danger" id="btn-clear-history" data-i18n="clearHist">Xóa lịch sử đấu</button>
+          <button type="button" class="btn danger" id="btn-reset-settings" data-i18n="resetSettings">Khôi phục mặc định</button>
         </div>
         <input type="file" id="import-file" accept="application/json,.json" hidden>
 
-        <div style="text-align:center;margin-top:20px;font-size:0.82rem;color:var(--text-sub);">Version <span id="st-version">1.1.0</span></div>
+        <div style="text-align:center;margin-top:20px;font-size:0.82rem;color:var(--text-sub);"><span data-i18n="version">Phiên bản</span> <span id="st-version">1.1.0</span></div>
       </div>
-      <div class="dlg-foot"><button type="submit" class="btn primary">Done</button></div>
+      <div class="dlg-foot"><button type="submit" class="btn primary" data-i18n="done">Xong</button></div>
     </form>
   </dialog>
 
   <dialog id="dlg-history" class="sheet" aria-labelledby="hi-title">
-    <div class="dlg-head"><h2 id="hi-title">Game history</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dlg-head"><h2 id="hi-title" data-i18n="historyTitle">Lịch sử đấu</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div class="dlg-body">
       <div class="hist-filters">
-        <select id="hf-mode" aria-label="Filter by mode"><option value="all">All modes</option><option value="pve">vs AI</option><option value="pvp">2 Players</option></select>
-        <select id="hf-result" aria-label="Filter by result"><option value="all">All results</option><option value="won">Won vs AI</option><option value="lost">Lost vs AI</option><option value="x">X won</option><option value="o">O won</option><option value="draw">Draw</option><option value="forfeit">Forfeit</option><option value="abandoned">Abandoned</option></select>
+        <select id="hf-mode" aria-label="Filter by mode">
+          <option value="all" data-i18n="allModes">Tất cả chế độ</option>
+          <option value="pve" data-i18n="vsAI">Đấu với Máy</option>
+          <option value="pvp" data-i18n="twoPlayers">2 Người</option>
+        </select>
+        <select id="hf-result" aria-label="Filter by result">
+          <option value="all" data-i18n="allResults">Tất cả kết quả</option>
+          <option value="won" data-i18n="wonVsAI">Thắng Máy</option>
+          <option value="lost" data-i18n="lostVsAI">Thua Máy</option>
+          <option value="x" data-i18n="xWon">X thắng</option>
+          <option value="o" data-i18n="oWon">O thắng</option>
+          <option value="draw" data-i18n="draw">Hòa</option>
+          <option value="forfeit" data-i18n="forfeit">Đầu hàng</option>
+          <option value="abandoned" data-i18n="abandoned">Bỏ dở</option>
+        </select>
       </div>
       <ul class="hist-list" id="hist-list"></ul>
     </div>
@@ -356,32 +374,32 @@ kbd { background: var(--chip); border-radius: 6px; padding: 1px 6px; font-family
 
   <dialog id="dlg-result" class="small" aria-labelledby="rs-title">
     <div class="dlg-body">
-      <div class="result-big" id="rs-title">You win!</div>
-      <div class="result-sub" id="rs-sub">Five in a row</div>
+      <div class="result-big" id="rs-title">Bạn đã thắng!</div>
+      <div class="result-sub" id="rs-sub">5 ô liên tiếp</div>
     </div>
     <div class="dlg-foot" style="justify-content:center">
-      <button class="btn primary" id="rs-rematch">Rematch</button>
-      <button class="btn" id="rs-new">New Game</button>
-      <button class="btn" id="rs-replay">Watch Replay</button>
-      <button class="btn" data-close>Close</button>
+      <button class="btn primary" id="rs-rematch" data-i18n="rematch">🔄 Đấu lại</button>
+      <button class="btn" id="rs-new" data-i18n="newGame">➕ Ván mới</button>
+      <button class="btn" id="rs-replay" data-i18n="watchReplay">⏪ Xem lại</button>
+      <button class="btn" data-close data-i18n="close">Đóng</button>
     </div>
   </dialog>
 
   <dialog id="dlg-confirm" class="small" aria-labelledby="cf-msg">
     <div class="dlg-body"><p id="cf-msg" style="font-weight:700;font-size:1.05em;margin:14px 0 4px"></p><p id="cf-sub" class="note"></p></div>
-    <div class="dlg-foot"><button class="btn" id="cf-no">Cancel</button><button class="btn primary" id="cf-yes">OK</button></div>
+    <div class="dlg-foot"><button class="btn" id="cf-no" data-i18n="cancel">Hủy</button><button class="btn primary" id="cf-yes" data-i18n="ok">Đồng ý</button></div>
   </dialog>
 
   <dialog id="dlg-menu" class="small" aria-labelledby="mn-title">
-    <div class="dlg-head"><h2 id="mn-title">Caro &amp; Gomoku</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dlg-head"><h2 id="mn-title" data-i18n="menuTitle">Cờ Caro &amp; Gomoku</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div class="dlg-body"><div class="menu-list">
-      <button class="btn primary" id="mn-vs-bot">🤖 VS Bot</button>
-      <button class="btn" id="mn-vs-player">👥 VS Player</button>
-      <button class="btn" id="mn-new">➕ New Game</button>
-      <button class="btn" id="mn-restart">🔄 Restart</button>
-      <button class="btn" id="mn-replay">⏪ Replay</button>
-      <button class="btn" id="mn-settings">⚙️ Settings</button>
-      <button class="btn danger" id="mn-forfeit">🏳️ Forfeit</button>
+      <button class="btn primary" id="mn-vs-bot" data-i18n="vsBot">🤖 Đấu với Máy</button>
+      <button class="btn" id="mn-vs-player" data-i18n="vsPlayer">👥 2 Người chơi</button>
+      <button class="btn" id="mn-new" data-i18n="newGame">➕ Ván mới</button>
+      <button class="btn" id="mn-restart" data-i18n="restart">🔄 Chơi lại</button>
+      <button class="btn" id="mn-replay" data-i18n="replay">⏪ Xem lại &amp; Lịch sử</button>
+      <button class="btn" id="mn-settings" data-i18n="settings">⚙️ Cài đặt</button>
+      <button class="btn danger" id="mn-forfeit" data-i18n="menuForfeit">🏳️ Đầu hàng</button>
     </div></div>
   </dialog>
 
@@ -416,19 +434,369 @@ const BOARD_SIZES = [30];
 const TIME_PRESETS = [5, 10, 15, 30, 45, 60, 90, 120, 300];
 const LS = { settings: 'caro.settings', current: 'caro.current', records: 'caro.records', iosHint: 'caro.iosHint' };
 const MAX_RECORDS = 200;
+const I18N = {
+  vn: {
+    appTitle: 'Cờ Caro & Gomoku',
+    undo: 'Hoàn tác',
+    fit: 'Vừa bàn',
+    menu: 'Menu',
+    moveNo: (n) => `Nước ${n}`,
+    turnPlayer: (name) => `Lượt của ${name}`,
+    aiThinking: 'AI đang suy nghĩ...',
+    startNewGame: 'Bắt đầu ván mới',
+    soundHint: '🔊 Chạm để bật âm thanh',
+    viewingReplay: 'Đang xem lại ván đấu',
+    playAsYou: 'Bạn',
+
+    menuTitle: 'Cờ Caro & Gomoku',
+    resume: '▶ Tiếp tục',
+    vsBot: '🤖 Đấu với Máy',
+    vsPlayer: '👥 2 Người chơi',
+    newGame: '➕ Ván mới',
+    restart: '🔄 Chơi lại',
+    replay: '⏪ Xem lại & Lịch sử',
+    settings: '⚙️ Cài đặt',
+    menuForfeit: '🏳️ Đầu hàng',
+
+    gameMode: 'Chế độ chơi',
+    vsAI: 'Đấu với Máy',
+    twoPlayers: '2 Người chơi',
+    aiDifficulty: 'Độ khó AI',
+    easy: 'Dễ',
+    medium: 'Vừa',
+    hard: 'Khó',
+    playAs: 'Bạn cầm quân',
+    xFirst: 'X (đi trước)',
+    oSecond: 'O (đi sau)',
+    random: 'Ngẫu nhiên',
+    player1: 'Người chơi 1 (X)',
+    player2: 'Người chơi 2 (O)',
+    defaultP1: 'Người chơi X',
+    defaultP2: 'Người chơi O',
+    rule: 'Luật chơi',
+    ruleCaro: 'Caro (Chặn 2 đầu)',
+    ruleGomoku: 'Gomoku (Tự do)',
+    caroExplain: 'Thắng khi có 5 quân liên tiếp không bị chặn cả 2 đầu.',
+    gomokuExplain: 'Thắng khi có từ 5 quân liên tiếp trở lên.',
+    edgeBlocks: 'Mép bàn tính là chặn',
+    edgeBlocksSub: 'Mép bàn cờ có tác dụng như quân đối thủ',
+    exactFive: 'Đúng 5 quân',
+    exactFiveSub: 'Hàng 6 quân trở lên không tính thắng',
+    turnTimer: 'Đồng hồ nước đi',
+    turnTimerSub: 'Giới hạn thời gian mỗi nước',
+    timePerTurn: 'Thời gian mỗi nước',
+    onTimeout: 'Khi hết giờ',
+    loseGame: 'Xử thua',
+    skipTurn: 'Mất lượt',
+    saveAsDefault: 'Lưu làm mặc định',
+    cancel: 'Hủy',
+    startGame: 'Bắt đầu',
+    ok: 'Đồng ý',
+
+    settingsTitle: 'Cài đặt',
+    ruleSettingsSec: 'Cài đặt luật chơi',
+    ruleSettingsNote: 'Áp dụng cho ván mới — ván đang chơi giữ nguyên luật.',
+    otherSettingsSec: 'Cài đặt chung',
+    language: 'Ngôn ngữ',
+    undoBtn: 'Nút hoàn tác',
+    undoBtnSub: 'Hiển thị nút hoàn tác trên thanh công cụ',
+    cellSize: 'Kích thước ô (chạm tay)',
+    sizeNormal: 'Vừa',
+    sizeLarge: 'Lớn (iPad/iPhone)',
+    sizeHuge: 'Rất lớn',
+    pieceStyle: 'Kiểu quân cờ',
+    styleAuto: 'Tự động',
+    styleXo: 'X-O',
+    styleStones: 'Quân tròn',
+    tapConfirm: 'Xác nhận khi chạm',
+    tapAuto: 'Tự động (cảm ứng)',
+    tapAlways: 'Luôn hỏi',
+    tapNever: 'Không hỏi',
+    showCoords: 'Hiện tọa độ mép bàn',
+    reduceMotion: 'Giảm chuyển động',
+    motionSystem: 'Hệ thống',
+    motionOn: 'Bật',
+    motionOff: 'Tắt',
+    audioSec: 'Âm thanh',
+    music: 'Nhạc nền (spa thư giãn)',
+    sfx: 'Hiệu ứng âm thanh',
+    iphoneNote: 'Trên iPhone, gạt rung có thể tắt âm thanh web.',
+    dataSec: 'Dữ liệu',
+    exportHist: 'Xuất lịch sử (JSON)',
+    importHist: 'Nhập lịch sử (JSON)',
+    clearHist: 'Xóa lịch sử đấu',
+    resetSettings: 'Khôi phục mặc định',
+    version: 'Phiên bản',
+    done: 'Xong',
+
+    confirmPlace: '✓ Đặt quân',
+    cancelPlace: '✕',
+    placeHerePrompt: 'Đặt quân tại đây?',
+    speed: 'Tốc độ',
+    realTiming: 'Thời gian thực',
+    numbers: 'Số thứ tự',
+    playFromHere: 'Chơi từ đây',
+    exitReplay: 'Thoát',
+
+    historyTitle: 'Lịch sử ván đấu',
+    filterMode: 'Lọc chế độ',
+    filterResult: 'Lọc kết quả',
+    allModes: 'Tất cả chế độ',
+    allResults: 'Tất cả kết quả',
+    wonVsAI: 'Thắng Máy',
+    lostVsAI: 'Thua Máy',
+    xWon: 'X thắng',
+    oWon: 'O thắng',
+    draw: 'Hòa',
+    forfeit: 'Đầu hàng',
+    abandoned: 'Bỏ dở',
+    noRecords: 'Chưa có lịch sử ván đấu',
+    movesCount: (n) => `${n} nước`,
+    replayBtn: 'Xem lại',
+    deleteBtnTitle: 'Xóa ván đấu',
+
+    youWin: 'Bạn đã thắng! 🎉',
+    aiWins: 'Máy đã thắng!',
+    playerWins: (name) => `${name} đã thắng!`,
+    drawGame: 'Hòa cờ!',
+    youForfeited: 'Bạn đã đầu hàng (Máy thắng)',
+    aiForfeited: 'Máy đã đầu hàng (Bạn thắng)',
+    playerForfeited: (name) => `${name} đã đầu hàng`,
+    reasonFive: (turn) => `5 ô liên tiếp (lượt của ${turn})`,
+    reasonTimeout: (turn) => `Thắng do hết giờ (lượt của ${turn})`,
+    reasonForfeit: (turn) => `Đầu hàng ở lượt của ${turn}`,
+    reasonDraw: (turn) => `Hết ô cờ (lượt của ${turn})`,
+    rematch: '🔄 Đấu lại',
+    watchReplay: '⏪ Xem lại',
+    close: 'Đóng',
+
+    confirmForfeitTitle: 'Đầu hàng ván cờ?',
+    confirmForfeitSub: 'Bạn sẽ chấp nhận thua ván này.',
+    noGameToForfeit: 'Không có ván đang chơi để đầu hàng',
+    confirmRestartTitle: 'Chơi lại ván này?',
+    confirmRestartSub: 'Các nước đi hiện tại sẽ được xóa.',
+    gameRestarted: 'Đã chơi lại ván cờ',
+    confirmClearTitle: 'Xóa toàn bộ lịch sử đấu?',
+    confirmClearSub: 'Hành động này không thể hoàn tác.',
+    historyCleared: 'Đã xóa toàn bộ lịch sử',
+    confirmResetTitle: 'Khôi phục tất cả cài đặt về mặc định?',
+    settingsReset: 'Đã khôi phục cài đặt mặc định',
+    confirmResumeTitle: 'Tiếp tục ván chơi trước?',
+    confirmResumeSub: (rule, n) => `Ván cờ ${rule} đang chơi với ${n} nước.`,
+    resumedPrevGame: 'Đã tiếp tục ván trước',
+    importedRecords: (n) => `Đã nhập ${n} ván đấu`,
+    invalidJson: 'Tệp không đúng định dạng',
+    recordDeleted: 'Đã xóa ván đấu',
+    settingsSaved: 'Đã lưu cài đặt',
+    startNewConfirmTitle: 'Bắt đầu ván mới?',
+    startNewConfirmSub: 'Ván hiện tại sẽ bị hủy.',
+    savedAsDefault: 'Đã lưu làm mặc định',
+    settingsUpdated: 'Đã cập nhật cài đặt',
+    startFromReplay: 'Đã bắt đầu ván mới từ vị trí xem lại',
+    timeoutTurnSkipped: (name) => `${name} hết giờ — mất lượt`
+  },
+  eng: {
+    appTitle: 'Caro & Gomoku',
+    undo: 'Undo',
+    fit: 'Fit',
+    menu: 'Menu',
+    moveNo: (n) => `Move ${n}`,
+    turnPlayer: (name) => `${name}'s turn`,
+    aiThinking: 'AI is thinking...',
+    startNewGame: 'Start a new game',
+    soundHint: '🔊 Tap to enable sound',
+    viewingReplay: 'Viewing replay',
+    playAsYou: 'You',
+
+    menuTitle: 'Caro & Gomoku',
+    resume: '▶ Resume',
+    vsBot: '🤖 VS Bot',
+    vsPlayer: '👥 2 Players',
+    newGame: '➕ New Game',
+    restart: '🔄 Restart',
+    replay: '⏪ History & Replay',
+    settings: '⚙️ Settings',
+    menuForfeit: '🏳️ Forfeit',
+
+    gameMode: 'Game mode',
+    vsAI: 'vs AI',
+    twoPlayers: '2 Players',
+    aiDifficulty: 'AI Difficulty',
+    easy: 'Easy',
+    medium: 'Medium',
+    hard: 'Hard',
+    playAs: 'Play as',
+    xFirst: 'X (first)',
+    oSecond: 'O (second)',
+    random: 'Random',
+    player1: 'Player 1 (X)',
+    player2: 'Player 2 (O)',
+    defaultP1: 'Player X',
+    defaultP2: 'Player O',
+    rule: 'Rule',
+    ruleCaro: 'Caro (Blocked-End)',
+    ruleGomoku: 'Gomoku (Freestyle)',
+    caroExplain: 'Win with 5 in a row that is not blocked at both ends.',
+    gomokuExplain: 'Win with 5 or more in a row.',
+    edgeBlocks: 'Edge counts as block',
+    edgeBlocksSub: 'Board edge acts like opponent stone',
+    exactFive: 'Exact five only',
+    exactFiveSub: 'Overlines (6+) do not win',
+    turnTimer: 'Turn timer',
+    turnTimerSub: 'Limit time per move',
+    timePerTurn: 'Time per turn',
+    onTimeout: 'On timeout',
+    loseGame: 'Lose game',
+    skipTurn: 'Skip turn',
+    saveAsDefault: 'Save as my default',
+    cancel: 'Cancel',
+    startGame: 'Start game',
+    ok: 'OK',
+
+    settingsTitle: 'Settings',
+    ruleSettingsSec: 'Game rule settings',
+    ruleSettingsNote: 'Applies to new games — in-progress games keep their rules.',
+    otherSettingsSec: 'Other settings',
+    language: 'Language',
+    undoBtn: 'Undo button',
+    undoBtnSub: 'Show undo button in toolbar',
+    cellSize: 'Cell size (finger touch)',
+    sizeNormal: 'Normal',
+    sizeLarge: 'Large (iPad/iPhone)',
+    sizeHuge: 'Extra Large',
+    pieceStyle: 'Piece style',
+    styleAuto: 'Auto',
+    styleXo: 'X-O',
+    styleStones: 'Stones',
+    tapConfirm: 'Tap-to-confirm',
+    tapAuto: 'Auto (touch)',
+    tapAlways: 'Always',
+    tapNever: 'Never',
+    showCoords: 'Show coordinates',
+    reduceMotion: 'Reduce motion',
+    motionSystem: 'System',
+    motionOn: 'On',
+    motionOff: 'Off',
+    audioSec: 'Audio',
+    music: 'Music (relaxing spa)',
+    sfx: 'Sound effects',
+    iphoneNote: 'On iPhone, the hardware silent switch may mute web audio.',
+    dataSec: 'Data',
+    exportHist: 'Export history (JSON)',
+    importHist: 'Import history (JSON)',
+    clearHist: 'Clear game history',
+    resetSettings: 'Reset all settings',
+    version: 'Version',
+    done: 'Done',
+
+    confirmPlace: '✓ Place',
+    cancelPlace: '✕',
+    placeHerePrompt: 'Place stone here?',
+    speed: 'Speed',
+    realTiming: 'Real timing',
+    numbers: 'Numbers',
+    playFromHere: 'Play from here',
+    exitReplay: 'Exit replay',
+
+    historyTitle: 'Game history',
+    filterMode: 'Filter by mode',
+    filterResult: 'Filter by result',
+    allModes: 'All modes',
+    allResults: 'All results',
+    wonVsAI: 'Won vs AI',
+    lostVsAI: 'Lost vs AI',
+    xWon: 'X won',
+    oWon: 'O won',
+    draw: 'Draw',
+    forfeit: 'Forfeit',
+    abandoned: 'Abandoned',
+    noRecords: 'No game records found',
+    movesCount: (n) => `${n} moves`,
+    replayBtn: 'Replay',
+    deleteBtnTitle: 'Delete record',
+
+    youWin: 'You win!',
+    aiWins: 'AI wins!',
+    playerWins: (name) => `${name} wins!`,
+    drawGame: 'Draw game!',
+    youForfeited: 'You forfeited',
+    aiForfeited: 'AI forfeited (You win)',
+    playerForfeited: (name) => `${name} forfeited`,
+    reasonFive: (turn) => `Five in a row (${turn}'s turn)`,
+    reasonTimeout: (turn) => `Won by timeout (${turn}'s turn)`,
+    reasonForfeit: (turn) => `Forfeited at ${turn}'s turn`,
+    reasonDraw: (turn) => `Board is full (${turn}'s turn)`,
+    rematch: '🔄 Rematch',
+    watchReplay: '⏪ Watch Replay',
+    close: 'Close',
+
+    confirmForfeitTitle: 'Forfeit game?',
+    confirmForfeitSub: 'You will concede this game.',
+    noGameToForfeit: 'No active game to forfeit',
+    confirmRestartTitle: 'Restart game?',
+    confirmRestartSub: 'Current moves will be reset.',
+    gameRestarted: 'Game restarted',
+    confirmClearTitle: 'Clear all game records?',
+    confirmClearSub: 'This action cannot be undone.',
+    historyCleared: 'History cleared',
+    confirmResetTitle: 'Reset all settings to defaults?',
+    settingsReset: 'Settings reset to defaults',
+    confirmResumeTitle: 'Resume previous game?',
+    confirmResumeSub: (rule, n) => `In-progress ${rule} game with ${n} moves.`,
+    resumedPrevGame: 'Resumed previous game',
+    importedRecords: (n) => `Imported ${n} game records`,
+    invalidJson: 'Invalid file format',
+    recordDeleted: 'Record deleted',
+    settingsSaved: 'Settings saved',
+    startNewConfirmTitle: 'Start new game?',
+    startNewConfirmSub: 'Current game will be abandoned.',
+    savedAsDefault: 'Saved as default',
+    settingsUpdated: 'Settings updated',
+    startFromReplay: 'Started new game from replay position',
+    timeoutTurnSkipped: (name) => `${name} timed out — turn skipped`
+  }
+};
+
+function t(key, ...args) {
+  const lang = App?.settings?.display?.lang || 'vn';
+  const dict = I18N[lang] || I18N.vn;
+  const val = dict[key] ?? I18N.vn[key] ?? key;
+  return typeof val === 'function' ? val(...args) : val;
+}
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    const val = t(k);
+    if (val) el.textContent = val;
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const k = el.dataset.i18nTitle;
+    const val = t(k);
+    if (val) el.title = val;
+  });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    const k = el.dataset.i18nAria;
+    const val = t(k);
+    if (val) el.setAttribute('aria-label', val);
+  });
+  if (App?.game) App.game.updateHUD();
+}
+
 const DEFAULT_SETTINGS = {
   v: 1,
   game: {
     mode: 'pve', difficulty: 'medium', playAs: 'x', rule: 'caro', exactFive: false, edgeBlocks: false,
-    boardSize: 30, timerEnabled: false, timerSeconds: 30, onTimeout: 'lose', name1: 'Player X', name2: 'Player O',
+    boardSize: 30, timerEnabled: false, timerSeconds: 30, onTimeout: 'lose', name1: '', name2: '',
     allowUndo: true,
   },
-  audio: { musicOn: true, musicVol: 45, sfxOn: true, sfxVol: 75 },
-  display: { cellSize: 'normal', pieceStyle: 'xo', tapConfirm: 'auto', showCoords: true, reduceMotion: 'system' },
+  audio: { musicOn: false, musicVol: 45, sfxOn: true, sfxVol: 75, spaV1: true },
+  display: { lang: 'vn', cellSize: 'normal', pieceStyle: 'xo', tapConfirm: 'auto', showCoords: true, reduceMotion: 'system' },
 };
 const ENUMS = {
   mode: ['pve', 'pvp'], difficulty: ['easy', 'medium', 'hard'], playAs: ['x', 'o', 'random'], rule: ['gomoku', 'caro'],
   boardSize: BOARD_SIZES, timerSeconds: TIME_PRESETS, onTimeout: ['lose', 'skip'],
+  lang: ['vn', 'eng'],
   cellSize: ['normal', 'large', 'huge'],
   pieceStyle: ['auto', 'xo', 'stones'], tapConfirm: ['auto', 'always', 'never'], reduceMotion: ['system', 'on', 'off'],
 };
@@ -485,6 +853,11 @@ function loadSettings() {
   const def = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
   if (IS_TOUCH_DEVICE) def.display.cellSize = 'large';
   const s = mergeKnown(def, raw && raw.v === 1 ? raw : {});
+  // Migrate: ensure spa music is off by default
+  if (!raw || !raw.audio || !raw.audio.spaV1) {
+    s.audio.musicOn = false;
+    s.audio.spaV1 = true;
+  }
   s.audio.musicVol = clamp(s.audio.musicVol, 0, 100); s.audio.sfxVol = clamp(s.audio.sfxVol, 0, 100);
   return s;
 }
@@ -1036,7 +1409,7 @@ class AIClient {
 }
 
 // ============================================================
-// 08 Audio Engine (Tone.js procedural lofi & synthesized SFX)
+// 08 Audio Engine (Tone.js peaceful spa ambient music & synthesized SFX)
 // ============================================================
 class AudioEngine {
   constructor() {
@@ -1049,7 +1422,7 @@ class AudioEngine {
     this.sfxGain = null;
     this.limiter = null;
     this.isMutedByTab = false;
-    this.lofiRunning = false;
+    this.spaRunning = false;
     this.initNodes();
   }
 
@@ -1078,61 +1451,36 @@ class AudioEngine {
         envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.4 }
       }).connect(this.sfxGain);
 
-      // Lofi Synths & FX
-      this.lofiFilter = new Tone.Filter(1800, 'lowpass').connect(this.musicGain);
-      this.lofiChorus = new Tone.Chorus(2.5, 3.5, 0.4).connect(this.lofiFilter);
-      this.lofiReverb = new Tone.Reverb({ decay: 2.5, wet: 0.35 }).connect(this.lofiChorus);
+      // Spa Relaxing Ambient Nodes (Lush Reverb & Warm Lowpass Filter)
+      this.spaReverb = new Tone.Reverb({ decay: 6.5, wet: 0.55 }).connect(this.musicGain);
+      this.spaFilter = new Tone.Filter(850, 'lowpass').connect(this.spaReverb);
 
-      this.keysSynth = new Tone.PolySynth(Tone.Synth, {
-        volume: -5,
+      // Soothing warm ambient pad
+      this.padSynth = new Tone.PolySynth(Tone.Synth, {
+        volume: -6,
         oscillator: { type: 'sine' },
-        envelope: { attack: 0.03, decay: 0.4, sustain: 0.4, release: 1.2 }
-      }).connect(this.lofiReverb);
+        envelope: { attack: 1.8, decay: 2.5, sustain: 0.8, release: 3.5 }
+      }).connect(this.spaFilter);
 
-      this.bassSynth = new Tone.MonoSynth({
-        volume: -3,
-        oscillator: { type: 'sine' },
-        envelope: { attack: 0.04, decay: 0.3, sustain: 0.8, release: 1.5 }
-      }).connect(this.musicGain);
-
-      this.kickSynth = new Tone.MembraneSynth({
-        volume: -2,
-        pitchDecay: 0.05,
-        octaves: 4,
-        oscillator: { type: 'sine' },
-        envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.1 }
-      }).connect(this.musicGain);
-
-      this.snareSynth = new Tone.NoiseSynth({
+      // Gentle meditation bell / spa chime
+      this.chimeSynth = new Tone.PolySynth(Tone.Synth, {
         volume: -10,
-        noise: { type: 'white' },
-        envelope: { attack: 0.001, decay: 0.14, sustain: 0, release: 0.05 }
-      }).connect(this.musicGain);
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.08, decay: 3.2, sustain: 0.1, release: 3.0 }
+      }).connect(this.spaReverb);
 
-      this.hatSynth = new Tone.NoiseSynth({
-        volume: -18,
-        noise: { type: 'pink' },
-        envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.02 }
-      }).connect(this.musicGain);
-
-      // Vinyl crackle simulation
-      this.vinylFilter = new Tone.Filter(1200, 'bandpass').connect(this.musicGain);
-      this.vinylNoise = new Tone.Noise('brown');
-      this.vinylNoise.volume.value = -34;
-      this.vinylNoise.connect(this.vinylFilter);
-
-      this.setupLofiPatterns();
+      this.setupSpaPatterns();
 
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           if (this.musicEnabled) {
             this.isMutedByTab = true;
-            this.stopLofiTransport();
+            this.stopSpaTransport();
           }
         } else {
           if (this.isMutedByTab && this.musicEnabled) {
             this.isMutedByTab = false;
-            this.startLofiTransport();
+            this.startSpaTransport();
           }
         }
       });
@@ -1141,49 +1489,28 @@ class AudioEngine {
     }
   }
 
-  setupLofiPatterns() {
-    const chordsA = [
-      ['D4', 'F4', 'A4', 'C5', 'E5'], // Dm9
-      ['G3', 'F4', 'B4', 'E5'],       // G13
-      ['C4', 'E4', 'G4', 'B4', 'D5'], // Cmaj9
-      ['A3', 'G4', 'C#5', 'F5']       // A7b9
+  setupSpaPatterns() {
+    // Calming spa pentatonic & suspended chords
+    const spaChords = [
+      ['D3', 'A3', 'E4', 'F#4'],  // Dadd9 (Serene, warm)
+      ['G3', 'D4', 'A4', 'B4'],   // Gmaj9 (Floating)
+      ['B2', 'F#3', 'D4', 'A4'],  // Bm7 (Peaceful)
+      ['A2', 'E3', 'A3', 'C#4']   // A (Gentle resolution)
     ];
-    const chordsB = [
-      ['F3', 'A4', 'C5', 'E5'],       // Fmaj7
-      ['E3', 'G4', 'B4', 'D5'],       // Em7
-      ['D3', 'F4', 'A4', 'C5'],       // Dm7
-      ['C3', 'E4', 'G4', 'B4']        // Cmaj7
-    ];
-    const bassA = ['D2', 'G2', 'C2', 'A2'];
-    const bassB = ['F2', 'E2', 'D2', 'C2'];
+    const chimeNotes = ['A5', 'F#5', 'D5', 'E5', 'B4', 'D6'];
 
-    Tone.getTransport().bpm.value = 78;
-    Tone.getTransport().swing = 0.2;
+    Tone.getTransport().bpm.value = 44;
 
     let bar = 0;
     Tone.getTransport().scheduleRepeat((time) => {
-      const prog = Math.floor(bar / 8) % 2 === 0 ? chordsA : chordsB;
-      const bProg = Math.floor(bar / 8) % 2 === 0 ? bassA : bassB;
-      const idx = Math.floor((bar % 4));
-
-      // Play chord on beat 1
       try {
-        this.keysSynth.triggerAttackRelease(prog[idx], '2m', time, 0.65);
-        this.bassSynth.triggerAttackRelease(bProg[idx], '1m', time, 0.7);
+        const chord = spaChords[bar % spaChords.length];
+        this.padSynth.triggerAttackRelease(chord, '1m', time, 0.45);
 
-        // Drums (boom-bap 4/4)
-        const t0 = time;
-        const beatSec = 60 / 78;
-        this.kickSynth.triggerAttackRelease('C1', '8n', t0);
-        this.kickSynth.triggerAttackRelease('C1', '8n', t0 + beatSec * 2.5);
-        this.snareSynth.triggerAttackRelease('16n', t0 + beatSec * 1);
-        this.snareSynth.triggerAttackRelease('16n', t0 + beatSec * 3);
-
-        // Hi-hats 8ths
-        for (let i = 0; i < 4; i++) {
-          this.hatSynth.triggerAttackRelease('32n', t0 + beatSec * i, i % 2 === 0 ? 0.4 : 0.2);
-          this.hatSynth.triggerAttackRelease('32n', t0 + beatSec * (i + 0.5), 0.15);
-        }
+        // Occasional gentle chime
+        const chime = chimeNotes[bar % chimeNotes.length];
+        const chimeOffset = bar % 2 === 0 ? 1.4 : 2.8;
+        this.chimeSynth.triggerAttackRelease(chime, '2n', time + chimeOffset, 0.22);
       } catch {
         // Audio error caught
       }
@@ -1221,31 +1548,29 @@ class AudioEngine {
 
     const musicVal = this.musicEnabled ? clamp(this.musicVolume / 100, 0, 1) : 0;
     if (this.musicEnabled && !this.isMutedByTab) {
-      this.musicGain.gain.rampTo(musicVal * 0.5, 0.5);
-      this.startLofiTransport();
+      this.musicGain.gain.rampTo(musicVal * 0.4, 0.8);
+      this.startSpaTransport();
     } else {
-      this.musicGain.gain.rampTo(0, 0.3);
-      this.stopLofiTransport();
+      this.musicGain.gain.rampTo(0, 0.4);
+      this.stopSpaTransport();
     }
   }
 
-  startLofiTransport() {
-    if (this.lofiRunning || !this.unlocked) return;
+  startSpaTransport() {
+    if (this.spaRunning || !this.unlocked) return;
     try {
       Tone.getTransport().start();
-      this.vinylNoise.start();
-      this.lofiRunning = true;
+      this.spaRunning = true;
     } catch {
       // Transport error caught
     }
   }
 
-  stopLofiTransport() {
-    if (!this.lofiRunning) return;
+  stopSpaTransport() {
+    if (!this.spaRunning) return;
     try {
       Tone.getTransport().pause();
-      this.vinylNoise.stop();
-      this.lofiRunning = false;
+      this.spaRunning = false;
     } catch {
       // Transport pause caught
     }
@@ -2318,6 +2643,8 @@ class GameController {
       else if (g.playAs === 'random') first = Math.random() < 0.5 ? 1 : 2;
     }
     const aiSide = g.mode === 'pve' ? (first === 1 ? 2 : 1) : null;
+    const diffName = t(g.difficulty || 'medium');
+    const youName = t('playAsYou');
     return {
       id: uuid(),
       startedAt: Date.now(),
@@ -2335,8 +2662,8 @@ class GameController {
         onTimeout: g.onTimeout
       },
       players: {
-        1: { name: g.mode === 'pve' ? (aiSide === 1 ? `AI (${g.difficulty})` : 'You') : g.name1 || 'Player X' },
-        2: { name: g.mode === 'pve' ? (aiSide === 2 ? `AI (${g.difficulty})` : 'You') : g.name2 || 'Player O' }
+        1: { name: g.mode === 'pve' ? (aiSide === 1 ? `AI (${diffName})` : youName) : g.name1 || t('defaultP1') },
+        2: { name: g.mode === 'pve' ? (aiSide === 2 ? `AI (${diffName})` : youName) : g.name2 || t('defaultP2') }
       },
       firstPlayer: first
     };
@@ -2471,7 +2798,7 @@ class GameController {
     } else {
       // Auto-pass turn
       const pName = this.session.players[timedOutPlayer].name;
-      toast(`${pName} timed out — turn skipped`);
+      toast(t('timeoutTurnSkipped', pName));
       this.moves.push({ pass: true, p: timedOutPlayer, t: Date.now() - this.session.startedAt });
       this.turn = 3 - timedOutPlayer;
       this.updateHUD();
@@ -2553,24 +2880,25 @@ class GameController {
     if (reason === 'forfeit') {
       const fPlayer = forfeitedBy || (3 - winner);
       if (this.session.mode === 'pve' && this.session.ai) {
-        titleText = winner === this.session.ai.side ? 'You forfeited' : 'AI forfeited';
+        titleText = winner === this.session.ai.side ? t('youForfeited') : t('aiForfeited');
       } else {
-        titleText = `${this.session.players[fPlayer]?.name || pieceName(fPlayer)} forfeited`;
+        const pName = this.session.players[fPlayer]?.name || pieceName(fPlayer);
+        titleText = t('playerForfeited', pName);
       }
     } else if (winner === 0) {
-      titleText = 'Draw game!';
+      titleText = t('drawGame');
     } else if (this.session.mode === 'pve' && this.session.ai) {
-      titleText = winner === this.session.ai.side ? 'AI wins!' : 'You win!';
+      titleText = winner === this.session.ai.side ? t('aiWins') : t('youWin');
     } else {
-      titleText = `${this.session.players[winner].name} wins!`;
+      titleText = t('playerWins', this.session.players[winner].name);
     }
 
     const turnName = pieceName(this.turn);
     let subText = '';
-    if (reason === 'five') subText = `Five in a row (${turnName}'s turn)`;
-    else if (reason === 'timeout') subText = `Won by timeout (${turnName}'s turn)`;
-    else if (reason === 'resign' || reason === 'forfeit') subText = `Forfeited at ${turnName}'s turn`;
-    else if (reason === 'draw') subText = `Board is full (${turnName}'s turn)`;
+    if (reason === 'five') subText = t('reasonFive', turnName);
+    else if (reason === 'timeout') subText = t('reasonTimeout', turnName);
+    else if (reason === 'resign' || reason === 'forfeit') subText = t('reasonForfeit', turnName);
+    else if (reason === 'draw') subText = t('reasonDraw', turnName);
 
     title.textContent = titleText;
     sub.textContent = subText;
@@ -2601,23 +2929,23 @@ class GameController {
 
     badge.textContent = this.session.rules.mode === 'caro' ? 'Caro' : 'Gomoku';
     const nonPassMoves = this.moves.filter(m => !m.pass).length;
-    moveNo.textContent = `Move ${nonPassMoves}`;
+    moveNo.textContent = t('moveNo', nonPassMoves);
 
     if (this.state === 'playing') {
       if (this.isThinking) {
-        statusLine.textContent = 'AI is thinking';
+        statusLine.textContent = t('aiThinking');
         statusLine.classList.add('thinking');
       } else {
         statusLine.classList.remove('thinking');
         const pName = this.session.players[this.turn].name;
-        statusLine.textContent = `${pName}'s turn`;
+        statusLine.textContent = t('turnPlayer', pName);
       }
     } else if (this.state === 'finished') {
       statusLine.classList.remove('thinking');
-      statusLine.textContent = 'Game finished';
+      statusLine.textContent = '';
     } else if (this.state === 'replaying') {
       statusLine.classList.remove('thinking');
-      statusLine.textContent = 'Viewing replay';
+      statusLine.textContent = t('viewingReplay');
     }
 
     const undoBtn = $('#btn-undo');
@@ -2793,7 +3121,7 @@ class ReplayController {
         App.game.placeStone(m.x, m.y, true);
       }
     });
-    toast('Started new game from replay position');
+    toast(t('startFromReplay'));
   }
 
   seekTo(idx) {
@@ -2959,80 +3287,81 @@ function confirmDialog(msg, sub = '') {
 
 function renderGameFields(container, values, prefix = '') {
   const p = prefix ? prefix + '_' : '';
+  const isVn = (App?.settings?.display?.lang || 'vn') === 'vn';
   container.innerHTML = `
     <div class="field">
-      <span class="lbl">Game mode</span>
+      <span class="lbl">${t('gameMode')}</span>
       <div class="seg" data-name="${p}mode">
-        <label><input type="radio" name="${p}mode" value="pve" ${values.mode === 'pve' ? 'checked' : ''}><span>vs AI</span></label>
-        <label><input type="radio" name="${p}mode" value="pvp" ${values.mode === 'pvp' ? 'checked' : ''}><span>2 Players (hot-seat)</span></label>
+        <label><input type="radio" name="${p}mode" value="pve" ${values.mode === 'pve' ? 'checked' : ''}><span>${t('vsAI')}</span></label>
+        <label><input type="radio" name="${p}mode" value="pvp" ${values.mode === 'pvp' ? 'checked' : ''}><span>${t('twoPlayers')}</span></label>
       </div>
     </div>
 
     <div class="sec-ai" ${values.mode !== 'pve' ? 'hidden' : ''}>
       <div class="field">
-        <span class="lbl">AI Difficulty</span>
+        <span class="lbl">${t('aiDifficulty')}</span>
         <div class="seg" data-name="${p}difficulty">
-          <label><input type="radio" name="${p}difficulty" value="easy" ${values.difficulty === 'easy' ? 'checked' : ''}><span>Easy</span></label>
-          <label><input type="radio" name="${p}difficulty" value="medium" ${values.difficulty === 'medium' ? 'checked' : ''}><span>Medium</span></label>
-          <label><input type="radio" name="${p}difficulty" value="hard" ${values.difficulty === 'hard' ? 'checked' : ''}><span>Hard</span></label>
+          <label><input type="radio" name="${p}difficulty" value="easy" ${values.difficulty === 'easy' ? 'checked' : ''}><span>${t('easy')}</span></label>
+          <label><input type="radio" name="${p}difficulty" value="medium" ${values.difficulty === 'medium' ? 'checked' : ''}><span>${t('medium')}</span></label>
+          <label><input type="radio" name="${p}difficulty" value="hard" ${values.difficulty === 'hard' ? 'checked' : ''}><span>${t('hard')}</span></label>
         </div>
       </div>
       <div class="field">
-        <span class="lbl">Play as</span>
+        <span class="lbl">${t('playAs')}</span>
         <div class="seg" data-name="${p}playAs">
-          <label><input type="radio" name="${p}playAs" value="x" ${values.playAs === 'x' ? 'checked' : ''}><span>X (first)</span></label>
-          <label><input type="radio" name="${p}playAs" value="o" ${values.playAs === 'o' ? 'checked' : ''}><span>O (second)</span></label>
-          <label><input type="radio" name="${p}playAs" value="random" ${values.playAs === 'random' ? 'checked' : ''}><span>Random</span></label>
+          <label><input type="radio" name="${p}playAs" value="x" ${values.playAs === 'x' ? 'checked' : ''}><span>${t('xFirst')}</span></label>
+          <label><input type="radio" name="${p}playAs" value="o" ${values.playAs === 'o' ? 'checked' : ''}><span>${t('oSecond')}</span></label>
+          <label><input type="radio" name="${p}playAs" value="random" ${values.playAs === 'random' ? 'checked' : ''}><span>${t('random')}</span></label>
         </div>
       </div>
     </div>
 
     <div class="sec-pvp" ${values.mode !== 'pvp' ? 'hidden' : ''}>
       <div class="names">
-        <div><span class="lbl">Player 1 (X)</span><input type="text" name="${p}name1" value="${esc(values.name1 || 'Player X')}" maxlength="24"></div>
-        <div><span class="lbl">Player 2 (O)</span><input type="text" name="${p}name2" value="${esc(values.name2 || 'Player O')}" maxlength="24"></div>
+        <div><span class="lbl">${t('player1')}</span><input type="text" name="${p}name1" value="${esc(values.name1 || (isVn ? 'Người chơi X' : 'Player X'))}" maxlength="24"></div>
+        <div><span class="lbl">${t('player2')}</span><input type="text" name="${p}name2" value="${esc(values.name2 || (isVn ? 'Người chơi O' : 'Player O'))}" maxlength="24"></div>
       </div>
     </div>
 
     <div class="field">
-      <span class="lbl">Rule</span>
+      <span class="lbl">${t('rule')}</span>
       <div class="seg" data-name="${p}rule">
-        <label><input type="radio" name="${p}rule" value="caro" ${values.rule === 'caro' ? 'checked' : ''}><span>Caro (Blocked-End)</span></label>
-        <label><input type="radio" name="${p}rule" value="gomoku" ${values.rule === 'gomoku' ? 'checked' : ''}><span>Gomoku (Freestyle)</span></label>
+        <label><input type="radio" name="${p}rule" value="caro" ${values.rule === 'caro' ? 'checked' : ''}><span>${t('ruleCaro')}</span></label>
+        <label><input type="radio" name="${p}rule" value="gomoku" ${values.rule === 'gomoku' ? 'checked' : ''}><span>${t('ruleGomoku')}</span></label>
       </div>
-      <p class="note" id="${p}rule-explain">${values.rule === 'caro' ? 'Win with 5 in a row that is not blocked at both ends.' : 'Win with 5 or more in a row.'}</p>
+      <p class="note" id="${p}rule-explain">${values.rule === 'caro' ? t('caroExplain') : t('gomokuExplain')}</p>
       <div class="sub-opts">
         <div class="row row-caro-sub" ${values.rule !== 'caro' ? 'hidden' : ''}>
-          <div><span class="lbl">Edge counts as block</span><span class="sub">Board edge acts like opponent stone</span></div>
+          <div><span class="lbl">${t('edgeBlocks')}</span><span class="sub">${t('edgeBlocksSub')}</span></div>
           <label class="switch"><input type="checkbox" name="${p}edgeBlocks" ${values.edgeBlocks ? 'checked' : ''}><span></span></label>
         </div>
         <div class="row row-gomoku-sub" ${values.rule !== 'gomoku' ? 'hidden' : ''}>
-          <div><span class="lbl">Exact five only</span><span class="sub">Overlines (6+) do not win</span></div>
+          <div><span class="lbl">${t('exactFive')}</span><span class="sub">${t('exactFiveSub')}</span></div>
           <label class="switch"><input type="checkbox" name="${p}exactFive" ${values.exactFive ? 'checked' : ''}><span></span></label>
         </div>
       </div>
     </div>
 
     <div class="row">
-      <div><span class="lbl">Turn timer</span><span class="sub">Limit time per move</span></div>
+      <div><span class="lbl">${t('turnTimer')}</span><span class="sub">${t('turnTimerSub')}</span></div>
       <label class="switch"><input type="checkbox" name="${p}timerEnabled" ${values.timerEnabled ? 'checked' : ''}><span></span></label>
     </div>
 
     <div class="sec-timer" ${!values.timerEnabled ? 'hidden' : ''}>
       <div class="field">
-        <span class="lbl">Time per turn</span>
+        <span class="lbl">${t('timePerTurn')}</span>
         <div class="seg" data-name="${p}timerSeconds">
           ${TIME_PRESETS.map(sec => {
-            const lbl = sec < 60 ? `${sec}s` : `${sec / 60}m`;
+            const lbl = sec < 60 ? `${sec}s` : (isVn ? `${sec / 60}p` : `${sec / 60}m`);
             return `<label><input type="radio" name="${p}timerSeconds" value="${sec}" ${values.timerSeconds === sec ? 'checked' : ''}><span>${lbl}</span></label>`;
           }).join('')}
         </div>
       </div>
       <div class="field">
-        <span class="lbl">On timeout</span>
+        <span class="lbl">${t('onTimeout')}</span>
         <div class="seg" data-name="${p}onTimeout">
-          <label><input type="radio" name="${p}onTimeout" value="lose" ${values.onTimeout === 'lose' ? 'checked' : ''}><span>Lose game</span></label>
-          <label><input type="radio" name="${p}onTimeout" value="skip" ${values.onTimeout === 'skip' ? 'checked' : ''}><span>Skip turn</span></label>
+          <label><input type="radio" name="${p}onTimeout" value="lose" ${values.onTimeout === 'lose' ? 'checked' : ''}><span>${t('loseGame')}</span></label>
+          <label><input type="radio" name="${p}onTimeout" value="skip" ${values.onTimeout === 'skip' ? 'checked' : ''}><span>${t('skipTurn')}</span></label>
         </div>
       </div>
     </div>
@@ -3126,7 +3455,7 @@ class UIBindings {
 
   async openNewGame() {
     if (App.game.state === 'playing' && App.game.moves.length >= 5) {
-      const ok = await confirmDialog('Start new game?', 'Current game will be abandoned.');
+      const ok = await confirmDialog(t('startNewConfirmTitle'), t('startNewConfirmSub'));
       if (!ok) return;
     }
     const dlg = $('#dlg-new-game');
@@ -3145,7 +3474,7 @@ class UIBindings {
       if (saveDefault) {
         App.settings.game = { ...App.settings.game, ...vals };
         saveSettings();
-        toast('Saved as default');
+        toast(t('savedAsDefault'));
       }
 
       let first = 1;
@@ -3203,12 +3532,43 @@ class UIBindings {
     if (sVol) sVol.value = App.settings.audio.sfxVol;
 
     // Display values
-    this.setSegmented(dlg, 'cellSize', App.settings.display.cellSize || (IS_TOUCH_DEVICE ? 'large' : 'normal'));
-    this.setSegmented(dlg, 'pieceStyle', App.settings.display.pieceStyle);
-    this.setSegmented(dlg, 'tapConfirm', App.settings.display.tapConfirm);
-    this.setSegmented(dlg, 'reduceMotion', App.settings.display.reduceMotion);
+    const isVn = (App.settings.display.lang || 'vn') === 'vn';
+    this.setSegmented(dlg, 'lang', App.settings.display.lang || 'vn', [
+      ['vn', 'Tiếng Việt'],
+      ['eng', 'English']
+    ]);
+    this.setSegmented(dlg, 'cellSize', App.settings.display.cellSize || (IS_TOUCH_DEVICE ? 'large' : 'normal'), [
+      ['normal', isVn ? 'Vừa' : 'Normal'],
+      ['large', isVn ? 'Lớn (iPad/iPhone)' : 'Large (iPad/iPhone)'],
+      ['huge', isVn ? 'Rất lớn' : 'Extra Large']
+    ]);
+    this.setSegmented(dlg, 'pieceStyle', App.settings.display.pieceStyle, [
+      ['auto', isVn ? 'Tự động' : 'Auto'],
+      ['xo', 'X-O'],
+      ['stones', isVn ? 'Quân tròn' : 'Stones']
+    ]);
+    this.setSegmented(dlg, 'tapConfirm', App.settings.display.tapConfirm, [
+      ['auto', isVn ? 'Tự động (cảm ứng)' : 'Auto (touch)'],
+      ['always', isVn ? 'Luôn hỏi' : 'Always'],
+      ['never', isVn ? 'Không hỏi' : 'Never']
+    ]);
+    this.setSegmented(dlg, 'reduceMotion', App.settings.display.reduceMotion, [
+      ['system', isVn ? 'Hệ thống' : 'System'],
+      ['on', isVn ? 'Bật' : 'On'],
+      ['off', isVn ? 'Tắt' : 'Off']
+    ]);
     const coords = dlg.querySelector('input[name="showCoords"]');
     if (coords) coords.checked = App.settings.display.showCoords;
+
+    // Listen for language switch live
+    dlg.querySelectorAll('input[name="st_lang"]').forEach(radio => {
+      radio.onchange = () => {
+        App.settings.display.lang = radio.value;
+        saveSettings();
+        applyI18n();
+        this.openSettings();
+      };
+    });
 
     const ver = dlg.querySelector('#st-version');
     if (ver) ver.textContent = APP_VERSION;
@@ -3216,10 +3576,10 @@ class UIBindings {
     dlg.showModal();
   }
 
-  setSegmented(scope, name, val) {
+  setSegmented(scope, name, val, customOpts = null) {
     const seg = scope.querySelector(`.seg[data-seg="${name}"]`);
     if (!seg) return;
-    const opts = seg.dataset.opts.split('|').map(s => s.split(':'));
+    const opts = customOpts || seg.dataset.opts.split('|').map(s => s.split(':'));
     seg.innerHTML = opts.map(([v, label]) => `
       <label><input type="radio" name="st_${name}" value="${v}" ${v === val ? 'checked' : ''}><span>${label}</span></label>
     `).join('');
@@ -3257,17 +3617,19 @@ class UIBindings {
       App.settings.game = { ...App.settings.game, ...gVals, allowUndo };
 
       // Display options
+      const lang = form.querySelector('input[name="st_lang"]:checked')?.value || 'vn';
       const cellSize = form.querySelector('input[name="st_cellSize"]:checked')?.value || 'normal';
       const pieceStyle = form.querySelector('input[name="st_pieceStyle"]:checked')?.value || 'auto';
       const tapConfirm = form.querySelector('input[name="st_tapConfirm"]:checked')?.value || 'auto';
       const reduceMotion = form.querySelector('input[name="st_reduceMotion"]:checked')?.value || 'system';
       const showCoords = !!form.querySelector('input[name="showCoords"]')?.checked;
 
-      App.settings.display = { cellSize, pieceStyle, tapConfirm, reduceMotion, showCoords };
+      App.settings.display = { lang, cellSize, pieceStyle, tapConfirm, reduceMotion, showCoords };
+      applyI18n();
       saveSettings();
       this.applyDisplaySettings();
       $('#dlg-settings')?.close();
-      toast('Settings updated');
+      toast(t('settingsSaved'));
     });
 
     // History JSON Export
@@ -3298,13 +3660,13 @@ class UIBindings {
             const seen = new Set();
             App.records = merged.filter(r => seen.has(r.id) ? false : seen.add(r.id)).slice(0, MAX_RECORDS);
             saveRecords();
-            toast(`Imported ${valid.length} game records`);
+            toast(t('importedRecords', valid.length));
             this.renderHistoryList();
           } else {
-            toast('Invalid file format');
+            toast(t('invalidJson'));
           }
         } catch {
-          toast('Failed to read JSON');
+          toast(t('invalidJson'));
         }
       };
       reader.readAsText(file);
@@ -3312,25 +3674,26 @@ class UIBindings {
 
     // Clear history
     $('#btn-clear-history')?.addEventListener('click', async () => {
-      const ok = await confirmDialog('Clear all game records?', 'This action cannot be undone.');
+      const ok = await confirmDialog(t('confirmClearTitle'), t('confirmClearSub'));
       if (ok) {
         App.records = [];
         saveRecords();
         this.renderHistoryList();
-        toast('History cleared');
+        toast(t('historyCleared'));
       }
     });
 
     // Reset settings
     $('#btn-reset-settings')?.addEventListener('click', async () => {
-      const ok = await confirmDialog('Reset all settings to defaults?');
+      const ok = await confirmDialog(t('confirmResetTitle'));
       if (ok) {
         App.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
         saveSettings();
+        applyI18n();
         this.applyDisplaySettings();
         App.audio.applySettings();
         $('#dlg-settings')?.close();
-        toast('Settings reset to defaults');
+        toast(t('settingsReset'));
       }
     });
   }
@@ -3394,7 +3757,7 @@ class UIBindings {
     }
 
     if (items.length === 0) {
-      list.innerHTML = '<li class="empty">No game records found</li>';
+      list.innerHTML = `<li class="empty">${t('noRecords')}</li>`;
       return;
     }
 
@@ -3408,21 +3771,22 @@ class UIBindings {
         const forfPlayer = r.result.forfeitedBy || (3 - r.result.winner);
         const winPlayer = r.result.winner;
         if (r.session.mode === 'pve' && r.session.ai) {
-          const who = winPlayer === r.session.ai.side ? 'Defeat (Forfeited)' : 'Victory (AI Forfeited)';
-          outcome = `${who} at ${turnEndName}'s turn`;
+          const who = winPlayer === r.session.ai.side ? t('lostVsAI') + ` (${t('forfeit')})` : t('wonVsAI') + ` (${t('forfeit')})`;
+          outcome = `${who} • ${t('turnPlayer', turnEndName)}`;
         } else {
-          outcome = `${pieceName(forfPlayer)} forfeited (${pieceName(winPlayer)} won at ${turnEndName}'s turn)`;
+          outcome = `${t('playerForfeited', pieceName(forfPlayer))} (${pieceName(winPlayer)} • ${t('turnPlayer', turnEndName)})`;
         }
       } else if (r.result.winner === 0) {
-        outcome = `Draw at ${turnEndName}'s turn`;
+        outcome = `${t('draw')} • ${t('turnPlayer', turnEndName)}`;
       } else if (r.session.mode === 'pve') {
-        const who = r.result.winner === r.session.ai?.side ? 'Defeat' : 'Victory';
-        outcome = `${who} at ${turnEndName}'s turn`;
+        const who = r.result.winner === r.session.ai?.side ? t('lostVsAI') : t('wonVsAI');
+        outcome = `${who} • ${t('turnPlayer', turnEndName)}`;
       } else {
-        outcome = `${pieceName(r.result.winner)} won at ${turnEndName}'s turn`;
+        outcome = `${pieceName(r.result.winner)} ${t('xWon').replace('X ', '')} • ${t('turnPlayer', turnEndName)}`;
       }
 
-      const modeStr = r.session.mode === 'pve' ? `vs AI (${r.session.ai?.difficulty})` : '2 Players';
+      const diffLabel = r.session.ai?.difficulty ? t(r.session.ai.difficulty) : '';
+      const modeStr = r.session.mode === 'pve' ? `${t('vsAI')} (${diffLabel})` : t('twoPlayers');
       const ruleBadge = r.session.rules.mode === 'caro' ? 'Caro' : 'Gomoku';
 
       return `
@@ -3433,11 +3797,11 @@ class UIBindings {
               <span>${dateStr}</span>
               <span>${ruleBadge}</span>
               <span>${r.session.boardSize}×${r.session.boardSize}</span>
-              <span>${r.moves.length} moves</span>
+              <span>${t('movesCount', r.moves.length)}</span>
             </div>
           </div>
-          <button class="btn btn-replay" data-id="${r.id}">Replay</button>
-          <button class="icon-btn btn-del" data-id="${r.id}" title="Delete record">
+          <button class="btn btn-replay" data-id="${r.id}">${t('replayBtn')}</button>
+          <button class="icon-btn btn-del" data-id="${r.id}" title="${t('deleteBtnTitle')}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </li>
@@ -3463,7 +3827,7 @@ class UIBindings {
         App.records = App.records.filter(r => r.id !== id);
         saveRecords();
         this.renderHistoryList();
-        toast('Record deleted');
+        toast(t('recordDeleted'));
       });
     });
   }
@@ -3512,8 +3876,8 @@ class UIBindings {
       const s = App.game.createDefaultSession();
       s.mode = 'pve';
       s.ai = { difficulty: g.difficulty || 'medium', side: 2 };
-      s.players[1].name = 'You';
-      s.players[2].name = `AI (${g.difficulty || 'medium'})`;
+      s.players[1].name = t('playAsYou');
+      s.players[2].name = `AI (${t(g.difficulty || 'medium')})`;
       App.game.startNewGame(s);
     });
 
@@ -3522,8 +3886,8 @@ class UIBindings {
       const s = App.game.createDefaultSession();
       s.mode = 'pvp';
       s.ai = null;
-      s.players[1].name = App.settings.game.name1 || 'Player X';
-      s.players[2].name = App.settings.game.name2 || 'Player O';
+      s.players[1].name = App.settings.game.name1 || t('defaultP1');
+      s.players[2].name = App.settings.game.name2 || t('defaultP2');
       App.game.startNewGame(s);
     });
 
@@ -3534,7 +3898,7 @@ class UIBindings {
 
     $('#mn-restart')?.addEventListener('click', async () => {
       if (App.game.state === 'playing' && App.game.moves.length >= 2) {
-        const ok = await confirmDialog('Restart game?', 'Current moves will be reset.');
+        const ok = await confirmDialog(t('confirmRestartTitle'), t('confirmRestartSub'));
         if (!ok) return;
       }
       $('#dlg-menu')?.close();
@@ -3543,7 +3907,7 @@ class UIBindings {
       s.id = uuid();
       s.startedAt = Date.now();
       App.game.startNewGame(s);
-      toast('Game restarted');
+      toast(t('gameRestarted'));
     });
 
     $('#mn-replay')?.addEventListener('click', () => {
@@ -3559,11 +3923,11 @@ class UIBindings {
     $('#mn-forfeit')?.addEventListener('click', async () => {
       $('#dlg-menu')?.close();
       if (App.game.state === 'playing') {
-        const ok = await confirmDialog('Forfeit game?', 'You will concede this game.');
+        const ok = await confirmDialog(t('confirmForfeitTitle'), t('confirmForfeitSub'));
         if (!ok) return;
         App.game.forfeit();
       } else {
-        toast('No active game to forfeit');
+        toast(t('noGameToForfeit'));
       }
     });
   }
@@ -3770,17 +4134,18 @@ async function main() {
   App.replay = new ReplayController();
   App.ui = new UIBindings();
 
-  // Apply theme & motion
+  // Apply theme & motion & i18n
+  applyI18n();
   App.ui.applyDisplaySettings();
   initPWA();
 
   // Check saved game in progress
   const saved = Store.read(LS.current);
   if (saved && validSession(saved.session) && Array.isArray(saved.moves) && saved.moves.length > 0) {
-    const resume = await confirmDialog('Resume previous game?', `In-progress ${saved.session.rules.mode} game with ${saved.moves.length} moves.`);
+    const resume = await confirmDialog(t('confirmResumeTitle'), t('confirmResumeSub', saved.session.rules.mode, saved.moves.length));
     if (resume) {
       App.game.restoreGame(saved);
-      toast('Resumed previous game');
+      toast(t('resumedPrevGame'));
       return;
     }
   }
