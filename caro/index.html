@@ -52,8 +52,9 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
   font-family: Nunito, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: clamp(14px, 1.2vw + 10px, 16px);
-  overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
-#app { position: fixed; inset: 0; height: 100vh; height: 100dvh; -webkit-user-select: none; user-select: none;
+  overscroll-behavior: none; -webkit-text-size-adjust: 100%; touch-action: none; }
+#app { position: fixed; inset: 0; height: 100vh; height: 100dvh; overflow: hidden; overscroll-behavior: none;
+  touch-action: none; -webkit-user-select: none; user-select: none;
   -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 #canvas-host { position: absolute; inset: 0; touch-action: none; outline: none; }
 #canvas-host canvas { display: block; width: 100%; height: 100%; touch-action: none; }
@@ -345,7 +346,7 @@ kbd { background: var(--chip); border-radius: 6px; padding: 1px 6px; font-family
     <div class="dlg-body">
       <div class="hist-filters">
         <select id="hf-mode" aria-label="Filter by mode"><option value="all">All modes</option><option value="pve">vs AI</option><option value="pvp">2 Players</option></select>
-        <select id="hf-result" aria-label="Filter by result"><option value="all">All results</option><option value="won">Won vs AI</option><option value="lost">Lost vs AI</option><option value="x">X won</option><option value="o">O won</option><option value="draw">Draw</option><option value="abandoned">Abandoned</option></select>
+        <select id="hf-result" aria-label="Filter by result"><option value="all">All results</option><option value="won">Won vs AI</option><option value="lost">Lost vs AI</option><option value="x">X won</option><option value="o">O won</option><option value="draw">Draw</option><option value="forfeit">Forfeit</option><option value="abandoned">Abandoned</option></select>
       </div>
       <ul class="hist-list" id="hist-list"></ul>
     </div>
@@ -378,7 +379,7 @@ kbd { background: var(--chip); border-radius: 6px; padding: 1px 6px; font-family
       <button class="btn" id="mn-restart">🔄 Restart</button>
       <button class="btn" id="mn-replay">⏪ Replay</button>
       <button class="btn" id="mn-settings">⚙️ Settings</button>
-      <button class="btn danger" id="mn-quit">🚪 Quit</button>
+      <button class="btn danger" id="mn-forfeit">🏳️ Forfeit</button>
     </div></div>
   </dialog>
 
@@ -962,6 +963,7 @@ function runTests() {
   console.log(failed.length ? `❌ ${failed.length} test(s) failed` : `✅ all ${results.length} tests passed`);
   return { results, failed };
 }
+window.runTests = runTests;
 
 // ============================================================
 // 04 AI client (Web Worker with fallback)
@@ -1540,6 +1542,7 @@ class BoardRenderer {
     const planeGeo = new THREE.PlaneGeometry(boardExtent, boardExtent);
     this.boardMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     this.boardPlane = new THREE.Mesh(planeGeo, this.boardMat);
+    this.boardPlane.frustumCulled = false;
     this.boardPlane.position.z = 0;
     this.boardGroup.add(this.boardPlane);
 
@@ -1561,6 +1564,7 @@ class BoardRenderer {
       linewidth: 1
     });
     this.gridLines = new THREE.LineSegments(lineGeo, lineMat);
+    this.gridLines.frustumCulled = false;
     this.boardGroup.add(this.gridLines);
 
     // Frame border around the grid
@@ -1606,6 +1610,8 @@ class BoardRenderer {
 
     this.meshX = new THREE.InstancedMesh(geoX, matX, count);
     this.meshO = new THREE.InstancedMesh(geoO, matO, count);
+    this.meshX.frustumCulled = false;
+    this.meshO.frustumCulled = false;
 
     const dummy = new THREE.Object3D();
     dummy.scale.set(0, 0, 0);
@@ -1790,6 +1796,7 @@ class BoardRenderer {
     const tubeGeo = new THREE.TubeGeometry(curve, 32, 0.1, 12, false);
     const tubeMat = new THREE.MeshBasicMaterial({ color: 0xffd152, transparent: true, opacity: 0.95 });
     this.winLineMesh = new THREE.Mesh(tubeGeo, tubeMat);
+    this.winLineMesh.frustumCulled = false;
     this.boardGroup.add(this.winLineMesh);
 
     this.winPulses = coords.slice();
@@ -1831,30 +1838,67 @@ class BoardRenderer {
     this.needsRender = true;
   }
 
-  focusCell(x, y, smooth = true) {
-    const { wx, wy } = this.cellToWorld(x, y);
-    if (smooth) {
-      const startX = this.camera.position.x;
-      const startY = this.camera.position.y;
-      const t0 = performance.now();
-      const dur = 280;
-      const step = () => {
-        const now = performance.now();
-        const p = clamp((now - t0) / dur, 0, 1);
-        const ease = p * (2 - p);
-        this.camera.position.x = startX + (wx - startX) * ease;
-        this.camera.position.y = startY + (wy - startY) * ease;
-        this.clampCamera();
-        this.needsRender = true;
-        if (p < 1) requestAnimationFrame(step);
-      };
-      step();
-    } else {
-      this.camera.position.x = wx;
-      this.camera.position.y = wy;
+  panTo(targetX, targetY, smooth = true) {
+    const maxPan = ((this.N + 4) * this.cellSize) / 2;
+    targetX = clamp(targetX, -maxPan, maxPan);
+    targetY = clamp(targetY, -maxPan, maxPan);
+
+    if (!smooth) {
+      this.camera.position.x = targetX;
+      this.camera.position.y = targetY;
       this.clampCamera();
       this.needsRender = true;
+      return;
     }
+
+    const startX = this.camera.position.x;
+    const startY = this.camera.position.y;
+    const t0 = performance.now();
+    const dur = 240;
+    const step = () => {
+      const now = performance.now();
+      const p = clamp((now - t0) / dur, 0, 1);
+      const ease = p * (2 - p);
+      this.camera.position.x = startX + (targetX - startX) * ease;
+      this.camera.position.y = startY + (targetY - startY) * ease;
+      this.clampCamera();
+      this.needsRender = true;
+      if (p < 1) requestAnimationFrame(step);
+    };
+    step();
+  }
+
+  ensureVisible(x, y, smooth = true) {
+    const { wx, wy } = this.cellToWorld(x, y);
+    const cam = this.camera;
+    const halfW = (this.host.clientWidth / 2) / cam.zoom;
+    const halfH = (this.host.clientHeight / 2) / cam.zoom;
+    const marginW = halfW * 0.22;
+    const marginH = halfH * 0.22;
+
+    let targetX = cam.position.x;
+    let targetY = cam.position.y;
+
+    if (wx < cam.position.x - halfW + marginW) {
+      targetX = wx + halfW - marginW;
+    } else if (wx > cam.position.x + halfW - marginW) {
+      targetX = wx - halfW + marginW;
+    }
+
+    if (wy < cam.position.y - halfH + marginH) {
+      targetY = wy + halfH - marginH;
+    } else if (wy > cam.position.y - halfH + marginH) {
+      targetY = wy - halfH + marginH;
+    }
+
+    if (Math.abs(targetX - cam.position.x) > 0.05 || Math.abs(targetY - cam.position.y) > 0.05) {
+      this.panTo(targetX, targetY, smooth);
+    }
+  }
+
+  focusCell(x, y, smooth = true) {
+    const { wx, wy } = this.cellToWorld(x, y);
+    this.panTo(wx, wy, smooth);
   }
 
   clampCamera() {
@@ -2317,6 +2361,7 @@ class GameController {
     App.audio.playPlace(p);
     App.renderer.setStone(x, y, p, true);
     App.renderer.setLastMove(x, y);
+    App.renderer.ensureVisible(x, y, true);
     this.appendMoveToList(x, y, p);
 
     // Announce to screen reader
@@ -2376,15 +2421,6 @@ class GameController {
       if (this.state === 'playing' && this.isAITurn()) {
         this.isThinking = false;
         this.placeStone(res.x, res.y, true);
-
-        // Smooth camera pan to AI move if off screen
-        const cell = App.renderer.cellToWorld(res.x, res.y);
-        const cam = App.renderer.camera;
-        const halfW = (App.renderer.host.clientWidth / 2) / cam.zoom;
-        const halfH = (App.renderer.host.clientHeight / 2) / cam.zoom;
-        if (Math.abs(cell.wx - cam.position.x) > halfW * 0.8 || Math.abs(cell.wy - cam.position.y) > halfH * 0.8) {
-          App.renderer.focusCell(res.x, res.y, true);
-        }
       }
     } catch {
       this.isThinking = false;
@@ -2397,18 +2433,13 @@ class GameController {
     if (this.state !== 'playing' || this.isThinking || this.moves.length === 0) return;
 
     this.timer.stop();
-    const countToUndo = (this.session.mode === 'pve' && this.moves.length >= 2) ? 2 : 1;
-
-    for (let k = 0; k < countToUndo; k++) {
-      if (this.moves.length === 0) break;
-      const last = this.moves.pop();
-      if (!last.pass) {
-        const idx = last.y * this.session.boardSize + last.x;
-        this.board[idx] = 0;
-        App.renderer.setStone(last.x, last.y, 0, false);
-      }
-      this.turn = last.p;
+    const last = this.moves.pop();
+    if (!last.pass) {
+      const idx = last.y * this.session.boardSize + last.x;
+      this.board[idx] = 0;
+      App.renderer.setStone(last.x, last.y, 0, false);
     }
+    this.turn = last.p;
 
     this.undoCount++;
     const prev = this.moves[this.moves.length - 1];
@@ -2455,10 +2486,17 @@ class GameController {
     if (this.state !== 'playing') return;
     const resigningPlayer = (this.session.mode === 'pve' && this.session.ai) ? (3 - this.session.ai.side) : this.turn;
     const winner = 3 - resigningPlayer;
-    this.finishGame(winner, 'resign', null);
+    this.finishGame(winner, 'forfeit', null, resigningPlayer);
   }
 
-  finishGame(winner, reason, winLine = null) {
+  forfeit() {
+    if (this.state !== 'playing') return;
+    const forfeitingPlayer = (this.session.mode === 'pve' && this.session.ai) ? (3 - this.session.ai.side) : this.turn;
+    const winner = 3 - forfeitingPlayer;
+    this.finishGame(winner, 'forfeit', null, forfeitingPlayer);
+  }
+
+  finishGame(winner, reason, winLine = null, forfeitedBy = null) {
     this.state = 'finished';
     this.timer.stop();
     this.isThinking = false;
@@ -2485,7 +2523,13 @@ class GameController {
       durationMs: Date.now() - this.session.startedAt,
       session: JSON.parse(JSON.stringify(this.session)),
       moves: this.moves.slice(),
-      result: { winner, reason, line: winLine },
+      result: {
+        winner,
+        reason,
+        line: winLine,
+        turnAtEnd: this.turn,
+        forfeitedBy: reason === 'forfeit' ? (forfeitedBy || (3 - winner)) : undefined
+      },
       undoCount: this.undoCount
     };
 
@@ -2494,16 +2538,23 @@ class GameController {
     Store.remove(LS.current);
 
     this.updateHUD();
-    this.showResultDialog(winner, reason);
+    this.showResultDialog(winner, reason, forfeitedBy);
   }
 
-  showResultDialog(winner, reason) {
+  showResultDialog(winner, reason, forfeitedBy = null) {
     const dlg = $('#dlg-result');
     const title = $('#rs-title');
     const sub = $('#rs-sub');
 
     let titleText = '';
-    if (winner === 0) {
+    if (reason === 'forfeit') {
+      const fPlayer = forfeitedBy || (3 - winner);
+      if (this.session.mode === 'pve' && this.session.ai) {
+        titleText = winner === this.session.ai.side ? 'You forfeited' : 'AI forfeited';
+      } else {
+        titleText = `${this.session.players[fPlayer]?.name || pieceName(fPlayer)} forfeited`;
+      }
+    } else if (winner === 0) {
       titleText = 'Draw game!';
     } else if (this.session.mode === 'pve' && this.session.ai) {
       titleText = winner === this.session.ai.side ? 'AI wins!' : 'You win!';
@@ -2511,11 +2562,12 @@ class GameController {
       titleText = `${this.session.players[winner].name} wins!`;
     }
 
+    const turnName = pieceName(this.turn);
     let subText = '';
-    if (reason === 'five') subText = 'Five in a row';
-    else if (reason === 'timeout') subText = 'Won by timeout';
-    else if (reason === 'resign') subText = 'Opponent resigned';
-    else if (reason === 'draw') subText = 'Board is full';
+    if (reason === 'five') subText = `Five in a row (${turnName}'s turn)`;
+    else if (reason === 'timeout') subText = `Won by timeout (${turnName}'s turn)`;
+    else if (reason === 'resign' || reason === 'forfeit') subText = `Forfeited at ${turnName}'s turn`;
+    else if (reason === 'draw') subText = `Board is full (${turnName}'s turn)`;
 
     title.textContent = titleText;
     sub.textContent = subText;
@@ -3329,6 +3381,7 @@ class UIBindings {
         if (resFilter === 'x') return r.result.winner === 1;
         if (resFilter === 'o') return r.result.winner === 2;
         if (resFilter === 'draw') return r.result.winner === 0;
+        if (resFilter === 'forfeit') return r.result.reason === 'forfeit';
         if (resFilter === 'abandoned') return r.result.reason === 'abandoned';
         return true;
       });
@@ -3341,12 +3394,26 @@ class UIBindings {
 
     list.innerHTML = items.map(r => {
       const dateStr = new Date(r.startedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const turnEnd = r.result.turnAtEnd || (r.moves.length > 0 ? (r.moves[r.moves.length - 1].p === 1 ? 2 : 1) : r.session.firstPlayer);
+      const turnEndName = pieceName(turnEnd);
+
       let outcome = '';
-      if (r.result.winner === 0) outcome = 'Draw';
-      else if (r.session.mode === 'pve') {
-        outcome = r.result.winner === r.session.ai?.side ? 'Defeat' : 'Victory';
+      if (r.result.reason === 'forfeit') {
+        const forfPlayer = r.result.forfeitedBy || (3 - r.result.winner);
+        const winPlayer = r.result.winner;
+        if (r.session.mode === 'pve' && r.session.ai) {
+          const who = winPlayer === r.session.ai.side ? 'Defeat (Forfeited)' : 'Victory (AI Forfeited)';
+          outcome = `${who} at ${turnEndName}'s turn`;
+        } else {
+          outcome = `${pieceName(forfPlayer)} forfeited (${pieceName(winPlayer)} won at ${turnEndName}'s turn)`;
+        }
+      } else if (r.result.winner === 0) {
+        outcome = `Draw at ${turnEndName}'s turn`;
+      } else if (r.session.mode === 'pve') {
+        const who = r.result.winner === r.session.ai?.side ? 'Defeat' : 'Victory';
+        outcome = `${who} at ${turnEndName}'s turn`;
       } else {
-        outcome = `${pieceName(r.result.winner)} won`;
+        outcome = `${pieceName(r.result.winner)} won at ${turnEndName}'s turn`;
       }
 
       const modeStr = r.session.mode === 'pve' ? `vs AI (${r.session.ai?.difficulty})` : '2 Players';
@@ -3483,16 +3550,15 @@ class UIBindings {
       this.openSettings();
     });
 
-    $('#mn-quit')?.addEventListener('click', async () => {
+    $('#mn-forfeit')?.addEventListener('click', async () => {
+      $('#dlg-menu')?.close();
       if (App.game.state === 'playing') {
-        const ok = await confirmDialog('Quit game?', 'Return to main menu.');
+        const ok = await confirmDialog('Forfeit game?', 'You will concede this game.');
         if (!ok) return;
-        App.game.state = 'idle';
-        App.game.timer.stop();
-        Store.remove(LS.current);
+        App.game.forfeit();
+      } else {
+        toast('No active game to forfeit');
       }
-      toast('Main menu');
-      $('#dlg-menu')?.showModal();
     });
   }
 
