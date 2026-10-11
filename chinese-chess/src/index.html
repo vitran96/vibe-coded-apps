@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#F3EDE2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Cờ Tướng">
+  <title>Cờ Tướng.</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700&text=帥將仕士相象俥車傌馬炮砲兵卒楚河漢界&display=swap" rel="stylesheet">
+
+  <!-- Import map for Three.js CDN -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="./house-theme.css">
+  <link rel="stylesheet" href="./game.css">
+</head>
+<body>
+  <div id="audio-unlock-chip" class="chip" data-i18n="audio.tapToEnable">Chạm để bật âm thanh</div>
+  <div id="app-live-region" aria-live="polite" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);"></div>
+
+  <div id="app">
+    <!-- Screen 1: Start Screen -->
+    <div id="screen-start" class="screen active">
+      <div>
+        <h1 class="hero-title">Cờ Tướng<span>.</span></h1>
+        <div class="hero-subtitle" data-i18n="game.subtitle"></div>
+      </div>
+
+      <div class="start-actions">
+        <button id="btn-start-play" class="btn btn-primary" data-i18n="common.play">Chơi</button>
+        <button id="btn-start-resume" class="btn" style="display:none;" data-i18n="common.resume">Chơi tiếp</button>
+
+        <div class="secondary-actions">
+          <button id="btn-start-rules" class="btn" data-i18n="game.rules.title">Luật chơi</button>
+          <button id="btn-start-history" class="btn" data-i18n="common.history">Lịch sử</button>
+          <button id="btn-start-settings" class="btn" data-i18n="common.settings">Cài đặt</button>
+        </div>
+      </div>
+
+      <div class="maker"></div>
+    </div>
+
+    <!-- Screen 2: Game Screen -->
+    <div id="screen-game" class="screen">
+      <div class="game-layout">
+        <!-- Top bar (Opponent) -->
+        <div id="player-bar-top" class="player-bar panel top">
+          <div class="player-info">
+            <span id="side-badge-top" class="side-badge black"></span>
+            <span id="player-name-top" class="player-name">Máy (Vừa)</span>
+          </div>
+          <div id="captured-tray-top" class="captured-tray"></div>
+          <div id="clock-pill-top" class="clock-pill">10:00</div>
+        </div>
+
+        <!-- 3D Board Area -->
+        <div class="board-container">
+          <canvas id="canvas-3d"></canvas>
+          <div id="countdown-overlay" class="countdown-overlay" style="display:none;">
+            <div id="countdown-numeral" class="countdown-numeral">5</div>
+          </div>
+          <div id="board-vignette" class="board-vignette"></div>
+        </div>
+
+        <!-- Bottom bar (Player) -->
+        <div id="player-bar-bottom" class="player-bar panel bottom">
+          <div class="player-info">
+            <span id="side-badge-bottom" class="side-badge red"></span>
+            <span id="player-name-bottom" class="player-name">Bạn</span>
+          </div>
+          <div id="captured-tray-bottom" class="captured-tray"></div>
+          <div id="clock-pill-bottom" class="clock-pill active">10:00</div>
+        </div>
+
+        <!-- In-game Normal Toolbar -->
+        <div id="game-normal-toolbar" class="game-toolbar">
+          <button id="btn-game-undo" class="btn btn-icon" title="Đi lại">
+            <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+          </button>
+          <button id="btn-game-flip" class="btn btn-icon" title="Lật bàn cờ">
+            <svg viewBox="0 0 24 24"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+          </button>
+          <button id="btn-game-moves" class="btn btn-icon" title="Biên bản">
+            <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </button>
+          <button id="btn-game-rules" class="btn btn-icon" title="Luật chơi">
+            <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </button>
+          <button id="btn-game-menu" class="btn btn-icon" title="Menu">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+        </div>
+
+        <!-- In-game Replay Toolbar -->
+        <div id="replay-toolbar" class="replay-bar" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span id="replay-ply-label" style="font-weight:700; font-size:var(--fs-sm);">0 / 0</span>
+            <input id="replay-scrubber" type="range" class="scrubber-slider" min="0" max="0" value="0">
+            <button id="btn-replay-exit" class="btn" style="padding:2px 10px; min-height:32px;">Thoát</button>
+          </div>
+          <div class="replay-controls">
+            <button id="btn-replay-start" class="btn btn-icon">⏮</button>
+            <button id="btn-replay-prev" class="btn btn-icon">◀</button>
+            <button id="btn-replay-play" class="btn btn-icon">▶</button>
+            <button id="btn-replay-next" class="btn btn-icon">▶</button>
+            <button id="btn-replay-end" class="btn btn-icon">⏭</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Full-screen Rules Page -->
+    <div id="screen-rules" class="screen">
+      <div class="rules-nav">
+        <button id="btn-rules-back" class="btn btn-icon" title="Quay lại">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div class="rules-toc">
+          <a href="#rule-sec-1" class="chip" data-i18n="game.rules.sec1">Mục tiêu</a>
+          <a href="#rule-sec-2" class="chip" data-i18n="game.rules.sec2">Bàn cờ</a>
+          <a href="#rule-sec-3" class="chip" data-i18n="game.rules.sec3">Bày quân</a>
+          <a href="#rule-sec-4" class="chip" data-i18n="game.rules.sec4">Cách đi từng quân</a>
+          <a href="#rule-sec-5" class="chip" data-i18n="game.rules.sec5">Chiếu & chiếu bí</a>
+          <a href="#rule-sec-6" class="chip" data-i18n="game.rules.sec6">Lộ mặt tướng</a>
+          <a href="#rule-sec-7" class="chip" data-i18n="game.rules.sec7">Hoà & kết quả</a>
+          <a href="#rule-sec-8" class="chip" data-i18n="game.rules.sec8">Ghi biên bản</a>
+          <a href="#rule-sec-9" class="chip" data-i18n="game.rules.sec9">Mẹo nhỏ</a>
+        </div>
+      </div>
+
+      <div class="rules-container">
+        <!-- 1. Mục tiêu -->
+        <section id="rule-sec-1" class="rule-card panel">
+          <h2>1. Mục tiêu (Goal)</h2>
+          <p>Mục tiêu cao nhất là <strong>chiếu bí (checkmate)</strong> Tướng đối phương. Đặc biệt trong Cờ Tướng, bên nào đến lượt đi mà <strong>hết nước đi hợp lệ (stalemate/bí nước) cũng bị xử thua</strong>.</p>
+        </section>
+
+        <!-- 2. Bàn cờ -->
+        <section id="rule-sec-2" class="rule-card panel">
+          <h2>2. Bàn cờ (The Board)</h2>
+          <p>Bàn cờ gồm 9 đường dọc và 10 đường ngang, tạo thành 90 giao điểm (các quân cờ đứng và đi trên các giao điểm, không đứng trong ô vuông).</p>
+          <p>Sông (Sở hà · Hán giới) chia bàn cờ làm hai nửa. Cung tướng (Cung) ở mỗi bên có các đường chéo nối các điểm d-f và rank 0-2 (Đỏ) hoặc 7-9 (Đen).</p>
+        </section>
+
+        <!-- 3. Bày quân -->
+        <section id="rule-sec-3" class="rule-card panel">
+          <h2>3. Bày quân (Setup)</h2>
+          <p>Mỗi bên có 16 quân: 1 Tướng, 2 Sĩ, 2 Tượng, 2 Mã, 2 Xe, 2 Pháo, 5 Tốt. Đỏ đi trước.</p>
+        </section>
+
+        <!-- 4. Cách đi từng quân -->
+        <section id="rule-sec-4" class="rule-card panel">
+          <h2>4. Cách đi từng quân (Piece Movement)</h2>
+
+          <!-- Tướng -->
+          <h3>Tướng (General) — 帥 / 將</h3>
+          <p>Đi từng ô một theo chiều ngang hoặc dọc trong Cung tướng. Không được đi ra ngoài Cung.</p>
+          <div class="miniboard-box">
+            <canvas id="mb-general" class="miniboard-canvas"></canvas>
+            <div class="miniboard-caption">Tướng trong cung; điểm d0 bị cấm do lộ mặt tướng. Chạm điểm sáng để thử đi!</div>
+          </div>
+
+          <!-- Sĩ -->
+          <h3>Sĩ (Advisor) — 仕 / 士</h3>
+          <p>Đi chéo 1 ô mỗi nước, luôn ở trong Cung tướng. Sĩ có 5 điểm đứng trong Cung.</p>
+          <div class="miniboard-box">
+            <canvas id="mb-advisor" class="miniboard-canvas"></canvas>
+            <div class="miniboard-caption">Sĩ đi chéo trong cung tướng.</div>
+          </div>
+
+          <!-- Tượng -->
+          <h3>Tượng (Elephant) — 相 / 象</h3>
+          <p>Đi chéo 2 ô ("đi chữ điền"). Tượng không được qua sông. Nếu có quân cản ở giữa đường chéo ("mắt tượng"), Tượng bị chặn không đi được.</p>
+          <div class="miniboard-box">
+            <canvas id="mb-elephant" class="miniboard-canvas"></canvas>
+            <div class="miniboard-caption">Tượng đi chéo 2 ô; mắt tượng bị cản tại d1.</div>
+          </div>
+
+          <!-- Mã -->
+          <h3>Mã (Horse) — 傌 / 馬</h3>
+          <p>Đi 1 ô thẳng và 1 ô chéo ("chữ nhật"). Nếu ô liền kề theo chiều thẳng có quân đứng ("chân mã"), Mã bị cản.</p>
+          <div class="miniboard-box">
+            <canvas id="mb-horse" class="miniboard-canvas"></canvas>
+            <div class="miniboard-caption">Mã nhảy chữ nhật; chân mã tại b1 bị cản.</div>
+          </div>
+
+          <!-- Xe -->
+          <h3>Xe (Chariot) — 俥 / 車</h3>
+          <p>Đi ngang dọc tuỳ ý trên các đường thẳng không bị cản. Là quân tấn công mạnh nhất.</p>
+          <div class="miniboard-box">
+            <canvas id="mb-chariot" class="miniboard-canvas"></canvas>
+            <div class="miniboard-caption">Xe đi thẳng mọi hướng dọc ngang.</div>
+          </div>
+
+          <!-- Pháo -->
+          <h3>Pháo (Cannon) — 炮 / 砲</h3>
+          <p>Khi không ăn quân, đi như Xe. Khi ăn quân, Pháo bắt buộc phải nhảy qua đúng một quân khác làm ngòi.</p>
+          <div class="miniboard-box">
+            <canvas id="mb-cannon" class="miniboard-canvas"></canvas>
+            <div class="miniboard-caption">Pháo đi thẳng khi rảnh; ăn quân cần đúng 1 ngòi cản.</div>
+          </div>
+
+          <!-- Tốt -->
+          <h3>Tốt (Soldier) — 兵 / 卒</h3>
+          <p>Chưa qua sông chỉ tiến thẳng 1 bước. Đã qua sông có thể tiến 1 bước hoặc đi ngang 1 bước. Tốt không bao giờ đi lùi.</p>
+          <div class="miniboard-box">
+            <canvas id="mb-soldier" class="miniboard-canvas"></canvas>
+            <div class="miniboard-caption">Tốt qua sông đi thẳng và đi ngang.</div>
+          </div>
+        </section>
+
+        <!-- 5. Chiếu & Chiếu bí -->
+        <section id="rule-sec-5" class="rule-card panel">
+          <h2>5. Chiếu & Chiếu bí (Check & Checkmate)</h2>
+          <p>Khi Tướng bị một quân đối phương đe dọa ăn ở nước tiếp theo, gọi là Chiếu tướng. Bên bị chiếu phải tìm cách hoá giải ngay (chạy tướng, che chắn hoặc ăn quân đang chiếu).</p>
+          <div class="miniboard-box">
+            <canvas id="mb-checkmate" class="miniboard-canvas"></canvas>
+            <div class="miniboard-caption">Thế cờ chiếu bí hai xe (double chariot mate).</div>
+          </div>
+        </section>
+
+        <!-- 6. Lộ mặt tướng -->
+        <section id="rule-sec-6" class="rule-card panel">
+          <h2>6. Lộ mặt tướng (Flying General)</h2>
+          <p>Hai tướng không được đứng cùng một hàng dọc mà không có bất kỳ quân nào ở giữa che chắn. Nước đi làm lộ mặt tướng là phạm quy.</p>
+        </section>
+
+        <!-- 7. Hoà và kết quả khác -->
+        <section id="rule-sec-7" class="rule-card panel">
+          <h2>7. Hoà và thắng thua khác (Draws & Endings)</h2>
+          <p><strong>Cấm chiếu dai (Perpetual Check):</strong> Chiếu liên tục lặp lại 3 lần mà không chịu đổi nước sẽ bị xử thua.</p>
+          <p><strong>Giới hạn nước đi:</strong> 60 nước đi liên tiếp (120 plies) hai bên không ăn quân nào thì xử hoà.</p>
+          <p><strong>Hết quân tấn công:</strong> Hai bên chỉ còn Tướng, Sĩ, Tượng thì tự động xử hoà.</p>
+          <p><strong>Hết giờ:</strong> Hết thời gian suy nghĩ trước khi hoàn thành nước đi bị xử thua.</p>
+        </section>
+
+        <!-- 8. Ghi biên bản -->
+        <section id="rule-sec-8" class="rule-card panel">
+          <h2>8. Ghi biên bản (Notation)</h2>
+          <p>Đếm 9 cột từ phải sang trái theo góc nhìn của mỗi người chơi. Ký hiệu tiếng Việt: Tg (Tướng), S (Sĩ), T (Tượng), M (Mã), X (Xe), P (Pháo), B (Binh/Tốt). Dấu <code>.</code> là tiến, <code>-</code> là bình (đi ngang), <code>/</code> là thoái (lùi).</p>
+          <p>Ví dụ: <code>P2-5</code> (Pháo cột 2 bình sang cột 5), <code>M8.7</code> (Mã cột 8 tiến lên cột 7).</p>
+        </section>
+
+        <!-- 9. Mẹo nhỏ & Thử ngay -->
+        <section id="rule-sec-9" class="rule-card panel">
+          <h2>9. Mẹo nhỏ (Tips)</h2>
+          <p>Giá trị tương đối: Xe ≈ 9, Pháo ≈ 4.5, Mã ≈ 4, Sĩ/Tượng ≈ 2, Tốt 1 (sau khi qua sông 2). Đừng để chân mã bị chặn vô ích, tận dụng ngòi pháo và bảo vệ Cung tướng cẩn mật!</p>
+          <div style="margin-top:var(--sp-4); text-align:center;">
+            <button id="btn-rules-try" class="btn btn-primary" data-i18n="game.rules.tryNow">Thử ngay (Chơi với máy)</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialogs & Sheets -->
+  <!-- New Game Sheet -->
+  <dialog id="dialog-newgame">
+    <div class="sheet-header">
+      <h2 data-i18n="common.newGame">Ván mới</h2>
+      <button class="btn btn-icon" onclick="window.XQ.ui.closeDialog('dialog-newgame')">✕</button>
+    </div>
+    <div class="sheet-content">
+      <div class="form-group">
+        <label class="form-label">Chế độ chơi</label>
+        <div class="chip-group">
+          <div class="choice-chip chip-mode selected" data-val="pve" data-i18n="mode.pve">Chơi với máy</div>
+          <div class="choice-chip chip-mode" data-val="pvp" data-i18n="mode.pvp">Hai người</div>
+        </div>
+      </div>
+
+      <div id="newgame-ai-group" class="form-group">
+        <label class="form-label">Độ khó AI</label>
+        <div class="chip-group">
+          <div class="choice-chip chip-level" data-val="easy" data-i18n="ai.easy">Dễ</div>
+          <div class="choice-chip chip-level selected" data-val="medium" data-i18n="ai.medium">Vừa</div>
+          <div class="choice-chip chip-level" data-val="hard" data-i18n="ai.hard">Khó</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="game.yourSide">Bạn cầm quân</label>
+        <div class="chip-group">
+          <div class="choice-chip chip-side selected" data-val="red" data-i18n="game.side.red">Đỏ</div>
+          <div class="choice-chip chip-side" data-val="black" data-i18n="game.side.black">Đen</div>
+          <div class="choice-chip chip-side" data-val="random" data-i18n="game.random">Ngẫu nhiên</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="game.timer">Hẹn giờ</label>
+        <div class="chip-group">
+          <div class="choice-chip chip-timer-mode selected" data-val="off" data-i18n="game.timer.off">Tắt</div>
+          <div class="choice-chip chip-timer-mode" data-val="move" data-i18n="game.timer.move">Mỗi nước</div>
+          <div class="choice-chip chip-timer-mode" data-val="game" data-i18n="game.timer.game">Cả ván</div>
+        </div>
+      </div>
+
+      <!-- Timer duration chips -->
+      <div id="timer-opts-move" class="form-group" style="display:none;">
+        <label class="form-label" data-i18n="game.timer.duration">Thời gian mỗi nước</label>
+        <div class="chip-group">
+          <div class="choice-chip chip-timer-move" data-val="15">15 giây</div>
+          <div class="choice-chip chip-timer-move" data-val="30">30 giây</div>
+          <div class="choice-chip chip-timer-move selected" data-val="60">60 giây</div>
+          <div class="choice-chip chip-timer-move" data-val="120">2 phút</div>
+          <div class="choice-chip chip-timer-move" data-val="300">5 phút</div>
+        </div>
+      </div>
+
+      <div id="timer-opts-game" class="form-group" style="display:none;">
+        <label class="form-label" data-i18n="game.timer.duration">Thời gian cả ván</label>
+        <div class="chip-group">
+          <div class="choice-chip chip-timer-game" data-val="5+3">5+3</div>
+          <div class="choice-chip chip-timer-game selected" data-val="10+5">10+5</div>
+          <div class="choice-chip chip-timer-game" data-val="15+10">15+10</div>
+          <div class="choice-chip chip-timer-game" data-val="30+0">30+0</div>
+        </div>
+      </div>
+
+      <button id="btn-newgame-start" class="btn btn-primary" style="margin-top:var(--sp-2);" data-i18n="common.play">Bắt đầu</button>
+    </div>
+  </dialog>
+
+  <!-- Settings Sheet -->
+  <dialog id="dialog-settings">
+    <div class="sheet-header">
+      <h2 data-i18n="common.settings">Cài đặt</h2>
+      <button class="btn btn-icon" onclick="window.XQ.ui.closeDialog('dialog-settings')">✕</button>
+    </div>
+    <div class="sheet-content">
+      <div class="form-group">
+        <label class="form-label" data-i18n="settings.theme">Chủ đề</label>
+        <select id="settings-theme-select" class="btn" style="width:100%;">
+          <option value="auto">Tự động</option>
+          <option value="giay">Giấy (Paper)</option>
+          <option value="dem">Đêm (Night)</option>
+          <option value="sonmai">Sơn mài (Lacquer)</option>
+          <option value="bien">Biển (Sea)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="settings.language">Ngôn ngữ</label>
+        <select id="settings-lang-select" class="btn" style="width:100%;">
+          <option value="vi">Tiếng Việt</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="game.set.labels">Chữ trên quân cờ</label>
+        <select id="settings-label-select" class="btn" style="width:100%;">
+          <option value="han">Chữ Hán (帥, 將, ...)</option>
+          <option value="viet">Chữ Việt (Tg, S, T, ...)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="settings.audio">Âm thanh</label>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span data-i18n="settings.sfx">Hiệu ứng âm thanh</span>
+          <input type="checkbox" id="settings-sfx-toggle" checked style="transform:scale(1.3);">
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+          <span data-i18n="settings.music">Nhạc nền Lofi</span>
+          <input type="checkbox" id="settings-music-toggle" style="transform:scale(1.3);">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="settings.data">Dữ liệu</label>
+        <button id="btn-clear-history" class="btn" data-i18n="settings.clearHistory">Xoá lịch sử</button>
+        <button id="btn-reset-defaults" class="btn" style="margin-top:8px;" data-i18n="settings.reset">Khôi phục mặc định</button>
+      </div>
+
+      <div class="form-group" style="text-align:center; padding-top:var(--sp-2);">
+        <div style="color:var(--muted); font-size:var(--fs-xs);">
+          Phiên bản <span id="app-version-label">1.0.0</span>
+        </div>
+        <button id="btn-install-app" class="btn" style="display:none; margin-top:8px;" data-i18n="common.install">Cài ứng dụng</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Move List Dialog -->
+  <dialog id="dialog-movelist">
+    <div class="sheet-header">
+      <h2 data-i18n="game.moves">Biên bản nước đi</h2>
+      <button class="btn btn-icon" onclick="window.XQ.ui.closeDialog('dialog-movelist')">✕</button>
+    </div>
+    <div class="sheet-content" id="movelist-container"></div>
+  </dialog>
+
+  <!-- History Dialog -->
+  <dialog id="dialog-history">
+    <div class="sheet-header">
+      <h2 data-i18n="common.history">Lịch sử đấu</h2>
+      <button class="btn btn-icon" onclick="window.XQ.ui.closeDialog('dialog-history')">✕</button>
+    </div>
+    <div class="sheet-content" id="history-list-container"></div>
+  </dialog>
+
+  <!-- In-game Menu Dialog -->
+  <dialog id="dialog-game-menu">
+    <div class="sheet-header">
+      <h2>Tuỳ chọn ván đấu</h2>
+      <button class="btn btn-icon" onclick="window.XQ.ui.closeDialog('dialog-game-menu')">✕</button>
+    </div>
+    <div class="sheet-content">
+      <button id="menu-item-newgame" class="btn" data-i18n="common.newGame">Ván mới</button>
+      <button id="menu-item-draw" class="btn" data-i18n="game.offerDraw">Cầu hoà</button>
+      <button id="menu-item-resign" class="btn" data-i18n="game.resign">Xin thua</button>
+      <button id="menu-item-settings" class="btn" data-i18n="common.settings">Cài đặt</button>
+    </div>
+  </dialog>
+
+  <!-- Game Over Dialog -->
+  <dialog id="dialog-gameover">
+    <div class="sheet-header">
+      <h2 id="gameover-title">Kết thúc ván cờ</h2>
+    </div>
+    <div class="sheet-content" style="text-align:center;">
+      <div id="gameover-reason" style="font-size:var(--fs-lg); font-weight:700; color:var(--accent);"></div>
+      <div style="display:flex; flex-direction:column; gap:var(--sp-2); margin-top:var(--sp-4);">
+        <button id="btn-gameover-rematch" class="btn btn-primary" data-i18n="common.rematch">Đấu lại</button>
+        <button id="btn-gameover-replay" class="btn" data-i18n="common.replay">Xem lại</button>
+        <button id="btn-gameover-newgame" class="btn" data-i18n="common.newGame">Ván mới</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Draw Offer Dialog -->
+  <dialog id="dialog-draw-offer">
+    <div class="sheet-header">
+      <h2>Lời cầu hoà</h2>
+    </div>
+    <div class="sheet-content" style="text-align:center;">
+      <p>Đối phương xin hoà ván cờ. Bạn có đồng ý không?</p>
+      <div style="display:flex; justify-content:center; gap:var(--sp-3); margin-top:var(--sp-3);">
+        <button id="btn-draw-accept" class="btn btn-primary" data-i18n="common.confirm">Đồng ý</button>
+        <button id="btn-draw-decline" class="btn" data-i18n="common.cancel">Từ chối</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Plain scripts loaded in order before main.js -->
+  <script src="./house-kit.js"></script>
+  <script src="./i18n.js"></script>
+  <script src="./rules.js"></script>
+  <script src="./notation.js"></script>
+  <script src="./book.js"></script>
+  <script src="./engine.js"></script>
+  <script src="./storage.js"></script>
+  <script src="./audio.js"></script>
+  <script src="./ai-client.js"></script>
+  <script src="./render.js"></script>
+  <script src="./input.js"></script>
+  <script src="./rules-page.js"></script>
+  <script src="./replay.js"></script>
+  <script src="./pwa.js"></script>
+  <script src="./tests.js"></script>
+  <script src="./selfplay.js"></script>
+  <script src="./ui.js"></script>
+
+  <!-- Module script importing Three.js -->
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

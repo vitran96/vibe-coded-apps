@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="giay">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Cờ vua</title>
+  <meta name="theme-color" content="#F3EDE2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Cờ vua">
+
+  <!-- Pinned CDN Fonts & Libraries -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+    }
+  }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/tone@15.0.4/build/Tone.js"></script>
+
+  <!-- Split Stylesheets for Development -->
+  <link rel="stylesheet" href="./house-theme.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Audio unlock hint chip -->
+    <div id="audio-unlock-chip" class="chip" style="position:fixed; top:12px; right:12px; z-index:9000; cursor:pointer; background:var(--accent); color:var(--on-accent); display:none;">
+      <span data-i18n="audio.tapToEnable">Chạm để bật âm thanh</span>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+      <div class="start-header">
+        <h1 class="start-title"><span data-i18n="game.title">Cờ vua</span><span style="color:var(--accent);">.</span></h1>
+        <div id="maker-line" class="maker" style="display:none;"></div>
+      </div>
+
+      <div class="start-menu">
+        <button id="btn-play" class="btn btn-primary" data-i18n="common.play">Chơi</button>
+        <button id="btn-resume" class="btn" style="display:none;" data-i18n="common.resume">Chơi tiếp</button>
+        <button id="btn-rules" class="btn" data-i18n="game.rules.title">Luật chơi</button>
+        <button id="btn-history" class="btn" data-i18n="common.history">Lịch sử</button>
+      </div>
+
+      <div class="start-footer">
+        <button id="btn-start-settings" class="btn btn-icon" aria-label="Cài đặt">
+          <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Game Screen -->
+    <div id="game-screen" class="screen hidden">
+      <div class="game-main">
+        <!-- Top Player Bar -->
+        <div class="player-bar top">
+          <div class="player-info">
+            <div id="top-avatar" class="player-avatar black">♚</div>
+            <div>
+              <div id="top-name" class="player-name">Máy (Vừa)</div>
+              <div id="top-tray" class="captured-tray"></div>
+            </div>
+          </div>
+          <div id="top-clock" class="clock-pill">--:--</div>
+        </div>
+
+        <!-- 3D Board Canvas wrapper -->
+        <div class="board-wrapper">
+          <canvas id="chess-canvas"></canvas>
+          <div id="board-glow" class="board-glow" style="display:none;"></div>
+          <div id="countdown-overlay" style="display:none;">
+            <div id="countdown-num" class="countdown-num">5</div>
+          </div>
+        </div>
+
+        <!-- Bottom Player Bar -->
+        <div class="player-bar bottom">
+          <div class="player-info">
+            <div id="bottom-avatar" class="player-avatar white">♔</div>
+            <div>
+              <div id="bottom-name" class="player-name">Bạn</div>
+              <div id="bottom-tray" class="captured-tray"></div>
+            </div>
+          </div>
+          <div id="bottom-clock" class="clock-pill">--:--</div>
+        </div>
+
+        <!-- Status & Hint Line -->
+        <div id="game-status-line" style="font-size:var(--fs-sm); font-weight:600; color:var(--muted); min-height:24px; text-align:center;">
+          Lượt của Trắng
+        </div>
+
+        <!-- Bottom Toolbar (phone) -->
+        <div class="game-toolbar">
+          <button id="btn-undo" class="btn btn-icon" aria-label="Đi lại">
+            <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+          </button>
+          <button id="btn-flip" class="btn btn-icon" aria-label="Xoay bàn">
+            <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+          </button>
+          <button id="btn-show-moves" class="btn btn-icon" aria-label="Nước đi">
+            <svg viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+          </button>
+          <button id="btn-game-rules" class="btn btn-icon" aria-label="Luật chơi">
+            <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </button>
+          <button id="btn-menu" class="btn btn-icon" aria-label="Menu">
+            <svg viewBox="0 0 24 24"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Desktop Side Panel (hidden on phone, visible on >= 900px) -->
+      <aside class="side-panel" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-2);">
+          <h2 style="font-size:var(--fs-lg);" data-i18n="game.title">Cờ vua</h2>
+          <button id="btn-desktop-settings" class="btn btn-icon" aria-label="Cài đặt">
+            <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+          </button>
+        </div>
+        <div id="side-status" style="font-weight:600; font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);">Lượt của Trắng</div>
+        <div class="move-list-wrap" id="side-move-list"></div>
+        <div style="display:flex; gap:var(--sp-2); margin-top:auto;">
+          <button id="btn-side-undo" class="btn" style="flex:1;" data-i18n="common.undo">Đi lại</button>
+          <button id="btn-side-resign" class="btn" style="flex:1;" data-i18n="game.action.resign">Đầu hàng</button>
+          <button id="btn-side-draw" class="btn" style="flex:1;" data-i18n="game.action.offerDraw">Hoà</button>
+        </div>
+      </aside>
+
+      <!-- Replay Controller Bar (shown during replay mode) -->
+      <div id="replay-bar" class="replay-bar" style="display:none;">
+        <button id="btn-replay-start" class="btn btn-icon" aria-label="Bắt đầu"><svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" x2="5" y1="19" y2="5"/></svg></button>
+        <button id="btn-replay-prev" class="btn btn-icon" aria-label="Nước trước"><svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/></svg></button>
+        <button id="btn-replay-play" class="btn btn-icon" aria-label="Phát / Dừng"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+        <button id="btn-replay-next" class="btn btn-icon" aria-label="Nước sau"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20"/></svg></button>
+        <button id="btn-replay-end" class="btn btn-icon" aria-label="Kết thúc"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20"/><line x1="19" x2="19" y1="5" y2="19"/></svg></button>
+        <input type="range" id="replay-slider" class="replay-scrubber" min="0" max="0" value="0">
+        <button id="btn-replay-exit" class="btn" data-i18n="common.close">Đóng</button>
+      </div>
+    </div>
+
+    <!-- Rules Screen (Fullscreen) -->
+    <div id="rules-screen" class="screen hidden">
+      <header class="rules-header">
+        <button id="btn-rules-back" class="btn" data-i18n="common.back">Quay lại</button>
+        <h2 style="font-size:var(--fs-md); font-weight:800;" data-i18n="game.rules.title">Luật chơi Cờ vua</h2>
+        <div style="width:44px;"></div>
+      </header>
+      <nav id="rules-toc" class="rules-toc-chips"></nav>
+      <main id="rules-content" class="rules-content"></main>
+    </div>
+
+    <!-- Dialog: New Game Sheet -->
+    <dialog id="dialog-new-game">
+      <h3 style="margin-bottom:var(--sp-4);" data-i18n="common.newGame">Ván mới</h3>
+      <div style="display:flex; flex-direction:column; gap:var(--sp-4);">
+        <!-- Mode -->
+        <div>
+          <label style="font-weight:600; font-size:var(--fs-sm);" data-i18n="settings.game">Chế độ</label>
+          <div class="segmented" id="seg-mode" style="margin-top:var(--sp-1);">
+            <button data-val="pve" class="active" data-i18n="mode.pve">Chơi với máy</button>
+            <button data-val="pvp" data-i18n="mode.pvp">Hai người</button>
+          </div>
+        </div>
+
+        <!-- AI Level (PvE only) -->
+        <div id="row-ai-level">
+          <label style="font-weight:600; font-size:var(--fs-sm);">Độ khó</label>
+          <div class="segmented" id="seg-ai" style="margin-top:var(--sp-1);">
+            <button data-val="easy" data-i18n="ai.easy">Dễ</button>
+            <button data-val="medium" class="active" data-i18n="ai.medium">Vừa</button>
+            <button data-val="hard" data-i18n="ai.hard">Khó</button>
+          </div>
+        </div>
+
+        <!-- Side -->
+        <div>
+          <label style="font-weight:600; font-size:var(--fs-sm);">Bên của bạn</label>
+          <div class="segmented" id="seg-side" style="margin-top:var(--sp-1);">
+            <button data-val="w" class="active" data-i18n="game.side.white">Trắng</button>
+            <button data-val="b" data-i18n="game.side.black">Đen</button>
+            <button data-val="random" data-i18n="game.side.random">Ngẫu nhiên</button>
+          </div>
+        </div>
+
+        <!-- Timer Picker -->
+        <div>
+          <label style="font-weight:600; font-size:var(--fs-sm);" data-i18n="game.timer.title">Đồng hồ</label>
+          <div class="segmented" id="seg-timer-kind" style="margin-top:var(--sp-1);">
+            <button data-val="off" class="active" data-i18n="game.timer.off">Tắt</button>
+            <button data-val="move" data-i18n="game.timer.perMove">Mỗi nước</button>
+            <button data-val="game" data-i18n="game.timer.game">Cả ván</button>
+          </div>
+          <div id="timer-presets-wrap" class="chip-wrap" style="display:none;"></div>
+          <div id="timer-summary" style="font-size:var(--fs-xs); color:var(--muted); margin-top:var(--sp-1);"></div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:var(--sp-3); margin-top:var(--sp-5);">
+        <button id="btn-cancel-new-game" class="btn" data-i18n="common.cancel">Huỷ</button>
+        <button id="btn-start-game" class="btn btn-primary" data-i18n="common.play">Bắt đầu</button>
+      </div>
+    </dialog>
+
+    <!-- Dialog: Promotion Picker -->
+    <dialog id="dialog-promo">
+      <h3 style="text-align:center;" data-i18n="game.action.promoteTo">Phong cấp thành</h3>
+      <div id="promo-options" class="promo-grid"></div>
+    </dialog>
+
+    <!-- Dialog: Game Over -->
+    <dialog id="dialog-game-over">
+      <h3 id="game-over-title" style="text-align:center; font-size:var(--fs-xl);">Chiếu hết!</h3>
+      <p id="game-over-desc" style="text-align:center; color:var(--muted); margin:var(--sp-2) 0 var(--sp-4);"></p>
+      <div style="text-align:center; margin-bottom:var(--sp-4);">
+        <a id="link-game-over-rule" href="#rules" style="color:var(--accent); font-weight:600; font-size:var(--fs-sm); text-decoration:none;">Tìm hiểu luật này</a>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:var(--sp-2);">
+        <button id="btn-rematch" class="btn btn-primary" data-i18n="common.rematch">Đấu lại</button>
+        <button id="btn-over-replay" class="btn" data-i18n="common.replay">Xem lại ván cờ</button>
+        <button id="btn-over-new" class="btn" data-i18n="common.newGame">Ván mới</button>
+      </div>
+    </dialog>
+
+    <!-- Dialog: In-game Menu -->
+    <dialog id="dialog-menu">
+      <h3 style="margin-bottom:var(--sp-4);">Menu</h3>
+      <div style="display:flex; flex-direction:column; gap:var(--sp-3);">
+        <button id="btn-menu-resign" class="btn" data-i18n="game.action.resign">Đầu hàng</button>
+        <button id="btn-menu-draw" class="btn" data-i18n="game.action.offerDraw">Đề nghị hoà</button>
+        <button id="btn-menu-new" class="btn" data-i18n="common.newGame">Ván mới</button>
+        <button id="btn-menu-settings" class="btn" data-i18n="common.settings">Cài đặt</button>
+        <button id="btn-menu-close" class="btn" data-i18n="common.close">Đóng</button>
+      </div>
+    </dialog>
+
+    <!-- Dialog: History / Records -->
+    <dialog id="dialog-history" style="max-height:85dvh;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-3);">
+        <h3 data-i18n="common.history">Lịch sử ván đấu</h3>
+        <button id="btn-close-history" class="btn btn-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="segmented" id="seg-history-filter" style="margin-bottom:var(--sp-3);">
+        <button data-filter="all" class="active">Tất cả</button>
+        <button data-filter="pve" data-i18n="mode.pve">Vs máy</button>
+        <button data-filter="pvp" data-i18n="mode.pvp">Hai người</button>
+      </div>
+      <div id="history-list" style="overflow-y:auto; max-height:55dvh; display:flex; flex-direction:column; gap:var(--sp-2);"></div>
+    </dialog>
+
+    <!-- Dialog: Settings -->
+    <dialog id="dialog-settings" style="max-height:85dvh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-4);">
+        <h3 data-i18n="common.settings">Cài đặt</h3>
+        <button id="btn-close-settings" class="btn btn-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:var(--sp-5);">
+        <!-- Section: Game -->
+        <div>
+          <h4 style="font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);" data-i18n="settings.game">Trò chơi</h4>
+          <div style="display:flex; flex-direction:column; gap:var(--sp-3);">
+            <div>
+              <label style="font-weight:600; font-size:var(--fs-sm);" data-i18n="game.timer.title">Đồng hồ mặc định</label>
+              <div class="segmented" id="seg-settings-timer" style="margin-top:var(--sp-1);">
+                <button data-val="off" class="active" data-i18n="game.timer.off">Tắt</button>
+                <button data-val="move" data-i18n="game.timer.perMove">Mỗi nước</button>
+                <button data-val="game" data-i18n="game.timer.game">Cả ván</button>
+              </div>
+              <div id="settings-timer-presets" class="chip-wrap" style="display:none;"></div>
+            </div>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.countdownFx">Hiệu ứng đếm ngược 5 giây</span>
+              <input type="checkbox" id="chk-countdown-fx" checked>
+            </label>
+            <label id="lbl-vibrate" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.vibrate">Rung khi sắp hết giờ</span>
+              <input type="checkbox" id="chk-vibrate" checked>
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.legalDots">Hiện nước đi hợp lệ</span>
+              <input type="checkbox" id="chk-legal-dots" checked>
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.coords">Hiện toạ độ</span>
+              <input type="checkbox" id="chk-coords" checked>
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.autoQueen">Luôn phong Hậu</span>
+              <input type="checkbox" id="chk-auto-queen">
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.pvpUndo">Cho phép đi lại (PvP)</span>
+              <input type="checkbox" id="chk-pvp-undo" checked>
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.rotatePvp">Xoay bàn theo lượt (PvP)</span>
+              <input type="checkbox" id="chk-rotate-pvp">
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.ruleHints">Gợi ý luật</span>
+              <input type="checkbox" id="chk-rule-hints" checked>
+            </label>
+          </div>
+        </div>
+
+        <!-- Section: Audio -->
+        <div>
+          <h4 style="font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);" data-i18n="settings.audio">Âm thanh</h4>
+          <div style="display:flex; flex-direction:column; gap:var(--sp-3);">
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="settings.sfx">Hiệu ứng âm thanh</span>
+              <input type="checkbox" id="chk-sfx" checked>
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="settings.music">Nhạc nền</span>
+              <input type="checkbox" id="chk-music">
+            </label>
+          </div>
+        </div>
+
+        <!-- Section: Look -->
+        <div>
+          <h4 style="font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);" data-i18n="settings.look">Giao diện</h4>
+          <div style="display:flex; flex-direction:column; gap:var(--sp-3);">
+            <div>
+              <label style="font-weight:600; font-size:var(--fs-sm);" data-i18n="settings.theme">Chủ đề</label>
+              <div class="segmented" id="seg-theme" style="margin-top:var(--sp-1);">
+                <button data-val="auto" class="active" data-i18n="theme.auto">Tự động</button>
+                <button data-val="giay" data-i18n="theme.giay">Giấy</button>
+                <button data-val="dem" data-i18n="theme.dem">Đêm</button>
+                <button data-val="sonmai" data-i18n="theme.sonmai">Sơn mài</button>
+                <button data-val="bien" data-i18n="theme.bien">Biển</button>
+              </div>
+            </div>
+            <div>
+              <label style="font-weight:600; font-size:var(--fs-sm);" data-i18n="settings.language">Ngôn ngữ</label>
+              <div class="segmented" id="seg-lang" style="margin-top:var(--sp-1);">
+                <button data-val="vi" class="active">Tiếng Việt</button>
+                <button data-val="en">English</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Data -->
+        <div>
+          <h4 style="font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);" data-i18n="settings.data">Dữ liệu</h4>
+          <div style="display:flex; flex-direction:column; gap:var(--sp-2);">
+            <button id="btn-copy-pgn" class="btn" style="justify-content:flex-start;" data-i18n="game.settings.copyPgn">Sao chép PGN ván hiện tại</button>
+            <button id="btn-clear-history" class="btn" style="justify-content:flex-start;" data-i18n="settings.clearHistory">Xoá lịch sử</button>
+            <button id="btn-reset-data" class="btn" style="justify-content:flex-start; color:var(--danger);" data-i18n="settings.reset">Khôi phục mặc định</button>
+          </div>
+        </div>
+
+        <!-- Section: About -->
+        <div>
+          <h4 style="font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);" data-i18n="settings.about">Thông tin</h4>
+          <div style="font-size:var(--fs-sm); color:var(--muted);">
+            <div>Phiên bản 1.0.0</div>
+            <div id="settings-maker-line" style="display:none; margin-top:4px;"></div>
+          </div>
+        </div>
+      </div>
+    </dialog>
+  </div>
+
+  <!-- Scripts in order per Section 3 -->
+  <script src="./house-kit.js"></script>
+  <script src="./i18n.js"></script>
+  <script src="./rules.js"></script>
+  <script src="./ai.js"></script>
+  <script src="./rulesdocs.js"></script>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

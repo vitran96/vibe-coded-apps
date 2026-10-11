@@ -1,0 +1,5016 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="giay">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Cờ vua</title>
+  <meta name="theme-color" content="#F3EDE2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Cờ vua">
+
+  <!-- Pinned CDN Fonts & Libraries -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+    }
+  }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/tone@15.0.4/build/Tone.js"></script>
+
+  <!-- Split Stylesheets for Development -->
+  <style>
+/* House style "Mộc" — shared by every game. Do not change per game; add game-specific tokens below it. */
+:root {
+  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fs-xs: .75rem; --fs-sm: .875rem; --fs-md: 1rem; --fs-lg: 1.25rem;
+  --fs-xl: clamp(1.5rem, 4vw, 2rem); --fs-hero: clamp(2rem, 8vw, 3.5rem);
+  --r-sm: 10px; --r-md: 14px; --r-lg: 22px; --r-pill: 999px;
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px;
+  --tap: 44px;
+  --ease: cubic-bezier(.2, .8, .2, 1); --ease-pop: cubic-bezier(.34, 1.56, .64, 1);
+  --t-fast: 120ms; --t-med: 200ms; --t-slow: 320ms;
+}
+
+/* Theme: Giấy (paper, light) — default when the system is light */
+:root, [data-theme="giay"] {
+  color-scheme: light;
+  --bg: #F3EDE2; --surface: #FBF8F2; --surface-2: #EAE2D4; --line: #D8CCBA;
+  --ink: #2B2622; --muted: #6A6158;
+  --accent: #B8432E; --on-accent: #FFFFFF; --accent-2: #2E7566;
+  --p1: #2B2622; --p2: #B8432E;
+  --ok: #2E7566; --warn: #B7791F; --danger: #B8432E;
+  --board: #E9DCC4; --board-line: #8C7A62;
+  --shadow: 0 1px 0 rgb(43 38 34 / .05), 0 10px 28px -12px rgb(43 38 34 / .35);
+  --grain-opacity: .05;
+}
+
+/* Theme: Đêm (night, dark) — default when the system is dark */
+[data-theme="dem"] {
+  color-scheme: dark;
+  --bg: #1B1A1F; --surface: #25232A; --surface-2: #2F2C35; --line: #3B3742;
+  --ink: #EEE7DB; --muted: #A9A096;
+  --accent: #E6735B; --on-accent: #1B1A1F; --accent-2: #63B9A4;
+  --p1: #EEE7DB; --p2: #E6735B;
+  --ok: #63B9A4; --warn: #E2B25A; --danger: #E6735B;
+  --board: #2A2730; --board-line: #6E6676;
+  --shadow: 0 1px 0 rgb(0 0 0 / .3), 0 12px 32px -12px rgb(0 0 0 / .7);
+  --grain-opacity: .04;
+}
+
+/* Theme: Sơn mài (lacquer, dark warm) */
+[data-theme="sonmai"] {
+  color-scheme: dark;
+  --bg: #241311; --surface: #321B18; --surface-2: #40231F; --line: #5A3530;
+  --ink: #F4E6CF; --muted: #C2A98C;
+  --accent: #D9A441; --on-accent: #241311; --accent-2: #C8553D;
+  --p1: #F4E6CF; --p2: #C8553D;
+  --ok: #8FBF7F; --warn: #D9A441; --danger: #E06A50;
+  --board: #3A1E1A; --board-line: #A0784A;
+  --shadow: 0 1px 0 rgb(0 0 0 / .35), 0 12px 32px -12px rgb(0 0 0 / .75);
+  --grain-opacity: .06;
+}
+
+/* Theme: Biển (sea, light cool) */
+[data-theme="bien"] {
+  color-scheme: light;
+  --bg: #E7EEEF; --surface: #F6FAFA; --surface-2: #D9E4E6; --line: #BFD0D3;
+  --ink: #1D2B30; --muted: #546A70;
+  --accent: #1D6A85; --on-accent: #FFFFFF; --accent-2: #B5742A;
+  --p1: #1D2B30; --p2: #1D6A85;
+  --ok: #2E7566; --warn: #B5742A; --danger: #B8432E;
+  --board: #D3E2E3; --board-line: #6F8D93;
+  --shadow: 0 1px 0 rgb(29 43 48 / .05), 0 10px 28px -12px rgb(29 43 48 / .35);
+  --grain-opacity: .04;
+}
+
+/* Base */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  min-height: 100dvh; background: var(--bg); color: var(--ink);
+  font: 400 var(--fs-md)/1.5 var(--font); -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent; font-variant-numeric: tabular-nums; accent-color: var(--accent);
+}
+/* Signature paper grain over the whole app */
+body::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+h1, h2, h3 { font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin: 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Components */
+.btn {
+  min-height: var(--tap); padding: 0 var(--sp-5); border-radius: var(--r-pill);
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  font: 600 var(--fs-md) var(--font); display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  cursor: pointer; transition: transform var(--t-fast) var(--ease), background var(--t-med) var(--ease);
+}
+.btn:active { transform: scale(.96); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn-icon { width: 48px; min-height: 48px; padding: 0; }
+.btn-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.panel {
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--shadow);
+}
+.chip { display: inline-flex; align-items: center; gap: var(--sp-1); padding: 2px 10px; border-radius: var(--r-pill);
+  background: var(--surface-2); color: var(--muted); font-size: var(--fs-xs); font-weight: 600; }
+dialog {
+  border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); color: var(--ink);
+  box-shadow: var(--shadow); padding: var(--sp-5); width: min(560px, calc(100vw - 32px)); max-height: 85dvh;
+}
+dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+@media (max-width: 600px) {
+  dialog { margin: auto 0 0; width: 100vw; max-width: 100vw; border-radius: var(--r-lg) var(--r-lg) 0 0;
+    padding-bottom: calc(var(--sp-5) + env(safe-area-inset-bottom)); }
+  dialog::before { content: ""; display: block; width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: -8px auto 16px; }
+}
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: var(--r-pill); font-weight: 600; box-shadow: var(--shadow); }
+.maker { color: var(--muted); font-size: var(--fs-xs); text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
+
+</style>
+  <style>
+/* Chess specific tokens and layouts */
+
+:root, [data-theme="giay"] {
+  --sq-light: #EFE3CC;
+  --sq-dark: #C9A97E;
+  --piece-light: #FBF8F2;
+  --piece-light-ink: #2B2622;
+  --piece-dark: #2B2622;
+  --piece-dark-ink: #F3EDE2;
+}
+
+[data-theme="dem"] {
+  --sq-light: #4A4552;
+  --sq-dark: #34303A;
+  --piece-light: #EEE7DB;
+  --piece-light-ink: #1B1A1F;
+  --piece-dark: #141317;
+  --piece-dark-ink: #E6735B;
+}
+
+[data-theme="sonmai"] {
+  --sq-light: #6B4630;
+  --sq-dark: #3A1E1A;
+  --piece-light: #F4E6CF;
+  --piece-light-ink: #241311;
+  --piece-dark: #120807;
+  --piece-dark-ink: #D9A441;
+}
+
+[data-theme="bien"] {
+  --sq-light: #E2ECEC;
+  --sq-dark: #8FB0B5;
+  --piece-light: #F6FAFA;
+  --piece-light-ink: #1D2B30;
+  --piece-dark: #1D2B30;
+  --piece-dark-ink: #F6FAFA;
+}
+
+/* App Containers */
+#app {
+  width: 100vw;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg);
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  z-index: 10;
+  transition: opacity var(--t-med) var(--ease), visibility var(--t-med);
+}
+
+.screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Start Screen */
+#start-screen {
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+  z-index: 50;
+}
+
+.start-header {
+  margin-bottom: var(--sp-6);
+}
+
+.start-title {
+  font-size: var(--fs-hero);
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -.03em;
+}
+
+.start-title span {
+  color: var(--accent);
+}
+
+.start-subtitle {
+  color: var(--muted);
+  font-size: var(--fs-md);
+  margin-top: var(--sp-2);
+}
+
+.start-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: min(320px, 90vw);
+}
+
+.start-menu .btn {
+  width: 100%;
+  font-size: var(--fs-lg);
+  padding: 0 var(--sp-6);
+  min-height: 52px;
+}
+
+.start-footer {
+  margin-top: var(--sp-6);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+/* Game Layout */
+#game-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.game-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 3D Board Canvas wrapper */
+.board-wrapper {
+  position: relative;
+  width: min(100vw, calc(100dvh - 170px));
+  height: min(100vw, calc(100dvh - 170px));
+  max-width: 620px;
+  max-height: 620px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  touch-action: none;
+}
+
+#chess-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Countdown Visual FX */
+#countdown-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.countdown-num {
+  font-family: var(--font);
+  font-weight: 800;
+  font-size: clamp(80px, 25vw, 160px);
+  color: var(--danger);
+  opacity: 0.85;
+  text-shadow: 0 4px 20px rgb(184 67 46 / 0.5);
+  animation: countPop 1s cubic-bezier(.34, 1.56, .64, 1) forwards;
+}
+
+@keyframes countPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  20% { transform: scale(1.08); opacity: 0.95; }
+  35% { transform: scale(1.0); opacity: 0.9; }
+  100% { transform: scale(0.9); opacity: 0; }
+}
+
+.board-glow {
+  position: absolute;
+  inset: 0;
+  border: 4px solid var(--danger);
+  border-radius: var(--r-md);
+  pointer-events: none;
+  animation: glowPulse 1s infinite alternate;
+  z-index: 35;
+}
+
+@keyframes glowPulse {
+  0% { opacity: 0.3; box-shadow: inset 0 0 15px var(--danger); }
+  100% { opacity: 0.9; box-shadow: inset 0 0 30px var(--danger); }
+}
+
+/* Bars & Player Info */
+.player-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-4);
+  width: 100%;
+  max-width: 620px;
+  min-height: 48px;
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.player-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  border: 1px solid var(--line);
+}
+
+.player-avatar.white {
+  background: var(--piece-light);
+  color: var(--piece-light-ink);
+}
+
+.player-avatar.black {
+  background: var(--piece-dark);
+  color: var(--piece-dark-ink);
+}
+
+.player-name {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+
+.captured-tray {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  min-height: 20px;
+}
+
+.captured-piece {
+  display: inline-flex;
+  font-size: 14px;
+}
+
+.mat-diff {
+  margin-left: var(--sp-1);
+  font-weight: 700;
+  font-size: var(--fs-xs);
+  color: var(--accent);
+}
+
+.clock-pill {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  min-width: 72px;
+  text-align: center;
+  transition: all var(--t-fast) var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.clock-pill.active {
+  color: var(--ink);
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgb(184 67 46 / 0.25);
+  transform: scale(1.04);
+}
+
+.clock-pill.warn {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.clock-pill.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+  animation: shake 0.5s infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: scale(1.04) translateX(0); }
+  25% { transform: scale(1.04) translateX(-2px); }
+  75% { transform: scale(1.04) translateX(2px); }
+}
+
+/* In-game Toolbar */
+.game-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: var(--sp-2) var(--sp-4);
+  width: 100%;
+  max-width: 620px;
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
+/* Desktop layout (>= 900px) */
+@media (min-width: 900px) {
+  #game-screen {
+    flex-direction: row;
+  }
+  .game-main {
+    flex: 1;
+    height: 100%;
+    padding: var(--sp-4);
+  }
+  .side-panel {
+    width: 360px;
+    height: 100%;
+    border-left: 1px solid var(--line);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    padding: var(--sp-4);
+    box-shadow: var(--shadow);
+  }
+  .board-wrapper {
+    width: min(70vh, 70vw);
+    height: min(70vh, 70vw);
+    max-width: 720px;
+    max-height: 720px;
+  }
+}
+
+/* Move List */
+.move-list-wrap {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  padding: var(--sp-2);
+  margin: var(--sp-3) 0;
+  font-family: var(--font);
+  font-size: var(--fs-sm);
+}
+
+.move-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 1fr;
+  padding: 3px 6px;
+  border-radius: var(--r-sm);
+  align-items: center;
+  cursor: pointer;
+}
+
+.move-row:hover {
+  background: rgb(0 0 0 / 0.05);
+}
+
+.move-row .num {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.move-cell {
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.move-cell.current {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+/* Rules Page View */
+#rules-screen {
+  overflow-y: auto;
+  padding: 0;
+  background: var(--bg);
+}
+
+.rules-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rules-toc-chips {
+  display: flex;
+  overflow-x: auto;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.rules-toc-chips .chip {
+  cursor: pointer;
+  padding: 6px 14px;
+  font-size: var(--fs-xs);
+}
+
+.rules-toc-chips .chip.active {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.rules-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.rule-card {
+  padding: var(--sp-5);
+}
+
+.rule-card h3 {
+  font-size: var(--fs-lg);
+  margin-bottom: var(--sp-2);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rule-card p {
+  color: var(--ink);
+  line-height: 1.6;
+  margin: var(--sp-2) 0;
+  white-space: pre-line;
+}
+
+/* 2D Mini Board */
+.mini-board-wrap {
+  margin: var(--sp-3) auto;
+  width: min(300px, 80vw);
+  aspect-ratio: 1 / 1;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  border: 2px solid var(--board-line);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow);
+  position: relative;
+  user-select: none;
+}
+
+.mini-sq {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.mini-sq.light {
+  background: var(--sq-light);
+}
+
+.mini-sq.dark {
+  background: var(--sq-dark);
+}
+
+.mini-sq.highlight {
+  background: color-mix(in srgb, var(--accent) 45%, transparent) !important;
+}
+
+.mini-sq.dot::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.mini-sq.cross::after {
+  content: "✕";
+  color: var(--danger);
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.mini-glyph {
+  width: 78%;
+  height: 78%;
+  pointer-events: none;
+}
+
+.tryit-box {
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  padding: var(--sp-3);
+  margin-top: var(--sp-3);
+  border: 1px dashed var(--line);
+}
+
+.tryit-feedback {
+  font-weight: 600;
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.tryit-feedback.success {
+  color: var(--ok);
+}
+
+.tryit-feedback.wrong {
+  color: var(--danger);
+}
+
+/* Stepper & Segmented Controls */
+.segmented {
+  display: flex;
+  background: var(--surface-2);
+  border-radius: var(--r-pill);
+  padding: 3px;
+  gap: 3px;
+  width: 100%;
+}
+
+.segmented button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  font: 600 var(--fs-sm) var(--font);
+  color: var(--muted);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: all var(--t-fast) var(--ease);
+}
+
+.segmented button.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.chip-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0;
+}
+
+.stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: var(--sp-2) 0;
+}
+
+.stepper-ctrl {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.stepper-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* History / Replay Bar */
+.replay-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
+.replay-scrubber {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+/* Promotion Dialog Grid */
+.promo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.promo-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: transform var(--t-fast) var(--ease), border-color var(--t-fast);
+}
+
+.promo-item:hover {
+  transform: scale(1.05);
+  border-color: var(--accent);
+}
+
+.promo-item svg {
+  width: 44px;
+  height: 44px;
+}
+
+</style>
+</head>
+<body>
+  <div id="app">
+    <!-- Audio unlock hint chip -->
+    <div id="audio-unlock-chip" class="chip" style="position:fixed; top:12px; right:12px; z-index:9000; cursor:pointer; background:var(--accent); color:var(--on-accent); display:none;">
+      <span data-i18n="audio.tapToEnable">Chạm để bật âm thanh</span>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+      <div class="start-header">
+        <h1 class="start-title"><span data-i18n="game.title">Cờ vua</span><span style="color:var(--accent);">.</span></h1>
+        <div id="maker-line" class="maker" style="display:none;"></div>
+      </div>
+
+      <div class="start-menu">
+        <button id="btn-play" class="btn btn-primary" data-i18n="common.play">Chơi</button>
+        <button id="btn-resume" class="btn" style="display:none;" data-i18n="common.resume">Chơi tiếp</button>
+        <button id="btn-rules" class="btn" data-i18n="game.rules.title">Luật chơi</button>
+        <button id="btn-history" class="btn" data-i18n="common.history">Lịch sử</button>
+      </div>
+
+      <div class="start-footer">
+        <button id="btn-start-settings" class="btn btn-icon" aria-label="Cài đặt">
+          <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Game Screen -->
+    <div id="game-screen" class="screen hidden">
+      <div class="game-main">
+        <!-- Top Player Bar -->
+        <div class="player-bar top">
+          <div class="player-info">
+            <div id="top-avatar" class="player-avatar black">♚</div>
+            <div>
+              <div id="top-name" class="player-name">Máy (Vừa)</div>
+              <div id="top-tray" class="captured-tray"></div>
+            </div>
+          </div>
+          <div id="top-clock" class="clock-pill">--:--</div>
+        </div>
+
+        <!-- 3D Board Canvas wrapper -->
+        <div class="board-wrapper">
+          <canvas id="chess-canvas"></canvas>
+          <div id="board-glow" class="board-glow" style="display:none;"></div>
+          <div id="countdown-overlay" style="display:none;">
+            <div id="countdown-num" class="countdown-num">5</div>
+          </div>
+        </div>
+
+        <!-- Bottom Player Bar -->
+        <div class="player-bar bottom">
+          <div class="player-info">
+            <div id="bottom-avatar" class="player-avatar white">♔</div>
+            <div>
+              <div id="bottom-name" class="player-name">Bạn</div>
+              <div id="bottom-tray" class="captured-tray"></div>
+            </div>
+          </div>
+          <div id="bottom-clock" class="clock-pill">--:--</div>
+        </div>
+
+        <!-- Status & Hint Line -->
+        <div id="game-status-line" style="font-size:var(--fs-sm); font-weight:600; color:var(--muted); min-height:24px; text-align:center;">
+          Lượt của Trắng
+        </div>
+
+        <!-- Bottom Toolbar (phone) -->
+        <div class="game-toolbar">
+          <button id="btn-undo" class="btn btn-icon" aria-label="Đi lại">
+            <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+          </button>
+          <button id="btn-flip" class="btn btn-icon" aria-label="Xoay bàn">
+            <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+          </button>
+          <button id="btn-show-moves" class="btn btn-icon" aria-label="Nước đi">
+            <svg viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+          </button>
+          <button id="btn-game-rules" class="btn btn-icon" aria-label="Luật chơi">
+            <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </button>
+          <button id="btn-menu" class="btn btn-icon" aria-label="Menu">
+            <svg viewBox="0 0 24 24"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Desktop Side Panel (hidden on phone, visible on >= 900px) -->
+      <aside class="side-panel" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-2);">
+          <h2 style="font-size:var(--fs-lg);" data-i18n="game.title">Cờ vua</h2>
+          <button id="btn-desktop-settings" class="btn btn-icon" aria-label="Cài đặt">
+            <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+          </button>
+        </div>
+        <div id="side-status" style="font-weight:600; font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);">Lượt của Trắng</div>
+        <div class="move-list-wrap" id="side-move-list"></div>
+        <div style="display:flex; gap:var(--sp-2); margin-top:auto;">
+          <button id="btn-side-undo" class="btn" style="flex:1;" data-i18n="common.undo">Đi lại</button>
+          <button id="btn-side-resign" class="btn" style="flex:1;" data-i18n="game.action.resign">Đầu hàng</button>
+          <button id="btn-side-draw" class="btn" style="flex:1;" data-i18n="game.action.offerDraw">Hoà</button>
+        </div>
+      </aside>
+
+      <!-- Replay Controller Bar (shown during replay mode) -->
+      <div id="replay-bar" class="replay-bar" style="display:none;">
+        <button id="btn-replay-start" class="btn btn-icon" aria-label="Bắt đầu"><svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" x2="5" y1="19" y2="5"/></svg></button>
+        <button id="btn-replay-prev" class="btn btn-icon" aria-label="Nước trước"><svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/></svg></button>
+        <button id="btn-replay-play" class="btn btn-icon" aria-label="Phát / Dừng"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+        <button id="btn-replay-next" class="btn btn-icon" aria-label="Nước sau"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20"/></svg></button>
+        <button id="btn-replay-end" class="btn btn-icon" aria-label="Kết thúc"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20"/><line x1="19" x2="19" y1="5" y2="19"/></svg></button>
+        <input type="range" id="replay-slider" class="replay-scrubber" min="0" max="0" value="0">
+        <button id="btn-replay-exit" class="btn" data-i18n="common.close">Đóng</button>
+      </div>
+    </div>
+
+    <!-- Rules Screen (Fullscreen) -->
+    <div id="rules-screen" class="screen hidden">
+      <header class="rules-header">
+        <button id="btn-rules-back" class="btn" data-i18n="common.back">Quay lại</button>
+        <h2 style="font-size:var(--fs-md); font-weight:800;" data-i18n="game.rules.title">Luật chơi Cờ vua</h2>
+        <div style="width:44px;"></div>
+      </header>
+      <nav id="rules-toc" class="rules-toc-chips"></nav>
+      <main id="rules-content" class="rules-content"></main>
+    </div>
+
+    <!-- Dialog: New Game Sheet -->
+    <dialog id="dialog-new-game">
+      <h3 style="margin-bottom:var(--sp-4);" data-i18n="common.newGame">Ván mới</h3>
+      <div style="display:flex; flex-direction:column; gap:var(--sp-4);">
+        <!-- Mode -->
+        <div>
+          <label style="font-weight:600; font-size:var(--fs-sm);" data-i18n="settings.game">Chế độ</label>
+          <div class="segmented" id="seg-mode" style="margin-top:var(--sp-1);">
+            <button data-val="pve" class="active" data-i18n="mode.pve">Chơi với máy</button>
+            <button data-val="pvp" data-i18n="mode.pvp">Hai người</button>
+          </div>
+        </div>
+
+        <!-- AI Level (PvE only) -->
+        <div id="row-ai-level">
+          <label style="font-weight:600; font-size:var(--fs-sm);">Độ khó</label>
+          <div class="segmented" id="seg-ai" style="margin-top:var(--sp-1);">
+            <button data-val="easy" data-i18n="ai.easy">Dễ</button>
+            <button data-val="medium" class="active" data-i18n="ai.medium">Vừa</button>
+            <button data-val="hard" data-i18n="ai.hard">Khó</button>
+          </div>
+        </div>
+
+        <!-- Side -->
+        <div>
+          <label style="font-weight:600; font-size:var(--fs-sm);">Bên của bạn</label>
+          <div class="segmented" id="seg-side" style="margin-top:var(--sp-1);">
+            <button data-val="w" class="active" data-i18n="game.side.white">Trắng</button>
+            <button data-val="b" data-i18n="game.side.black">Đen</button>
+            <button data-val="random" data-i18n="game.side.random">Ngẫu nhiên</button>
+          </div>
+        </div>
+
+        <!-- Timer Picker -->
+        <div>
+          <label style="font-weight:600; font-size:var(--fs-sm);" data-i18n="game.timer.title">Đồng hồ</label>
+          <div class="segmented" id="seg-timer-kind" style="margin-top:var(--sp-1);">
+            <button data-val="off" class="active" data-i18n="game.timer.off">Tắt</button>
+            <button data-val="move" data-i18n="game.timer.perMove">Mỗi nước</button>
+            <button data-val="game" data-i18n="game.timer.game">Cả ván</button>
+          </div>
+          <div id="timer-presets-wrap" class="chip-wrap" style="display:none;"></div>
+          <div id="timer-summary" style="font-size:var(--fs-xs); color:var(--muted); margin-top:var(--sp-1);"></div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:var(--sp-3); margin-top:var(--sp-5);">
+        <button id="btn-cancel-new-game" class="btn" data-i18n="common.cancel">Huỷ</button>
+        <button id="btn-start-game" class="btn btn-primary" data-i18n="common.play">Bắt đầu</button>
+      </div>
+    </dialog>
+
+    <!-- Dialog: Promotion Picker -->
+    <dialog id="dialog-promo">
+      <h3 style="text-align:center;" data-i18n="game.action.promoteTo">Phong cấp thành</h3>
+      <div id="promo-options" class="promo-grid"></div>
+    </dialog>
+
+    <!-- Dialog: Game Over -->
+    <dialog id="dialog-game-over">
+      <h3 id="game-over-title" style="text-align:center; font-size:var(--fs-xl);">Chiếu hết!</h3>
+      <p id="game-over-desc" style="text-align:center; color:var(--muted); margin:var(--sp-2) 0 var(--sp-4);"></p>
+      <div style="text-align:center; margin-bottom:var(--sp-4);">
+        <a id="link-game-over-rule" href="#rules" style="color:var(--accent); font-weight:600; font-size:var(--fs-sm); text-decoration:none;">Tìm hiểu luật này</a>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:var(--sp-2);">
+        <button id="btn-rematch" class="btn btn-primary" data-i18n="common.rematch">Đấu lại</button>
+        <button id="btn-over-replay" class="btn" data-i18n="common.replay">Xem lại ván cờ</button>
+        <button id="btn-over-new" class="btn" data-i18n="common.newGame">Ván mới</button>
+      </div>
+    </dialog>
+
+    <!-- Dialog: In-game Menu -->
+    <dialog id="dialog-menu">
+      <h3 style="margin-bottom:var(--sp-4);">Menu</h3>
+      <div style="display:flex; flex-direction:column; gap:var(--sp-3);">
+        <button id="btn-menu-resign" class="btn" data-i18n="game.action.resign">Đầu hàng</button>
+        <button id="btn-menu-draw" class="btn" data-i18n="game.action.offerDraw">Đề nghị hoà</button>
+        <button id="btn-menu-new" class="btn" data-i18n="common.newGame">Ván mới</button>
+        <button id="btn-menu-settings" class="btn" data-i18n="common.settings">Cài đặt</button>
+        <button id="btn-menu-close" class="btn" data-i18n="common.close">Đóng</button>
+      </div>
+    </dialog>
+
+    <!-- Dialog: History / Records -->
+    <dialog id="dialog-history" style="max-height:85dvh;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-3);">
+        <h3 data-i18n="common.history">Lịch sử ván đấu</h3>
+        <button id="btn-close-history" class="btn btn-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="segmented" id="seg-history-filter" style="margin-bottom:var(--sp-3);">
+        <button data-filter="all" class="active">Tất cả</button>
+        <button data-filter="pve" data-i18n="mode.pve">Vs máy</button>
+        <button data-filter="pvp" data-i18n="mode.pvp">Hai người</button>
+      </div>
+      <div id="history-list" style="overflow-y:auto; max-height:55dvh; display:flex; flex-direction:column; gap:var(--sp-2);"></div>
+    </dialog>
+
+    <!-- Dialog: Settings -->
+    <dialog id="dialog-settings" style="max-height:85dvh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-4);">
+        <h3 data-i18n="common.settings">Cài đặt</h3>
+        <button id="btn-close-settings" class="btn btn-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:var(--sp-5);">
+        <!-- Section: Game -->
+        <div>
+          <h4 style="font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);" data-i18n="settings.game">Trò chơi</h4>
+          <div style="display:flex; flex-direction:column; gap:var(--sp-3);">
+            <div>
+              <label style="font-weight:600; font-size:var(--fs-sm);" data-i18n="game.timer.title">Đồng hồ mặc định</label>
+              <div class="segmented" id="seg-settings-timer" style="margin-top:var(--sp-1);">
+                <button data-val="off" class="active" data-i18n="game.timer.off">Tắt</button>
+                <button data-val="move" data-i18n="game.timer.perMove">Mỗi nước</button>
+                <button data-val="game" data-i18n="game.timer.game">Cả ván</button>
+              </div>
+              <div id="settings-timer-presets" class="chip-wrap" style="display:none;"></div>
+            </div>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.countdownFx">Hiệu ứng đếm ngược 5 giây</span>
+              <input type="checkbox" id="chk-countdown-fx" checked>
+            </label>
+            <label id="lbl-vibrate" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.vibrate">Rung khi sắp hết giờ</span>
+              <input type="checkbox" id="chk-vibrate" checked>
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.legalDots">Hiện nước đi hợp lệ</span>
+              <input type="checkbox" id="chk-legal-dots" checked>
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.coords">Hiện toạ độ</span>
+              <input type="checkbox" id="chk-coords" checked>
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.autoQueen">Luôn phong Hậu</span>
+              <input type="checkbox" id="chk-auto-queen">
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.pvpUndo">Cho phép đi lại (PvP)</span>
+              <input type="checkbox" id="chk-pvp-undo" checked>
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.rotatePvp">Xoay bàn theo lượt (PvP)</span>
+              <input type="checkbox" id="chk-rotate-pvp">
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="game.settings.ruleHints">Gợi ý luật</span>
+              <input type="checkbox" id="chk-rule-hints" checked>
+            </label>
+          </div>
+        </div>
+
+        <!-- Section: Audio -->
+        <div>
+          <h4 style="font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);" data-i18n="settings.audio">Âm thanh</h4>
+          <div style="display:flex; flex-direction:column; gap:var(--sp-3);">
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="settings.sfx">Hiệu ứng âm thanh</span>
+              <input type="checkbox" id="chk-sfx" checked>
+            </label>
+            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+              <span data-i18n="settings.music">Nhạc nền</span>
+              <input type="checkbox" id="chk-music">
+            </label>
+          </div>
+        </div>
+
+        <!-- Section: Look -->
+        <div>
+          <h4 style="font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);" data-i18n="settings.look">Giao diện</h4>
+          <div style="display:flex; flex-direction:column; gap:var(--sp-3);">
+            <div>
+              <label style="font-weight:600; font-size:var(--fs-sm);" data-i18n="settings.theme">Chủ đề</label>
+              <div class="segmented" id="seg-theme" style="margin-top:var(--sp-1);">
+                <button data-val="auto" class="active" data-i18n="theme.auto">Tự động</button>
+                <button data-val="giay" data-i18n="theme.giay">Giấy</button>
+                <button data-val="dem" data-i18n="theme.dem">Đêm</button>
+                <button data-val="sonmai" data-i18n="theme.sonmai">Sơn mài</button>
+                <button data-val="bien" data-i18n="theme.bien">Biển</button>
+              </div>
+            </div>
+            <div>
+              <label style="font-weight:600; font-size:var(--fs-sm);" data-i18n="settings.language">Ngôn ngữ</label>
+              <div class="segmented" id="seg-lang" style="margin-top:var(--sp-1);">
+                <button data-val="vi" class="active">Tiếng Việt</button>
+                <button data-val="en">English</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Data -->
+        <div>
+          <h4 style="font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);" data-i18n="settings.data">Dữ liệu</h4>
+          <div style="display:flex; flex-direction:column; gap:var(--sp-2);">
+            <button id="btn-copy-pgn" class="btn" style="justify-content:flex-start;" data-i18n="game.settings.copyPgn">Sao chép PGN ván hiện tại</button>
+            <button id="btn-clear-history" class="btn" style="justify-content:flex-start;" data-i18n="settings.clearHistory">Xoá lịch sử</button>
+            <button id="btn-reset-data" class="btn" style="justify-content:flex-start; color:var(--danger);" data-i18n="settings.reset">Khôi phục mặc định</button>
+          </div>
+        </div>
+
+        <!-- Section: About -->
+        <div>
+          <h4 style="font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);" data-i18n="settings.about">Thông tin</h4>
+          <div style="font-size:var(--fs-sm); color:var(--muted);">
+            <div>Phiên bản 1.0.0</div>
+            <div id="settings-maker-line" style="display:none; margin-top:4px;"></div>
+          </div>
+        </div>
+      </div>
+    </dialog>
+  </div>
+
+  <!-- Scripts in order per Section 3 -->
+  <script>
+// House kit "Mộc" — shared by every game. Plain script (no imports) so it inlines into a single HTML.
+// Exposes window.House. Games add their own strings/sounds on top; they do not change these.
+(() => {
+  const THEMES = ['auto', 'giay', 'dem', 'sonmai', 'bien'];
+  const PREFS_KEY = 'house:prefs'; // the ONE intentionally shared key: theme + language follow the player across games
+
+  const prefs = {
+    load() {
+      try { const p = JSON.parse(localStorage.getItem(PREFS_KEY)); if (p && p.v === 1) return p; } catch {}
+      return { v: 1, theme: 'auto', lang: 'vi' };
+    },
+    save(patch) {
+      const next = { ...prefs.load(), ...patch, v: 1 };
+      try { localStorage.setItem(PREFS_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    },
+  };
+
+  const dark = matchMedia('(prefers-color-scheme: dark)');
+  const resolve = (name) => (name === 'auto' || !THEMES.includes(name)) ? (dark.matches ? 'dem' : 'giay') : name;
+
+  function applyTheme(name) {
+    const id = resolve(name);
+    document.documentElement.dataset.theme = id;
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.append(meta); }
+    meta.content = bg;
+    dispatchEvent(new CustomEvent('housethemechange', { detail: { name, id } }));
+    return id;
+  }
+  dark.addEventListener('change', () => { if (prefs.load().theme === 'auto') applyTheme('auto'); });
+
+  // Colors for Three.js: read the CSS tokens so the 3D scene always matches the UI.
+  const TOKENS = ['bg', 'surface', 'surface-2', 'line', 'ink', 'muted', 'accent', 'accent-2', 'p1', 'p2', 'board', 'board-line', 'ok', 'warn', 'danger'];
+  function palette() {
+    const cs = getComputedStyle(document.documentElement);
+    return Object.fromEntries(TOKENS.map((k) => [k, cs.getPropertyValue('--' + k).trim()]));
+  }
+
+  // Shared UI strings. Games merge their own keys: House.i18n.add({ vi: {...}, en: {...} }).
+  const dict = {
+    vi: {
+      'app.by': 'Một trò chơi nhỏ của {maker}',
+      'common.play': 'Chơi', 'common.newGame': 'Ván mới', 'common.resume': 'Chơi tiếp', 'common.rematch': 'Đấu lại',
+      'common.undo': 'Đi lại', 'common.settings': 'Cài đặt', 'common.history': 'Lịch sử', 'common.replay': 'Xem lại',
+      'common.close': 'Đóng', 'common.cancel': 'Huỷ', 'common.confirm': 'Đồng ý', 'common.back': 'Quay lại', 'common.install': 'Cài ứng dụng',
+      'mode.pve': 'Chơi với máy', 'mode.pvp': 'Hai người', 'ai.easy': 'Dễ', 'ai.medium': 'Vừa', 'ai.hard': 'Khó',
+      'result.win': '{name} thắng!', 'result.youWin': 'Bạn thắng rồi!', 'result.youLose': 'Thua mất rồi…', 'result.draw': 'Hoà!',
+      'result.forfeit': '{name} bỏ cuộc', 'result.timeout': '{name} hết giờ', 'turn.of': 'Lượt của {name}', 'ai.thinking': 'Máy đang nghĩ…',
+      'settings.game': 'Trò chơi', 'settings.audio': 'Âm thanh', 'settings.look': 'Giao diện', 'settings.data': 'Dữ liệu', 'settings.about': 'Thông tin',
+      'settings.music': 'Nhạc nền', 'settings.sfx': 'Hiệu ứng âm thanh', 'settings.volume': 'Âm lượng',
+      'settings.theme': 'Chủ đề', 'settings.language': 'Ngôn ngữ', 'settings.reduceMotion': 'Giảm chuyển động',
+      'settings.clearHistory': 'Xoá lịch sử', 'settings.reset': 'Khôi phục mặc định', 'settings.version': 'Phiên bản {v}',
+      'theme.auto': 'Tự động', 'theme.giay': 'Giấy', 'theme.dem': 'Đêm', 'theme.sonmai': 'Sơn mài', 'theme.bien': 'Biển',
+      'audio.tapToEnable': 'Chạm để bật âm thanh', 'storage.failed': 'Không lưu được dữ liệu trên trình duyệt này',
+    },
+    en: {
+      'app.by': 'A small game by {maker}',
+      'common.play': 'Play', 'common.newGame': 'New game', 'common.resume': 'Resume', 'common.rematch': 'Rematch',
+      'common.undo': 'Undo', 'common.settings': 'Settings', 'common.history': 'History', 'common.replay': 'Replay',
+      'common.close': 'Close', 'common.cancel': 'Cancel', 'common.confirm': 'OK', 'common.back': 'Back', 'common.install': 'Install app',
+      'mode.pve': 'Vs computer', 'mode.pvp': 'Two players', 'ai.easy': 'Easy', 'ai.medium': 'Medium', 'ai.hard': 'Hard',
+      'result.win': '{name} wins!', 'result.youWin': 'You win!', 'result.youLose': 'You lost…', 'result.draw': 'Draw!',
+      'result.forfeit': '{name} forfeited', 'result.timeout': '{name} ran out of time', 'turn.of': "{name}'s turn", 'ai.thinking': 'Thinking…',
+      'settings.game': 'Game', 'settings.audio': 'Sound', 'settings.look': 'Appearance', 'settings.data': 'Data', 'settings.about': 'About',
+      'settings.music': 'Music', 'settings.sfx': 'Sound effects', 'settings.volume': 'Volume',
+      'settings.theme': 'Theme', 'settings.language': 'Language', 'settings.reduceMotion': 'Reduce motion',
+      'settings.clearHistory': 'Clear history', 'settings.reset': 'Reset to defaults', 'settings.version': 'Version {v}',
+      'theme.auto': 'Auto', 'theme.giay': 'Paper', 'theme.dem': 'Night', 'theme.sonmai': 'Lacquer', 'theme.bien': 'Sea',
+      'audio.tapToEnable': 'Tap to enable sound', 'storage.failed': "Saving isn't available in this browser",
+    },
+  };
+  let lang = 'vi';
+  const i18n = {
+    add(more) { for (const l in more) Object.assign(dict[l] ??= {}, more[l]); },
+    t(key, params = {}) {
+      const s = dict[lang]?.[key] ?? dict.vi[key] ?? key;
+      return s.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? '');
+    },
+    setLang(l) {
+      lang = dict[l] ? l : 'vi';
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = i18n.t(el.dataset.i18n); });
+      dispatchEvent(new CustomEvent('houselangchange', { detail: { lang } }));
+    },
+    get lang() { return lang; },
+  };
+
+  // Shared sound character: soft wooden marimba, C-major pentatonic. Same names in every game.
+  const NOTE = { C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880, C6: 1046.5, A4: 440, E4: 329.63, C4: 261.63 };
+  function pluck(ctx, out, freq, at, dur = 0.25, gain = 0.5) {
+    const g = ctx.createGain(); g.connect(out);
+    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(gain, at + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    for (const [mult, level] of [[1, 1], [4, 0.12]]) { // fundamental + quiet 4th harmonic = wooden bar
+      const o = ctx.createOscillator(), og = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = freq * mult; og.gain.value = level;
+      o.connect(og).connect(g); o.start(at); o.stop(at + dur + 0.05);
+    }
+  }
+  const SFX = {
+    tap:     (c, o, t) => pluck(c, o, NOTE.G5, t, 0.08, 0.25),
+    place:   (c, o, t, p = 1) => pluck(c, o, p === 1 ? NOTE.C5 : NOTE.E5, t, 0.18, 0.6),
+    invalid: (c, o, t) => { pluck(c, o, NOTE.E4, t, 0.12, 0.4); pluck(c, o, NOTE.C4, t + 0.08, 0.16, 0.4); },
+    tick:    (c, o, t) => pluck(c, o, NOTE.A5, t, 0.05, 0.2),
+    open:    (c, o, t) => { pluck(c, o, NOTE.C5, t, 0.1, 0.25); pluck(c, o, NOTE.G5, t + 0.05, 0.12, 0.25); },
+    close:   (c, o, t) => { pluck(c, o, NOTE.G5, t, 0.1, 0.25); pluck(c, o, NOTE.C5, t + 0.05, 0.12, 0.25); },
+    win:     (c, o, t) => ['C5', 'E5', 'G5', 'C6'].forEach((n, i) => pluck(c, o, NOTE[n], t + i * 0.09, 0.5, 0.5)),
+    lose:    (c, o, t) => { pluck(c, o, NOTE.A4, t, 0.4, 0.4); pluck(c, o, NOTE.E4, t + 0.18, 0.6, 0.4); },
+    draw:    (c, o, t) => ['C5', 'E5', 'G5'].forEach((n) => pluck(c, o, NOTE[n], t, 0.6, 0.25)),
+  };
+  function play(ctx, out, name, ...args) { SFX[name]?.(ctx, out, ctx.currentTime + 0.01, ...args); }
+
+  window.House = { THEMES, prefs, resolve, applyTheme, palette, i18n, SFX, play };
+})();
+
+</script>
+  <script>
+// Internationalization strings: Vietnamese (default) & English
+// Inlines into single-file bundle, registers via House.i18n.add(GAME_STRINGS)
+
+(() => {
+  const GAME_STRINGS = {
+    vi: {
+      'game.title': 'Cờ vua',
+      'game.side.white': 'Trắng',
+      'game.side.black': 'Đen',
+      'game.side.random': 'Ngẫu nhiên',
+
+      'game.piece.king': 'Vua',
+      'game.piece.queen': 'Hậu',
+      'game.piece.rook': 'Xe',
+      'game.piece.bishop': 'Tượng',
+      'game.piece.knight': 'Mã',
+      'game.piece.pawn': 'Tốt',
+
+      'game.status.check': 'Chiếu!',
+      'game.status.checkmate': 'Chiếu hết!',
+      'game.status.stalemate': 'Hoà vì hết nước đi (Pat)',
+
+      'game.reason.checkmate': 'Chiếu hết',
+      'game.reason.stalemate': 'Hết nước đi (Pat)',
+      'game.reason.threefold': 'Lặp lại 3 lần',
+      'game.reason.fifty': 'Luật 50 nước',
+      'game.reason.insufficient': 'Không đủ quân chiếu hết',
+      'game.reason.agreement': 'Thoả thuận hoà',
+      'game.reason.timeout': 'Hết giờ',
+      'game.reason.resign': 'Đầu hàng',
+      'game.reason.abandoned': 'Bỏ dở',
+
+      'game.action.resign': 'Đầu hàng',
+      'game.action.offerDraw': 'Đề nghị hoà',
+      'game.action.acceptDraw': 'Đồng ý',
+      'game.action.declineDraw': 'Từ chối',
+      'game.action.flip': 'Xoay bàn',
+      'game.action.moves': 'Nước đi',
+      'game.action.promoteTo': 'Phong cấp thành',
+      'game.action.confirmResign': 'Bạn có chắc muốn đầu hàng?',
+      'game.action.confirmDraw': 'Đối phương đề nghị hoà. Bạn có đồng ý?',
+      'game.action.aiDeclinedDraw': 'Máy từ chối hoà.',
+
+      'game.err.inCheck': 'Vua đang bị chiếu!',
+      'game.err.pinned': 'Quân này đang bị ghim bảo vệ vua!',
+      'game.err.castleThroughCheck': 'Không thể nhập thành: vua đi qua ô bị tấn công!',
+      'game.err.castleInCheck': 'Không thể nhập thành khi vua đang bị chiếu!',
+      'game.err.castleMoved': 'Không thể nhập thành vì vua hoặc xe đã từng di chuyển!',
+      'game.err.castleBlocked': 'Không thể nhập thành vì có quân cản giữa vua và xe!',
+      'game.err.notYourTurn': 'Chưa tới lượt của bạn!',
+
+      'game.hint.castled': 'Bạn có thể nhập thành rồi!',
+      'game.hint.enPassant': 'Có thể bắt tốt qua đường — chỉ trong nước này thôi!',
+      'game.hint.promoted': 'Tốt sắp đến hàng cuối để phong cấp.',
+      'game.hint.check': 'Vua đang bị chiếu: đi vua, chặn, hoặc ăn quân chiếu.',
+      'game.hint.learnMore': 'Tìm hiểu thêm',
+
+      'game.timer.title': 'Đồng hồ',
+      'game.timer.off': 'Tắt',
+      'game.timer.perMove': 'Mỗi nước',
+      'game.timer.game': 'Cả ván',
+      'game.timer.custom': 'Tuỳ chỉnh',
+      'game.timer.secs': '{n} giây',
+      'game.timer.mins': '{n} phút',
+      'game.timer.inc': '+{n} giây mỗi nước',
+      'game.timer.timeUp': 'Hết giờ!',
+      'game.timer.youLostOnTime': 'Bạn hết giờ rồi…',
+      'game.timer.playerLostOnTime': '{name} hết giờ — {winner} thắng!',
+      'game.timer.paused': 'Đã tạm dừng — chạm để tiếp tục',
+      'game.timer.lowTime': 'Còn {n} giây',
+      'game.timer.applyNext': 'Áp dụng từ ván sau',
+      'game.timer.startsAfterFirst': 'Đồng hồ chạy sau nước đầu tiên của Trắng',
+
+      'game.settings.timer': 'Đồng hồ',
+      'game.settings.legalDots': 'Hiện nước đi hợp lệ',
+      'game.settings.coords': 'Hiện toạ độ',
+      'game.settings.autoQueen': 'Luôn phong Hậu',
+      'game.settings.pvpUndo': 'Cho phép đi lại (2 người)',
+      'game.settings.rotatePvp': 'Xoay bàn theo lượt (2 người)',
+      'game.settings.ruleHints': 'Gợi ý luật',
+      'game.settings.notation': 'Kiểu ký hiệu nước đi',
+      'game.settings.notationLetters': 'Chữ cái',
+      'game.settings.notationFigurines': 'Hình quân',
+      'game.settings.countdownFx': 'Hiệu ứng đếm ngược 5 giây',
+      'game.settings.vibrate': 'Rung khi sắp hết giờ',
+      'game.settings.copyPgn': 'Sao chép PGN',
+      'game.settings.pgnCopied': 'Đã sao chép PGN vào bộ nhớ tạm!',
+      'game.settings.askUndo': 'Cho đi lại nước vừa rồi?',
+
+      'game.rules.title': 'Luật chơi Cờ vua',
+      'game.rules.done': 'Đã hoàn thành',
+      'game.rules.tryIt': 'Thử ngay',
+      'game.rules.retry': 'Làm lại',
+      'game.rules.success': 'Chính xác! Nước đi rất hay.',
+      'game.rules.wrong': 'Chưa đúng, hãy thử lại nhé.',
+      'game.rules.why': 'Vì sao?',
+    },
+    en: {
+      'game.title': 'Chess',
+      'game.side.white': 'White',
+      'game.side.black': 'Black',
+      'game.side.random': 'Random',
+
+      'game.piece.king': 'King',
+      'game.piece.queen': 'Queen',
+      'game.piece.rook': 'Rook',
+      'game.piece.bishop': 'Bishop',
+      'game.piece.knight': 'Knight',
+      'game.piece.pawn': 'Pawn',
+
+      'game.status.check': 'Check!',
+      'game.status.checkmate': 'Checkmate!',
+      'game.status.stalemate': 'Stalemate (Draw)',
+
+      'game.reason.checkmate': 'Checkmate',
+      'game.reason.stalemate': 'Stalemate',
+      'game.reason.threefold': 'Threefold repetition',
+      'game.reason.fifty': '50-move rule',
+      'game.reason.insufficient': 'Insufficient material',
+      'game.reason.agreement': 'Mutual agreement',
+      'game.reason.timeout': 'Time out',
+      'game.reason.resign': 'Resignation',
+      'game.reason.abandoned': 'Abandoned',
+
+      'game.action.resign': 'Resign',
+      'game.action.offerDraw': 'Offer draw',
+      'game.action.acceptDraw': 'Accept',
+      'game.action.declineDraw': 'Decline',
+      'game.action.flip': 'Flip board',
+      'game.action.moves': 'Moves',
+      'game.action.promoteTo': 'Promote to',
+      'game.action.confirmResign': 'Are you sure you want to resign?',
+      'game.action.confirmDraw': 'Opponent offered a draw. Accept?',
+      'game.action.aiDeclinedDraw': 'AI declined the draw offer.',
+
+      'game.err.inCheck': 'Your King is in check!',
+      'game.err.pinned': 'This piece is pinned to your King!',
+      'game.err.castleThroughCheck': 'Cannot castle: King passes through an attacked square!',
+      'game.err.castleInCheck': 'Cannot castle while in check!',
+      'game.err.castleMoved': 'Cannot castle: King or Rook has already moved!',
+      'game.err.castleBlocked': 'Cannot castle: pieces between King and Rook!',
+      'game.err.notYourTurn': 'Not your turn!',
+
+      'game.hint.castled': 'You can castle now!',
+      'game.hint.enPassant': 'En passant capture available — on this move only!',
+      'game.hint.promoted': 'Pawn reached 7th rank and is ready to promote.',
+      'game.hint.check': 'King is in check: move King, block, or capture checker.',
+      'game.hint.learnMore': 'Learn more',
+
+      'game.timer.title': 'Timer',
+      'game.timer.off': 'Off',
+      'game.timer.perMove': 'Per move',
+      'game.timer.game': 'Game clock',
+      'game.timer.custom': 'Custom',
+      'game.timer.secs': '{n} s',
+      'game.timer.mins': '{n} min',
+      'game.timer.inc': '+{n} s per move',
+      'game.timer.timeUp': "Time's up!",
+      'game.timer.youLostOnTime': 'You ran out of time…',
+      'game.timer.playerLostOnTime': "{name} ran out of time — {winner} wins!",
+      'game.timer.paused': 'Paused — tap to resume',
+      'game.timer.lowTime': '{n} seconds left',
+      'game.timer.applyNext': 'Applies from next game',
+      'game.timer.startsAfterFirst': 'Clock starts after White makes the first move',
+
+      'game.settings.timer': 'Clock',
+      'game.settings.legalDots': 'Show legal moves',
+      'game.settings.coords': 'Show coordinates',
+      'game.settings.autoQueen': 'Always promote to Queen',
+      'game.settings.pvpUndo': 'Allow undo (2 players)',
+      'game.settings.rotatePvp': 'Rotate board each turn',
+      'game.settings.ruleHints': 'Contextual hints',
+      'game.settings.notation': 'Move notation style',
+      'game.settings.notationLetters': 'Letters',
+      'game.settings.notationFigurines': 'Figurines',
+      'game.settings.countdownFx': '5-second countdown effect',
+      'game.settings.vibrate': 'Vibrate on low time',
+      'game.settings.copyPgn': 'Copy PGN',
+      'game.settings.pgnCopied': 'PGN copied to clipboard!',
+      'game.settings.askUndo': 'Allow undoing this move?',
+
+      'game.rules.title': 'Chess Rules',
+      'game.rules.done': 'Completed',
+      'game.rules.tryIt': 'Try it',
+      'game.rules.retry': 'Retry',
+      'game.rules.success': 'Well done! Great move.',
+      'game.rules.wrong': 'Not quite, try another move.',
+      'game.rules.why': 'Why?',
+    },
+  };
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = GAME_STRINGS;
+  } else if (typeof window !== 'undefined') {
+    window.GAME_STRINGS = GAME_STRINGS;
+    if (window.House && window.House.i18n) {
+      window.House.i18n.add(GAME_STRINGS);
+    }
+  }
+})();
+
+</script>
+  <script>
+// Chess rules engine: pure, deterministic, no DOM
+// Coordinates: 0 (a1) to 63 (h8), sq = rank * 8 + file
+// Pieces: 0 empty, White: 1=P, 2=N, 3=B, 4=R, 5=Q, 6=K. Black: -1..-6.
+
+(function (root, factory) {
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = factory();
+  } else {
+    root.ChessRules = factory();
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  const P = 1, N = 2, B = 3, R = 4, Q = 5, K = 6;
+  const PIECE_CHARS = { 1: 'P', 2: 'N', 3: 'B', 4: 'R', 5: 'Q', 6: 'K' };
+  const CHAR_TO_PIECE = { p: 1, n: 2, b: 3, r: 4, q: 5, k: 6 };
+
+  const FLAGS = {
+    DOUBLE: 1,
+    EP: 2,
+    CASTLE_K: 4,
+    CASTLE_Q: 8,
+    PROMO: 16,
+    CAPTURE: 32,
+  };
+
+  // Precomputed ray and step tables
+  const KNIGHT_OFFSETS = [-17, -15, -10, -6, 6, 10, 15, 17];
+  const KING_OFFSETS = [-9, -8, -7, -1, 1, 7, 8, 9];
+  const BISHOP_DIRS = [-9, -7, 7, 9];
+  const ROOK_DIRS = [-8, -1, 1, 8];
+
+  function sqToFile(sq) { return sq & 7; }
+  function sqToRank(sq) { return sq >> 3; }
+  function toCoord(sq) {
+    return String.fromCharCode(97 + (sq & 7)) + ((sq >> 3) + 1);
+  }
+  function fromCoord(str) {
+    if (!str || str.length < 2) return -1;
+    const f = str.charCodeAt(0) - 97;
+    const r = str.charCodeAt(1) - 49;
+    if (f < 0 || f > 7 || r < 0 || r > 7) return -1;
+    return (r << 3) | f;
+  }
+
+  // PRNG for Zobrist table (Mulberry32)
+  let seed = 0x12345678;
+  function prng() {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0);
+  }
+
+  const ZOBRIST = {
+    pieces: Array.from({ length: 64 }, () => Array.from({ length: 13 }, () => (BigInt(prng()) << 32n) | BigInt(prng()))),
+    blackTurn: (BigInt(prng()) << 32n) | BigInt(prng()),
+    castling: Array.from({ length: 16 }, () => (BigInt(prng()) << 32n) | BigInt(prng())),
+    ep: Array.from({ length: 8 }, () => (BigInt(prng()) << 32n) | BigInt(prng())),
+  };
+
+  function pieceIndex(p) {
+    // -6..-1 -> 0..5, 1..6 -> 6..11, 0 -> 12
+    if (p === 0) return 12;
+    return p < 0 ? -p - 1 : p + 5;
+  }
+
+  function computeHash(board, turn, castling, ep) {
+    let h = 0n;
+    for (let i = 0; i < 64; i++) {
+      const p = board[i];
+      if (p !== 0) h ^= ZOBRIST.pieces[i][pieceIndex(p)];
+    }
+    if (turn === -1) h ^= ZOBRIST.blackTurn;
+    h ^= ZOBRIST.castling[castling];
+    if (ep >= 0) {
+      // FIDE threefold: only hash ep if an enemy pawn could capture it
+      const epFile = ep & 7;
+      const pawnRank = turn === 1 ? 4 : 3;
+      const pawnSqLeft = (pawnRank << 3) | (epFile - 1);
+      const pawnSqRight = (pawnRank << 3) | (epFile + 1);
+      const enemyPawn = turn === 1 ? 1 : -1;
+      let canCapture = false;
+      if (epFile > 0 && board[pawnSqLeft] === enemyPawn) canCapture = true;
+      if (epFile < 7 && board[pawnSqRight] === enemyPawn) canCapture = true;
+      if (canCapture) h ^= ZOBRIST.ep[epFile];
+    }
+    return h;
+  }
+
+  function fromFEN(fen) {
+    const parts = fen.trim().split(/\s+/);
+    const board = new Int8Array(64);
+    let r = 7, f = 0;
+    let wKing = -1, bKing = -1;
+
+    for (const ch of parts[0]) {
+      if (ch === '/') {
+        r--;
+        f = 0;
+      } else if (ch >= '1' && ch <= '8') {
+        f += parseInt(ch, 10);
+      } else {
+        const lower = ch.toLowerCase();
+        const isWhite = ch !== lower;
+        const pType = CHAR_TO_PIECE[lower] || 0;
+        const val = isWhite ? pType : -pType;
+        const sq = (r << 3) | f;
+        board[sq] = val;
+        if (val === K) wKing = sq;
+        if (val === -K) bKing = sq;
+        f++;
+      }
+    }
+
+    const turn = parts[1] === 'b' ? -1 : 1;
+
+    let castling = 0;
+    if (parts[2]) {
+      if (parts[2].includes('K')) castling |= 1;
+      if (parts[2].includes('Q')) castling |= 2;
+      if (parts[2].includes('k')) castling |= 4;
+      if (parts[2].includes('q')) castling |= 8;
+    }
+
+    let ep = -1;
+    if (parts[3] && parts[3] !== '-') {
+      ep = fromCoord(parts[3]);
+    }
+
+    const halfmove = parts[4] ? parseInt(parts[4], 10) : 0;
+    const fullmove = parts[5] ? parseInt(parts[5], 10) : 1;
+
+    const hash = computeHash(board, turn, castling, ep);
+    return {
+      board,
+      turn,
+      castling,
+      ep,
+      halfmove,
+      fullmove,
+      kings: [wKing, bKing],
+      hash,
+      history: [hash],
+    };
+  }
+
+  function initial() {
+    return fromFEN('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+  }
+
+  function toFEN(state) {
+    let res = '';
+    for (let r = 7; r >= 0; r--) {
+      let empty = 0;
+      for (let f = 0; f < 8; f++) {
+        const p = state.board[(r << 3) | f];
+        if (p === 0) {
+          empty++;
+        } else {
+          if (empty > 0) { res += empty; empty = 0; }
+          const ch = PIECE_CHARS[Math.abs(p)];
+          res += p > 0 ? ch : ch.toLowerCase();
+        }
+      }
+      if (empty > 0) res += empty;
+      if (r > 0) res += '/';
+    }
+
+    res += ' ' + (state.turn === 1 ? 'w' : 'b') + ' ';
+
+    let castStr = '';
+    if (state.castling & 1) castStr += 'K';
+    if (state.castling & 2) castStr += 'Q';
+    if (state.castling & 4) castStr += 'k';
+    if (state.castling & 8) castStr += 'q';
+    res += (castStr || '-') + ' ';
+
+    res += (state.ep >= 0 ? toCoord(state.ep) : '-') + ' ';
+    res += state.halfmove + ' ' + state.fullmove;
+    return res;
+  }
+
+  function isAttacked(state, sq, bySide) {
+    const b = state.board;
+    const f = sq & 7;
+    const r = sq >> 3;
+
+    // Pawns
+    if (bySide === 1) {
+      // White pawns attack sq from rank r - 1
+      if (r > 0) {
+        if (f > 0 && b[sq - 9] === P) return true;
+        if (f < 7 && b[sq - 7] === P) return true;
+      }
+    } else {
+      // Black pawns attack sq from rank r + 1
+      if (r < 7) {
+        if (f > 0 && b[sq + 7] === -P) return true;
+        if (f < 7 && b[sq + 9] === -P) return true;
+      }
+    }
+
+    // Knights
+    const targetKnight = bySide === 1 ? N : -N;
+    for (let i = 0; i < 8; i++) {
+      const off = KNIGHT_OFFSETS[i];
+      const to = sq + off;
+      if (to >= 0 && to < 64) {
+        const tf = to & 7;
+        const df = Math.abs(tf - f);
+        if ((df === 1 || df === 2) && b[to] === targetKnight) return true;
+      }
+    }
+
+    // Kings
+    const targetKing = bySide === 1 ? K : -K;
+    for (let i = 0; i < 8; i++) {
+      const off = KING_OFFSETS[i];
+      const to = sq + off;
+      if (to >= 0 && to < 64) {
+        const tf = to & 7;
+        if (Math.abs(tf - f) <= 1 && b[to] === targetKing) return true;
+      }
+    }
+
+    // Bishops & Queens (diagonals)
+    const targetBishop = bySide === 1 ? B : -B;
+    const targetQueen = bySide === 1 ? Q : -Q;
+    for (let i = 0; i < 4; i++) {
+      const dir = BISHOP_DIRS[i];
+      let cur = sq;
+      while (true) {
+        const cf = cur & 7;
+        cur += dir;
+        if (cur < 0 || cur >= 64) break;
+        const nf = cur & 7;
+        if (Math.abs(nf - cf) !== 1) break;
+        const p = b[cur];
+        if (p !== 0) {
+          if (p === targetBishop || p === targetQueen) return true;
+          break;
+        }
+      }
+    }
+
+    // Rooks & Queens (orthogonals)
+    const targetRook = bySide === 1 ? R : -R;
+    for (let i = 0; i < 4; i++) {
+      const dir = ROOK_DIRS[i];
+      let cur = sq;
+      while (true) {
+        const cf = cur & 7;
+        cur += dir;
+        if (cur < 0 || cur >= 64) break;
+        const nf = cur & 7;
+        if (dir === 1 || dir === -1) {
+          if ((cur >> 3) !== r) break;
+        } else {
+          if (nf !== f) break;
+        }
+        const p = b[cur];
+        if (p !== 0) {
+          if (p === targetRook || p === targetQueen) return true;
+          break;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  function inCheck(state, side) {
+    const kingSq = side === 1 ? state.kings[0] : state.kings[1];
+    if (kingSq < 0) return false;
+    return isAttacked(state, kingSq, -side);
+  }
+
+  function pseudoMoves(state) {
+    const list = [];
+    const b = state.board;
+    const turn = state.turn;
+
+    for (let sq = 0; sq < 64; sq++) {
+      const p = b[sq];
+      if (p === 0 || (p > 0 && turn !== 1) || (p < 0 && turn !== -1)) continue;
+
+      const type = Math.abs(p);
+      const f = sq & 7;
+      const r = sq >> 3;
+
+      if (type === P) {
+        const fwd = turn === 1 ? 8 : -8;
+        const startRank = turn === 1 ? 1 : 6;
+        const promoRank = turn === 1 ? 7 : 0;
+        const to1 = sq + fwd;
+
+        // Push 1
+        if (to1 >= 0 && to1 < 64 && b[to1] === 0) {
+          const toRank = to1 >> 3;
+          if (toRank === promoRank) {
+            list.push({ from: sq, to: to1, piece: p, captured: 0, promo: Q, flags: FLAGS.PROMO });
+            list.push({ from: sq, to: to1, piece: p, captured: 0, promo: R, flags: FLAGS.PROMO });
+            list.push({ from: sq, to: to1, piece: p, captured: 0, promo: B, flags: FLAGS.PROMO });
+            list.push({ from: sq, to: to1, piece: p, captured: 0, promo: N, flags: FLAGS.PROMO });
+          } else {
+            list.push({ from: sq, to: to1, piece: p, captured: 0, promo: 0, flags: 0 });
+            // Push 2
+            if (r === startRank) {
+              const to2 = sq + fwd * 2;
+              if (b[to2] === 0) {
+                list.push({ from: sq, to: to2, piece: p, captured: 0, promo: 0, flags: FLAGS.DOUBLE });
+              }
+            }
+          }
+        }
+
+        // Captures
+        for (const df of [-1, 1]) {
+          const tf = f + df;
+          if (tf >= 0 && tf < 8) {
+            const toCap = sq + fwd + df;
+            const target = b[toCap];
+            if (target !== 0 && (target * turn < 0)) {
+              const toRank = toCap >> 3;
+              if (toRank === promoRank) {
+                list.push({ from: sq, to: toCap, piece: p, captured: target, promo: Q, flags: FLAGS.PROMO | FLAGS.CAPTURE });
+                list.push({ from: sq, to: toCap, piece: p, captured: target, promo: R, flags: FLAGS.PROMO | FLAGS.CAPTURE });
+                list.push({ from: sq, to: toCap, piece: p, captured: target, promo: B, flags: FLAGS.PROMO | FLAGS.CAPTURE });
+                list.push({ from: sq, to: toCap, piece: p, captured: target, promo: N, flags: FLAGS.PROMO | FLAGS.CAPTURE });
+              } else {
+                list.push({ from: sq, to: toCap, piece: p, captured: target, promo: 0, flags: FLAGS.CAPTURE });
+              }
+            } else if (toCap === state.ep) {
+              // En passant
+              list.push({ from: sq, to: toCap, piece: p, captured: -turn * P, promo: 0, flags: FLAGS.EP | FLAGS.CAPTURE });
+            }
+          }
+        }
+      } else if (type === N) {
+        for (let i = 0; i < 8; i++) {
+          const off = KNIGHT_OFFSETS[i];
+          const to = sq + off;
+          if (to >= 0 && to < 64) {
+            const tf = to & 7;
+            if (Math.abs(tf - f) === 1 || Math.abs(tf - f) === 2) {
+              const target = b[to];
+              if (target === 0) {
+                list.push({ from: sq, to, piece: p, captured: 0, promo: 0, flags: 0 });
+              } else if (target * turn < 0) {
+                list.push({ from: sq, to, piece: p, captured: target, promo: 0, flags: FLAGS.CAPTURE });
+              }
+            }
+          }
+        }
+      } else if (type === B || type === R || type === Q) {
+        const dirs = type === B ? BISHOP_DIRS : type === R ? ROOK_DIRS : BISHOP_DIRS.concat(ROOK_DIRS);
+        for (let i = 0; i < dirs.length; i++) {
+          const dir = dirs[i];
+          let cur = sq;
+          while (true) {
+            const cf = cur & 7;
+            cur += dir;
+            if (cur < 0 || cur >= 64) break;
+            const nf = cur & 7;
+            if (dir === 1 || dir === -1) {
+              if ((cur >> 3) !== r) break;
+            } else if (dir === 8 || dir === -8) {
+              if (nf !== f) break;
+            } else {
+              if (Math.abs(nf - cf) !== 1) break;
+            }
+            const target = b[cur];
+            if (target === 0) {
+              list.push({ from: sq, to: cur, piece: p, captured: 0, promo: 0, flags: 0 });
+            } else {
+              if (target * turn < 0) {
+                list.push({ from: sq, to: cur, piece: p, captured: target, promo: 0, flags: FLAGS.CAPTURE });
+              }
+              break;
+            }
+          }
+        }
+      } else if (type === K) {
+        for (let i = 0; i < 8; i++) {
+          const off = KING_OFFSETS[i];
+          const to = sq + off;
+          if (to >= 0 && to < 64) {
+            const tf = to & 7;
+            if (Math.abs(tf - f) <= 1) {
+              const target = b[to];
+              if (target === 0) {
+                list.push({ from: sq, to, piece: p, captured: 0, promo: 0, flags: 0 });
+              } else if (target * turn < 0) {
+                list.push({ from: sq, to, piece: p, captured: target, promo: 0, flags: FLAGS.CAPTURE });
+              }
+            }
+          }
+        }
+
+        // Castling
+        if (turn === 1 && sq === 4) {
+          // White Kingside: e1 -> g1 (squares 5, 6 empty)
+          if ((state.castling & 1) && b[5] === 0 && b[6] === 0 && b[7] === R) {
+            if (!isAttacked(state, 4, -1) && !isAttacked(state, 5, -1) && !isAttacked(state, 6, -1)) {
+              list.push({ from: 4, to: 6, piece: p, captured: 0, promo: 0, flags: FLAGS.CASTLE_K });
+            }
+          }
+          // White Queenside: e1 -> c1 (squares 1, 2, 3 empty)
+          if ((state.castling & 2) && b[1] === 0 && b[2] === 0 && b[3] === 0 && b[0] === R) {
+            if (!isAttacked(state, 4, -1) && !isAttacked(state, 3, -1) && !isAttacked(state, 2, -1)) {
+              list.push({ from: 4, to: 2, piece: p, captured: 0, promo: 0, flags: FLAGS.CASTLE_Q });
+            }
+          }
+        } else if (turn === -1 && sq === 60) {
+          // Black Kingside: e8 -> g8 (squares 61, 62 empty)
+          if ((state.castling & 4) && b[61] === 0 && b[62] === 0 && b[63] === -R) {
+            if (!isAttacked(state, 60, 1) && !isAttacked(state, 61, 1) && !isAttacked(state, 62, 1)) {
+              list.push({ from: 60, to: 62, piece: p, captured: 0, promo: 0, flags: FLAGS.CASTLE_K });
+            }
+          }
+          // Black Queenside: e8 -> c8 (squares 57, 58, 59 empty)
+          if ((state.castling & 8) && b[57] === 0 && b[58] === 0 && b[59] === 0 && b[56] === -R) {
+            if (!isAttacked(state, 60, 1) && !isAttacked(state, 59, 1) && !isAttacked(state, 58, 1)) {
+              list.push({ from: 60, to: 58, piece: p, captured: 0, promo: 0, flags: FLAGS.CASTLE_Q });
+            }
+          }
+        }
+      }
+    }
+
+    return list;
+  }
+
+  function make(state, move) {
+    const nextBoard = new Int8Array(state.board);
+    const turn = state.turn;
+    let wKing = state.kings[0];
+    let bKing = state.kings[1];
+
+    nextBoard[move.from] = 0;
+    const finalPiece = move.promo ? (turn === 1 ? move.promo : -move.promo) : move.piece;
+    nextBoard[move.to] = finalPiece;
+
+    if (move.flags & FLAGS.EP) {
+      const epCapSq = state.ep - (turn === 1 ? 8 : -8);
+      nextBoard[epCapSq] = 0;
+    } else if (move.flags & FLAGS.CASTLE_K) {
+      if (turn === 1) {
+        nextBoard[7] = 0;
+        nextBoard[5] = R;
+      } else {
+        nextBoard[63] = 0;
+        nextBoard[61] = -R;
+      }
+    } else if (move.flags & FLAGS.CASTLE_Q) {
+      if (turn === 1) {
+        nextBoard[0] = 0;
+        nextBoard[3] = R;
+      } else {
+        nextBoard[56] = 0;
+        nextBoard[59] = -R;
+      }
+    }
+
+    if (Math.abs(move.piece) === K) {
+      if (turn === 1) wKing = move.to;
+      else bKing = move.to;
+    }
+
+    // Update castling rights
+    let castling = state.castling;
+    if (move.from === 4 || move.to === 4) castling &= ~3; // White King moved/captured
+    if (move.from === 60 || move.to === 60) castling &= ~12; // Black King moved/captured
+    if (move.from === 7 || move.to === 7) castling &= ~1; // h1 rook
+    if (move.from === 0 || move.to === 0) castling &= ~2; // a1 rook
+    if (move.from === 63 || move.to === 63) castling &= ~4; // h8 rook
+    if (move.from === 56 || move.to === 56) castling &= ~8; // a8 rook
+
+    const ep = (move.flags & FLAGS.DOUBLE) ? (move.from + (turn === 1 ? 8 : -8)) : -1;
+    const halfmove = (Math.abs(move.piece) === P || move.captured !== 0) ? 0 : state.halfmove + 1;
+    const fullmove = turn === -1 ? state.fullmove + 1 : state.fullmove;
+
+    const nextTurn = -turn;
+    const hash = computeHash(nextBoard, nextTurn, castling, ep);
+
+    return {
+      board: nextBoard,
+      turn: nextTurn,
+      castling,
+      ep,
+      halfmove,
+      fullmove,
+      kings: [wKing, bKing],
+      hash,
+      history: [...state.history, hash],
+    };
+  }
+
+  function makeInPlace(state, move, undo) {
+    const b = state.board;
+    const turn = state.turn;
+
+    undo.castling = state.castling;
+    undo.ep = state.ep;
+    undo.halfmove = state.halfmove;
+    undo.kings0 = state.kings[0];
+    undo.kings1 = state.kings[1];
+    undo.hash = state.hash;
+
+    b[move.from] = 0;
+    const finalPiece = move.promo ? (turn === 1 ? move.promo : -move.promo) : move.piece;
+    b[move.to] = finalPiece;
+
+    if (move.flags & FLAGS.EP) {
+      const epCapSq = state.ep - (turn === 1 ? 8 : -8);
+      b[epCapSq] = 0;
+    } else if (move.flags & FLAGS.CASTLE_K) {
+      if (turn === 1) { b[7] = 0; b[5] = R; }
+      else { b[63] = 0; b[61] = -R; }
+    } else if (move.flags & FLAGS.CASTLE_Q) {
+      if (turn === 1) { b[0] = 0; b[3] = R; }
+      else { b[56] = 0; b[59] = -R; }
+    }
+
+    if (Math.abs(move.piece) === K) {
+      if (turn === 1) state.kings[0] = move.to;
+      else state.kings[1] = move.to;
+    }
+
+    if (move.from === 4 || move.to === 4) state.castling &= ~3;
+    if (move.from === 60 || move.to === 60) state.castling &= ~12;
+    if (move.from === 7 || move.to === 7) state.castling &= ~1;
+    if (move.from === 0 || move.to === 0) state.castling &= ~2;
+    if (move.from === 63 || move.to === 63) state.castling &= ~4;
+    if (move.from === 56 || move.to === 56) state.castling &= ~8;
+
+    state.ep = (move.flags & FLAGS.DOUBLE) ? (move.from + (turn === 1 ? 8 : -8)) : -1;
+    state.halfmove = (Math.abs(move.piece) === P || move.captured !== 0) ? 0 : state.halfmove + 1;
+    if (turn === -1) state.fullmove++;
+    state.turn = -turn;
+    state.hash = computeHash(b, state.turn, state.castling, state.ep);
+  }
+
+  function unmake(state, move, undo) {
+    const b = state.board;
+    const prevTurn = -state.turn;
+
+    state.turn = prevTurn;
+    if (prevTurn === -1) state.fullmove--;
+    state.castling = undo.castling;
+    state.ep = undo.ep;
+    state.halfmove = undo.halfmove;
+    state.kings[0] = undo.kings0;
+    state.kings[1] = undo.kings1;
+    state.hash = undo.hash;
+
+    b[move.from] = move.piece;
+    b[move.to] = move.captured;
+
+    if (move.flags & FLAGS.EP) {
+      const epCapSq = undo.ep - (prevTurn === 1 ? 8 : -8);
+      b[epCapSq] = -prevTurn * P;
+      b[move.to] = 0;
+    } else if (move.flags & FLAGS.CASTLE_K) {
+      if (prevTurn === 1) { b[7] = R; b[5] = 0; }
+      else { b[63] = -R; b[61] = 0; }
+    } else if (move.flags & FLAGS.CASTLE_Q) {
+      if (prevTurn === 1) { b[0] = R; b[3] = 0; }
+      else { b[56] = -R; b[59] = 0; }
+    }
+  }
+
+  function legalMoves(state) {
+    const pms = pseudoMoves(state);
+    const res = [];
+    const undo = {};
+    for (let i = 0; i < pms.length; i++) {
+      const m = pms[i];
+      makeInPlace(state, m, undo);
+      // King of the mover (which is -state.turn after makeInPlace) must not be in check
+      if (!inCheck(state, -state.turn)) {
+        res.push(m);
+      }
+      unmake(state, m, undo);
+    }
+    return res;
+  }
+
+  function legalMovesFrom(state, sq) {
+    const all = legalMoves(state);
+    return all.filter((m) => m.from === sq);
+  }
+
+  function insufficientMaterial(state) {
+    const b = state.board;
+    let wPieces = [], bPieces = [];
+    for (let i = 0; i < 64; i++) {
+      const p = b[i];
+      if (p === 0) continue;
+      if (Math.abs(p) === P || Math.abs(p) === R || Math.abs(p) === Q) return false;
+      if (p > 0) wPieces.push({ type: p, sq: i });
+      else bPieces.push({ type: -p, sq: i });
+    }
+
+    // Both sides must have at least King
+    if (wPieces.length === 1 && bPieces.length === 1) return true; // K vs K
+    if (wPieces.length === 2 && bPieces.length === 1) {
+      const minor = wPieces.find((x) => x.type !== K);
+      if (minor && (minor.type === B || minor.type === N)) return true; // K+B vs K or K+N vs K
+    }
+    if (bPieces.length === 2 && wPieces.length === 1) {
+      const minor = bPieces.find((x) => x.type !== K);
+      if (minor && (minor.type === B || minor.type === N)) return true;
+    }
+    if (wPieces.length === 2 && bPieces.length === 2) {
+      const wB = wPieces.find((x) => x.type === B);
+      const bB = bPieces.find((x) => x.type === B);
+      if (wB && bB) {
+        // Bishops on same-color squares:
+        // Square color = ((sq >> 3) + (sq & 7)) % 2
+        const wColor = ((wB.sq >> 3) + (wB.sq & 7)) & 1;
+        const bColor = ((bB.sq >> 3) + (bB.sq & 7)) & 1;
+        if (wColor === bColor) return true;
+      }
+    }
+    return false;
+  }
+
+  function status(state) {
+    const legals = legalMoves(state);
+    if (legals.length === 0) {
+      if (inCheck(state, state.turn)) {
+        return {
+          over: true,
+          result: state.turn === 1 ? '0-1' : '1-0',
+          reason: 'checkmate',
+        };
+      }
+      return {
+        over: true,
+        result: '1/2-1/2',
+        reason: 'stalemate',
+      };
+    }
+
+    if (insufficientMaterial(state)) {
+      return { over: true, result: '1/2-1/2', reason: 'insufficient' };
+    }
+
+    if (state.halfmove >= 100) {
+      return { over: true, result: '1/2-1/2', reason: 'fifty' };
+    }
+
+    // Threefold repetition
+    let count = 0;
+    const currentHash = state.hash;
+    for (let i = 0; i < state.history.length; i++) {
+      if (state.history[i] === currentHash) {
+        count++;
+        if (count >= 3) {
+          return { over: true, result: '1/2-1/2', reason: 'threefold' };
+        }
+      }
+    }
+
+    return { over: false, result: null, reason: null };
+  }
+
+  function toSAN(state, move) {
+    if (move.flags & FLAGS.CASTLE_K) {
+      const next = make(state, move);
+      const chk = inCheck(next, next.turn);
+      const mates = chk && legalMoves(next).length === 0;
+      return 'O-O' + (mates ? '#' : chk ? '+' : '');
+    }
+    if (move.flags & FLAGS.CASTLE_Q) {
+      const next = make(state, move);
+      const chk = inCheck(next, next.turn);
+      const mates = chk && legalMoves(next).length === 0;
+      return 'O-O-O' + (mates ? '#' : chk ? '+' : '');
+    }
+
+    const pieceType = Math.abs(move.piece);
+    let san = '';
+
+    if (pieceType === P) {
+      if (move.captured !== 0 || (move.flags & FLAGS.EP)) {
+        san += String.fromCharCode(97 + (move.from & 7)) + 'x' + toCoord(move.to);
+      } else {
+        san += toCoord(move.to);
+      }
+      if (move.promo) {
+        san += '=' + PIECE_CHARS[move.promo];
+      }
+    } else {
+      san += PIECE_CHARS[pieceType];
+
+      // Disambiguation among other pieces of same type that could also move to `move.to`
+      const legals = legalMoves(state);
+      const others = legals.filter((m) =>
+        m.from !== move.from &&
+        m.to === move.to &&
+        Math.abs(m.piece) === pieceType
+      );
+
+      if (others.length > 0) {
+        const sameFile = others.some((m) => (m.from & 7) === (move.from & 7));
+        const sameRank = others.some((m) => (m.from >> 3) === (move.from >> 3));
+        if (!sameFile) {
+          san += String.fromCharCode(97 + (move.from & 7));
+        } else if (!sameRank) {
+          san += ((move.from >> 3) + 1);
+        } else {
+          san += toCoord(move.from);
+        }
+      }
+
+      if (move.captured !== 0) san += 'x';
+      san += toCoord(move.to);
+    }
+
+    const next = make(state, move);
+    const chk = inCheck(next, next.turn);
+    if (chk) {
+      const mates = legalMoves(next).length === 0;
+      san += mates ? '#' : '+';
+    }
+
+    return san;
+  }
+
+  function toUCI(move) {
+    let uci = toCoord(move.from) + toCoord(move.to);
+    if (move.promo) uci += PIECE_CHARS[move.promo].toLowerCase();
+    return uci;
+  }
+
+  function fromUCI(state, uci) {
+    if (!uci || uci.length < 4) return null;
+    const from = fromCoord(uci.slice(0, 2));
+    const to = fromCoord(uci.slice(2, 4));
+    let promo = 0;
+    if (uci.length >= 5) {
+      promo = CHAR_TO_PIECE[uci[4].toLowerCase()] || 0;
+    }
+    const legals = legalMoves(state);
+    return legals.find((m) => m.from === from && m.to === to && (promo ? m.promo === promo : !m.promo)) || null;
+  }
+
+  function fromSAN(state, san) {
+    if (!san) return null;
+    const clean = san.replace(/[+#?!=]/g, '').trim();
+    const legals = legalMoves(state);
+    for (let i = 0; i < legals.length; i++) {
+      const m = legals[i];
+      if (toSAN(state, m) === san) return m;
+      const sClean = toSAN(state, m).replace(/[+#?!=]/g, '').trim();
+      if (sClean === clean) return m;
+    }
+    return null;
+  }
+
+  function toPGN(game) {
+    // game = { headers: {}, moves: [san...] }
+    const headers = Object.assign({
+      Event: 'Casual Game',
+      Site: 'Antigravity Chess',
+      Date: new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
+      Round: '1',
+      White: 'White',
+      Black: 'Black',
+      Result: '*',
+    }, game.headers || {});
+
+    let pgn = '';
+    for (const [k, v] of Object.entries(headers)) {
+      pgn += `[${k} "${v}"]\n`;
+    }
+    pgn += '\n';
+
+    const moves = game.moves || [];
+    let line = '';
+    for (let i = 0; i < moves.length; i++) {
+      const num = (i % 2 === 0) ? `${Math.floor(i / 2) + 1}. ` : '';
+      const token = num + moves[i] + ' ';
+      if (line.length + token.length > 80) {
+        pgn += line.trimEnd() + '\n';
+        line = token;
+      } else {
+        line += token;
+      }
+    }
+    if (headers.Result) line += headers.Result;
+    pgn += line.trimEnd() + '\n';
+    return pgn;
+  }
+
+  function perft(state, depth) {
+    if (depth <= 0) return 1;
+    const moves = legalMoves(state);
+    if (depth === 1) return moves.length;
+    let nodes = 0;
+    const undo = {};
+    for (let i = 0; i < moves.length; i++) {
+      makeInPlace(state, moves[i], undo);
+      nodes += perft(state, depth - 1);
+      unmake(state, moves[i], undo);
+    }
+    return nodes;
+  }
+
+  return {
+    FLAGS,
+    P, N, B, R, Q, K,
+    initial,
+    fromFEN,
+    toFEN,
+    toCoord,
+    fromCoord,
+    isAttacked,
+    inCheck,
+    pseudoMoves,
+    legalMoves,
+    legalMovesFrom,
+    make,
+    makeInPlace,
+    unmake,
+    insufficientMaterial,
+    status,
+    toSAN,
+    fromSAN,
+    toUCI,
+    fromUCI,
+    toPGN,
+    perft,
+  };
+});
+
+</script>
+  <script>
+// Chess AI Engine: Evaluation, Minimax / Alpha-Beta search, Opening book, Worker dispatcher
+(function (root, factory) {
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = factory(require('./rules.js'));
+  } else {
+    root.ChessAI = factory(root.ChessRules);
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (ChessRules) {
+  'use strict';
+
+  const PIECE_VALS = { 1: 100, 2: 320, 3: 330, 4: 500, 5: 900, 6: 20000 };
+
+  // PST (Piece-Square Tables) - values oriented for White (rank 0 = rank 1)
+  // [Rank 0 to 7, a to h]
+  const PAWN_PST_MG = [
+     0,  0,  0,  0,  0,  0,  0,  0,
+     5, 10, 10,-20,-20, 10, 10,  5,
+     5, -5,-10,  0,  0,-10, -5,  5,
+     0,  0,  0, 20, 20,  0,  0,  0,
+     5,  5, 10, 25, 25, 10,  5,  5,
+    10, 10, 20, 30, 30, 20, 10, 10,
+    50, 50, 50, 50, 50, 50, 50, 50,
+     0,  0,  0,  0,  0,  0,  0,  0
+  ];
+  const PAWN_PST_EG = [
+     0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    20, 20, 20, 20, 20, 20, 20, 20,
+    30, 30, 30, 30, 30, 30, 30, 30,
+    50, 50, 50, 50, 50, 50, 50, 50,
+    80, 80, 80, 80, 80, 80, 80, 80,
+     0,  0,  0,  0,  0,  0,  0,  0
+  ];
+
+  const KNIGHT_PST = [
+    -50,-40,-30,-30,-30,-30,-40,-50,
+    -40,-20,  0,  5,  5,  0,-20,-40,
+    -30,  5, 10, 15, 15, 10,  5,-30,
+    -30,  0, 15, 20, 20, 15,  0,-30,
+    -30,  5, 15, 20, 20, 15,  5,-30,
+    -30,  0, 10, 15, 15, 10,  0,-30,
+    -40,-20,  0,  0,  0,  0,-20,-40,
+    -50,-40,-30,-30,-30,-30,-40,-50
+  ];
+
+  const BISHOP_PST = [
+    -20,-10,-10,-10,-10,-10,-10,-20,
+    -10,  5,  0,  0,  0,  0,  5,-10,
+    -10, 10, 10, 10, 10, 10, 10,-10,
+    -10,  0, 10, 10, 10, 10,  0,-10,
+    -10,  5,  5, 10, 10,  5,  5,-10,
+    -10,  0,  5, 10, 10,  5,  0,-10,
+    -10,  0,  0,  0,  0,  0,  0,-10,
+    -20,-10,-10,-10,-10,-10,-10,-20
+  ];
+
+  const ROOK_PST = [
+      0,  0,  0,  5,  5,  0,  0,  0,
+     -5,  0,  0,  0,  0,  0,  0, -5,
+     -5,  0,  0,  0,  0,  0,  0, -5,
+     -5,  0,  0,  0,  0,  0,  0, -5,
+     -5,  0,  0,  0,  0,  0,  0, -5,
+     -5,  0,  0,  0,  0,  0,  0, -5,
+      5, 10, 10, 10, 10, 10, 10,  5,
+      0,  0,  0,  0,  0,  0,  0,  0
+  ];
+
+  const QUEEN_PST = [
+    -20,-10,-10, -5, -5,-10,-10,-20,
+    -10,  0,  5,  0,  0,  0,  0,-10,
+    -10,  5,  5,  5,  5,  5,  0,-10,
+      0,  0,  5,  5,  5,  5,  0, -5,
+     -5,  0,  5,  5,  5,  5,  0, -5,
+    -10,  0,  5,  5,  5,  5,  0,-10,
+    -10,  0,  0,  0,  0,  0,  0,-10,
+    -20,-10,-10, -5, -5,-10,-10,-20
+  ];
+
+  const KING_PST_MG = [
+     20, 30, 10,  0,  0, 10, 30, 20,
+     20, 20,  0,  0,  0,  0, 20, 20,
+    -10,-20,-20,-20,-20,-20,-20,-10,
+    -20,-30,-30,-40,-40,-30,-30,-20,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30
+  ];
+
+  const KING_PST_EG = [
+    -50,-30,-30,-30,-30,-30,-30,-50,
+    -30,-20,-10,  0,  0,-10,-20,-30,
+    -30,-10, 20, 30, 30, 20,-10,-30,
+    -30,-10, 30, 40, 40, 30,-10,-30,
+    -30,-10, 30, 40, 40, 30,-10,-30,
+    -30,-10, 20, 30, 30, 20,-10,-30,
+    -30,-30,  0,  0,  0,  0,-30,-30,
+    -50,-30,-30,-30,-30,-30,-30,-50
+  ];
+
+  // Tiny Opening Book (SAN moves)
+  const OPENING_BOOK = [
+    ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Bc5'], // Italian Game
+    ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6'],  // Ruy Lopez
+    ['e4', 'c5', 'Nf3', 'd6', 'd4', 'cxd4'],  // Sicilian
+    ['e4', 'e6', 'd4', 'd5', 'Nc3', 'Nf6'],   // French Defense
+    ['d4', 'd5', 'c4', 'e6', 'Nc3', 'Nf6'],   // Queen's Gambit Declined
+    ['d4', 'Nf6', 'c4', 'g6', 'Nc3', 'Bg7'],  // King's Indian
+    ['e4', 'c6', 'd4', 'd5', 'Nc3', 'dxe4'],  // Caro-Kann
+    ['d4', 'd5', 'Nf3', 'Nf6', 'Bf4', 'c5'],  // London System
+  ];
+
+  function evaluate(state) {
+    const b = state.board;
+    let mgScore = 0;
+    let egScore = 0;
+    let phase = 0; // 0 = endgame, 24 = opening/middlegame
+
+    let wBishops = 0, bBishops = 0;
+    let wRookFiles = 0, bRookFiles = 0;
+    let pawnFilesW = new Int8Array(8);
+    let pawnFilesB = new Int8Array(8);
+
+    for (let sq = 0; sq < 64; sq++) {
+      const p = b[sq];
+      if (p === 0) continue;
+      const type = Math.abs(p);
+      const isWhite = p > 0;
+      const f = sq & 7;
+      const r = sq >> 3;
+      const pstSq = isWhite ? sq : ((7 - r) << 3) | f;
+
+      const val = PIECE_VALS[type];
+      const sign = isWhite ? 1 : -1;
+
+      // Phase weighting
+      if (type === ChessRules.N || type === ChessRules.B) phase += 1;
+      else if (type === ChessRules.R) phase += 2;
+      else if (type === ChessRules.Q) phase += 4;
+
+      if (type === ChessRules.P) {
+        if (isWhite) pawnFilesW[f]++;
+        else pawnFilesB[f]++;
+        const mg = val + PAWN_PST_MG[pstSq];
+        const eg = val + PAWN_PST_EG[pstSq];
+        mgScore += sign * mg;
+        egScore += sign * eg;
+      } else if (type === ChessRules.N) {
+        const mg = val + KNIGHT_PST[pstSq];
+        mgScore += sign * mg;
+        egScore += sign * mg;
+      } else if (type === ChessRules.B) {
+        if (isWhite) wBishops++; else bBishops++;
+        const mg = val + BISHOP_PST[pstSq];
+        mgScore += sign * mg;
+        egScore += sign * mg;
+      } else if (type === ChessRules.R) {
+        if (isWhite) wRookFiles |= (1 << f); else bRookFiles |= (1 << f);
+        const mg = val + ROOK_PST[pstSq];
+        mgScore += sign * mg;
+        egScore += sign * mg;
+      } else if (type === ChessRules.Q) {
+        const mg = val + QUEEN_PST[pstSq];
+        mgScore += sign * mg;
+        egScore += sign * mg;
+      } else if (type === ChessRules.K) {
+        const mg = KING_PST_MG[pstSq];
+        const eg = KING_PST_EG[pstSq];
+        mgScore += sign * mg;
+        egScore += sign * eg;
+      }
+    }
+
+    // Bishop pair
+    if (wBishops >= 2) { mgScore += 30; egScore += 30; }
+    if (bBishops >= 2) { mgScore -= 30; egScore -= 30; }
+
+    // Rooks on open/semi-open files
+    for (let f = 0; f < 8; f++) {
+      if (wRookFiles & (1 << f)) {
+        if (pawnFilesW[f] === 0 && pawnFilesB[f] === 0) mgScore += 15;
+        else if (pawnFilesW[f] === 0) mgScore += 8;
+      }
+      if (bRookFiles & (1 << f)) {
+        if (pawnFilesW[f] === 0 && pawnFilesB[f] === 0) mgScore -= 15;
+        else if (pawnFilesB[f] === 0) mgScore -= 8;
+      }
+      // Doubled pawns penalty
+      if (pawnFilesW[f] > 1) { mgScore -= 15; egScore -= 15; }
+      if (pawnFilesB[f] > 1) { mgScore += 15; egScore += 15; }
+    }
+
+    // Tapered score
+    if (phase > 24) phase = 24;
+    const score = Math.round((mgScore * phase + egScore * (24 - phase)) / 24);
+    return state.turn === 1 ? score : -score;
+  }
+
+  // Transposition Table
+  const TT_SIZE = 1 << 18; // 262,144 entries
+  const ttKeys = new BigInt64Array(TT_SIZE);
+  const ttDepths = new Int8Array(TT_SIZE);
+  const ttFlags = new Int8Array(TT_SIZE); // 1 = EXACT, 2 = LOWER, 3 = UPPER
+  const ttScores = new Int16Array(TT_SIZE);
+  const ttMoves = new Int16Array(TT_SIZE); // packed (from << 6) | to
+
+  function ttProbe(hash, depth, alpha, beta) {
+    const idx = Number(hash & BigInt(TT_SIZE - 1));
+    if (ttKeys[idx] === hash) {
+      if (ttDepths[idx] >= depth) {
+        const sc = ttScores[idx];
+        const fl = ttFlags[idx];
+        if (fl === 1) return { score: sc, move: ttMoves[idx] };
+        if (fl === 2 && sc >= beta) return { score: sc, move: ttMoves[idx] };
+        if (fl === 3 && sc <= alpha) return { score: sc, move: ttMoves[idx] };
+      }
+      return { score: null, move: ttMoves[idx] };
+    }
+    return { score: null, move: -1 };
+  }
+
+  function ttStore(hash, depth, score, flag, move) {
+    const idx = Number(hash & BigInt(TT_SIZE - 1));
+    ttKeys[idx] = hash;
+    ttDepths[idx] = depth;
+    ttScores[idx] = score;
+    ttFlags[idx] = flag;
+    if (move >= 0) ttMoves[idx] = move;
+  }
+
+  // Quiescence search
+  function quiesce(state, alpha, beta, nodesObj) {
+    nodesObj.count++;
+    const standPat = evaluate(state);
+    if (standPat >= beta) return beta;
+    if (alpha < standPat) alpha = standPat;
+
+    const moves = ChessRules.legalMoves(state).filter(m => (m.flags & ChessRules.FLAGS.CAPTURE) || (m.flags & ChessRules.FLAGS.PROMO));
+    // Sort captures by MVV-LVA (Most Valuable Victim - Least Valuable Attacker)
+    moves.sort((a, b) => {
+      const va = (PIECE_VALS[Math.abs(a.captured)] || 0) - (PIECE_VALS[Math.abs(a.piece)] || 0);
+      const vb = (PIECE_VALS[Math.abs(b.captured)] || 0) - (PIECE_VALS[Math.abs(b.piece)] || 0);
+      return vb - va;
+    });
+
+    const undo = {};
+    for (let i = 0; i < moves.length; i++) {
+      ChessRules.makeInPlace(state, moves[i], undo);
+      const score = -quiesce(state, -beta, -alpha, nodesObj);
+      ChessRules.unmake(state, moves[i], undo);
+
+      if (score >= beta) return beta;
+      if (score > alpha) alpha = score;
+    }
+    return alpha;
+  }
+
+  // Negamax with Alpha-Beta
+  function negamax(state, depth, alpha, beta, isRoot, deadline, nodesObj) {
+    if ((nodesObj.count & 2047) === 0 && performance.now() > deadline) {
+      nodesObj.stopped = true;
+      return 0;
+    }
+
+    nodesObj.count++;
+
+    if (depth <= 0) {
+      return quiesce(state, alpha, beta, nodesObj);
+    }
+
+    const tt = ttProbe(state.hash, depth, alpha, beta);
+    if (!isRoot && tt.score !== null) {
+      return tt.score;
+    }
+
+    const inChk = ChessRules.inCheck(state, state.turn);
+
+    // Null-move pruning
+    if (depth >= 3 && !inChk && !isRoot) {
+      // Switch turn with null move
+      state.turn = -state.turn;
+      const prevEp = state.ep;
+      state.ep = -1;
+      const nmScore = -negamax(state, depth - 1 - 2, -beta, -beta + 1, false, deadline, nodesObj);
+      state.ep = prevEp;
+      state.turn = -state.turn;
+      if (nodesObj.stopped) return 0;
+      if (nmScore >= beta) return beta;
+    }
+
+    const moves = ChessRules.legalMoves(state);
+    if (moves.length === 0) {
+      return inChk ? (-20000 + (100 - depth)) : 0; // Checkmate or stalemate
+    }
+
+    // Move ordering
+    const ttMoveVal = tt.move;
+    moves.sort((a, b) => {
+      const aPack = (a.from << 6) | a.to;
+      const bPack = (b.from << 6) | b.to;
+      if (aPack === ttMoveVal) return -100000;
+      if (bPack === ttMoveVal) return 100000;
+      const aScore = ((a.flags & ChessRules.FLAGS.CAPTURE) ? 1000 + (PIECE_VALS[Math.abs(a.captured)] || 0) : 0) + (a.promo ? 500 : 0);
+      const bScore = ((b.flags & ChessRules.FLAGS.CAPTURE) ? 1000 + (PIECE_VALS[Math.abs(b.captured)] || 0) : 0) + (b.promo ? 500 : 0);
+      return bScore - aScore;
+    });
+
+    let bestScore = -30000;
+    let bestMove = -1;
+    let origAlpha = alpha;
+    const undo = {};
+
+    for (let i = 0; i < moves.length; i++) {
+      const m = moves[i];
+      ChessRules.makeInPlace(state, m, undo);
+      const score = -negamax(state, depth - 1, -beta, -alpha, false, deadline, nodesObj);
+      ChessRules.unmake(state, m, undo);
+
+      if (nodesObj.stopped) return 0;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = (m.from << 6) | m.to;
+      }
+      if (score > alpha) {
+        alpha = score;
+      }
+      if (alpha >= beta) {
+        break; // Beta cutoff
+      }
+    }
+
+    let flag = 1; // EXACT
+    if (bestScore <= origAlpha) flag = 3; // UPPER
+    else if (bestScore >= beta) flag = 2; // LOWER
+    ttStore(state.hash, depth, bestScore, flag, bestMove);
+
+    return bestScore;
+  }
+
+  // Easy AI
+  function searchEasy(state) {
+    const moves = ChessRules.legalMoves(state);
+    if (moves.length === 0) return null;
+
+    // Check if can mate in 1 (50% chance to play it)
+    for (const m of moves) {
+      const next = ChessRules.make(state, m);
+      if (ChessRules.status(next).reason === 'checkmate' && Math.random() < 0.5) {
+        return { uci: ChessRules.toUCI(m), eval: 9999, depth: 1, nodes: 1 };
+      }
+    }
+
+    // Score all moves at depth 1 with noise
+    const scored = moves.map((m) => {
+      const next = ChessRules.make(state, m);
+      let ev = -evaluate(next);
+      ev += (Math.random() * 300 - 150); // +/- 150 noise
+      // 25% of the time, ignore hanging own pieces
+      return { move: m, score: ev };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    const bestScore = scored[0].score;
+    const nearBest = scored.filter(s => s.score >= bestScore - 200);
+    const pick = nearBest[Math.floor(Math.random() * nearBest.length)].move;
+
+    return { uci: ChessRules.toUCI(pick), eval: Math.round(scored[0].score), depth: 1, nodes: moves.length };
+  }
+
+  // Medium AI
+  function searchMedium(state, historyHashes = []) {
+    const moves = ChessRules.legalMoves(state);
+    if (moves.length === 0) return null;
+
+    // Opening book check (first 6 plies)
+    if (state.fullmove <= 3) {
+      for (const line of OPENING_BOOK) {
+        let sim = ChessRules.initial();
+        let match = true;
+        for (let i = 0; i < line.length; i++) {
+          if (ChessRules.toFEN(sim) === ChessRules.toFEN(state)) {
+            const bookMove = ChessRules.fromSAN(sim, line[i]);
+            if (bookMove) {
+              return { uci: ChessRules.toUCI(bookMove), eval: 0, depth: 2, nodes: 1 };
+            }
+          }
+          const m = ChessRules.fromSAN(sim, line[i]);
+          if (!m) { match = false; break; }
+          sim = ChessRules.make(sim, m);
+        }
+      }
+    }
+
+    // Always play mate-in-1
+    for (const m of moves) {
+      const next = ChessRules.make(state, m);
+      if (ChessRules.status(next).reason === 'checkmate') {
+        return { uci: ChessRules.toUCI(m), eval: 10000, depth: 2, nodes: moves.length };
+      }
+    }
+
+    // Depth 2 alpha-beta + capture quiescence
+    const scored = [];
+    const undo = {};
+    const nodesObj = { count: 0, stopped: false };
+
+    for (const m of moves) {
+      ChessRules.makeInPlace(state, m, undo);
+
+      // Check if opponent has mate-in-1
+      let oppCanMate = false;
+      const oppMoves = ChessRules.legalMoves(state);
+      for (const om of oppMoves) {
+        const afterOpp = ChessRules.make(state, om);
+        if (ChessRules.status(afterOpp).reason === 'checkmate') {
+          oppCanMate = true;
+          break;
+        }
+      }
+
+      let score = 0;
+      if (oppCanMate) {
+        score = -10000;
+      } else {
+        score = -quiesce(state, -30000, 30000, nodesObj);
+      }
+
+      ChessRules.unmake(state, m, undo);
+      scored.push({ move: m, score: score + (Math.random() * 40 - 20) });
+    }
+
+    scored.sort((a, b) => b.score - a.score);
+    const pick = scored[0].move;
+    return { uci: ChessRules.toUCI(pick), eval: Math.round(scored[0].score), depth: 2, nodes: nodesObj.count };
+  }
+
+  // Hard AI
+  function searchHard(state, timeBudgetMs = 1000, historyHashes = []) {
+    const moves = ChessRules.legalMoves(state);
+    if (moves.length === 0) return null;
+    if (moves.length === 1) return { uci: ChessRules.toUCI(moves[0]), eval: 0, depth: 1, nodes: 1 };
+
+    // Opening book check
+    if (state.fullmove <= 3) {
+      const bookMatches = [];
+      for (const line of OPENING_BOOK) {
+        let sim = ChessRules.initial();
+        for (let i = 0; i < line.length; i++) {
+          if (ChessRules.toFEN(sim) === ChessRules.toFEN(state)) {
+            const bm = ChessRules.fromSAN(sim, line[i]);
+            if (bm) bookMatches.push(bm);
+          }
+          const m = ChessRules.fromSAN(sim, line[i]);
+          if (!m) break;
+          sim = ChessRules.make(sim, m);
+        }
+      }
+      if (bookMatches.length > 0) {
+        const pick = bookMatches[Math.floor(Math.random() * bookMatches.length)];
+        return { uci: ChessRules.toUCI(pick), eval: 20, depth: 1, nodes: 1 };
+      }
+    }
+
+    const deadline = performance.now() + Math.max(150, timeBudgetMs);
+    const nodesObj = { count: 0, stopped: false };
+    let bestMove = moves[0];
+    let bestEval = 0;
+    let completedDepth = 1;
+
+    // Iterative Deepening
+    for (let depth = 1; depth <= 8; depth++) {
+      if (performance.now() > deadline) break;
+
+      let alpha = -30000;
+      let beta = 30000;
+      let curBestMove = bestMove;
+      let curBestEval = -30000;
+
+      // Root search
+      const rootMoves = moves.slice();
+      // Sort root moves so previous best is tried first
+      rootMoves.sort((a, b) => {
+        if (a === bestMove) return -1;
+        if (b === bestMove) return 1;
+        return 0;
+      });
+
+      const undo = {};
+      for (let i = 0; i < rootMoves.length; i++) {
+        const m = rootMoves[i];
+        ChessRules.makeInPlace(state, m, undo);
+        const score = -negamax(state, depth - 1, -beta, -alpha, false, deadline, nodesObj);
+        ChessRules.unmake(state, m, undo);
+
+        if (nodesObj.stopped) break;
+
+        if (score > curBestEval) {
+          curBestEval = score;
+          curBestMove = m;
+        }
+        if (score > alpha) {
+          alpha = score;
+        }
+      }
+
+      if (!nodesObj.stopped) {
+        bestMove = curBestMove;
+        bestEval = curBestEval;
+        completedDepth = depth;
+        if (Math.abs(bestEval) >= 19000) break; // Found checkmate
+      }
+    }
+
+    return {
+      uci: ChessRules.toUCI(bestMove),
+      eval: bestEval,
+      depth: completedDepth,
+      nodes: nodesObj.count,
+    };
+  }
+
+  function search(fen, level, timeBudgetMs, historyHashes = []) {
+    const state = ChessRules.fromFEN(fen);
+    if (historyHashes && historyHashes.length > 0) {
+      state.history = historyHashes;
+    }
+
+    if (level === 'easy') {
+      return searchEasy(state);
+    } else if (level === 'medium') {
+      return searchMedium(state, historyHashes);
+    } else {
+      return searchHard(state, timeBudgetMs, historyHashes);
+    }
+  }
+
+  return {
+    evaluate,
+    search,
+    searchEasy,
+    searchMedium,
+    searchHard,
+  };
+});
+
+</script>
+  <script>
+// Chess Rules Documentation content model & try-it tasks (15 sections)
+// Inlines into single-file bundle, registers via window.RULES_SECTIONS
+
+(() => {
+  const RULES_SECTIONS = [
+    {
+      id: 'goal',
+      title: { vi: '1. Mục tiêu', en: '1. The Goal' },
+      summary: {
+        vi: 'Mục tiêu tối thượng là chiếu hết (checkmate) Vua đối phương: Vua bị tấn công và không còn bất kỳ đường thoát nào.',
+        en: 'The ultimate objective is to checkmate the opponent’s King: the King is under attack with no legal way to escape.',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: 'Trong Cờ vua, Vua không bao giờ bị "ăn" và nhấc khỏi bàn như các quân khác. Khi Vua không thể thoát khỏi đòn tấn công, ván cờ kết thúc ngay lập tức. Ngoài ra, ván đấu cũng có thể kết thúc với kết quả hoà.',
+            en: 'In chess, the King is never actually captured or removed from the board. When the King cannot escape attack, the game ends immediately. A game can also end in a draw.',
+          },
+        },
+        {
+          type: 'board',
+          fen: 'r1bqkb1r/pppp1Qpp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4',
+          highlights: ['f7', 'e8'],
+          arrows: [['f7', 'e8']],
+          caption: {
+            vi: 'Ví dụ: Hậu Trắng tại f7 đang chiếu hết Vua Đen tại e8 (Scholar’s mate).',
+            en: 'Example: White Queen on f7 checkmates the Black King on e8 (Scholar’s mate).',
+          },
+        },
+      ],
+    },
+    {
+      id: 'board',
+      title: { vi: '2. Bàn cờ & Cách xếp quân', en: '2. Board & Setup' },
+      summary: {
+        vi: 'Bàn cờ có 64 ô (8 hàng × 8 cột). Quy tắc vàng: Ô góc dưới bên phải của mỗi người luôn là ô trắng.',
+        en: 'The chessboard has 64 squares (8 ranks × 8 files). Golden rule: "White on right" for bottom-corner square.',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: 'Cột được đặt tên bằng chữ cái a đến h (từ trái qua phải của bên Trắng). Hàng được đánh số 1 đến 8 (hàng 1 và 2 là sân nhà của Trắng). Hàng 1 xếp: Xe, Mã, Tượng, Hậu, Vua, Tượng, Mã, Xe. Ghi nhớ: "Hậu trắng ô trắng, Hậu đen ô đen". Toàn bộ hàng 2 là hàng Tốt.',
+            en: 'Files are lettered a to h (left to right from White). Ranks are numbered 1 to 8. Rank 1 setup: Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook. Remember: "Queen on her color". Rank 2 is filled with Pawns.',
+          },
+        },
+        {
+          type: 'board',
+          fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+          caption: {
+            vi: 'Thế cờ khởi đầu tiêu chuẩn. Trắng luôn luôn là bên đi trước.',
+            en: 'Standard initial starting position. White always moves first.',
+          },
+        },
+      ],
+    },
+    {
+      id: 'pieces',
+      title: { vi: '3. Cách đi của từng quân', en: '3. How Pieces Move' },
+      summary: {
+        vi: 'Mỗi loại quân có cách di chuyển và sức mạnh riêng biệt.',
+        en: 'Each piece type possesses unique movement capabilities and values.',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: '• Vua (King - ♔): Đi 1 ô theo mọi hướng. Vua vô giá, mất vua là thua.\n• Hậu (Queen - ♕, 9 điểm): Đi ngang, dọc hoặc chéo bao nhiêu ô tuỳ ý (không nhảy qua quân).\n• Xe (Rook - ♖, 5 điểm): Đi ngang hoặc dọc không giới hạn khoảng cách.\n• Tượng (Bishop - ♗, 3 điểm): Đi chéo bao nhiêu ô tuỳ ý. Tượng luôn đi trên các ô cùng một màu suốt ván.\n• Mã (Knight - ♘, 3 điểm): Đi theo hình chữ "L" (2 ô rồi rẽ 1 ô). Mã là quân duy nhất nhảy qua đầu các quân khác!\n• Tốt (Pawn - ♙, 1 điểm): Tiến thẳng 1 ô (nước đầu được tiến 2 ô), ăn chéo 1 ô về phía trước.',
+            en: '• King (♔): 1 square any direction. Priceless.\n• Queen (♕, 9 pts): Any squares orthogonally or diagonally.\n• Rook (♖, 5 pts): Any squares orthogonally.\n• Bishop (♗, 3 pts): Any squares diagonally; stays on same square color.\n• Knight (♘, 3 pts): "L" shape (2+1); only piece that can jump over others!\n• Pawn (♙, 1 pt): 1 step forward (optionally 2 steps on initial move), captures 1 square diagonally forward.',
+          },
+        },
+        {
+          type: 'tryit',
+          fen: '8/8/8/4N3/8/8/8/4K2k w - - 0 1',
+          solution: ['e5f7', 'e5d7', 'e5c6', 'e5c4', 'e5d3', 'e5f3', 'e5g4', 'e5g6'],
+          targetMove: 'e5f7',
+          caption: {
+            vi: 'Thử ngay: Di chuyển Mã tại e5 sang một ô hợp lệ (ví dụ: f7).',
+            en: 'Try it: Move the Knight on e5 to any legal square (e.g. f7).',
+          },
+          whyWrong: {
+            vi: 'Mã chỉ đi theo hình chữ L (2 ô thẳng + 1 ô rẽ).',
+            en: 'Knights move strictly in an L-shape.',
+          },
+        },
+      ],
+    },
+    {
+      id: 'capturing',
+      title: { vi: '4. Ăn quân (Capturing)', en: '4. Capturing Pieces' },
+      summary: {
+        vi: 'Đi quân vào ô đang có quân đối phương để ăn và loại quân đó khỏi bàn cờ.',
+        en: 'Move onto a square occupied by an enemy piece to capture and remove it.',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: 'Không được ăn quân cùng màu của mình. Mọi quân (Vua, Hậu, Xe, Tượng, Mã) ăn quân theo đúng hướng đi của nó. Riêng Tốt: đi thẳng nhưng ăn chéo 1 ô về phía trước.',
+            en: 'You cannot capture your own pieces. Pieces capture along their normal path of movement, except Pawns (which advance straight but capture diagonally forward).',
+          },
+        },
+        {
+          type: 'tryit',
+          fen: '4k3/8/8/3p4/4B3/8/8/4K3 w - - 0 1',
+          solution: ['e4d5'],
+          caption: {
+            vi: 'Thử ngay: Tượng Trắng e4 ăn Tốt Đen tại d5!',
+            en: 'Try it: White Bishop on e4 captures Black Pawn on d5!',
+          },
+          whyWrong: {
+            vi: 'Hãy dùng Tượng ăn quân Tốt Đen trên đường chéo.',
+            en: 'Capture the black pawn diagonally with your bishop.',
+          },
+        },
+      ],
+    },
+    {
+      id: 'check',
+      title: { vi: '5. Chiếu & Cách thoát chiếu', en: '5. Check & Escaping' },
+      summary: {
+        vi: 'Khi Vua bị quân đối phương đe dọa ăn ở nước tiếp theo, Vua bị "Chiếu".',
+        en: 'When a King is under direct attack by an enemy piece, it is in "Check".',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: 'Bắt buộc phải thoát chiếu ngay lập tức bằng 1 trong 3 cách (CPR):\n1. Chạy Vua (Run): Di chuyển Vua đến ô an toàn không bị tấn công.\n2. Chặn đòn (Block): Đưa một quân vào giữa Vua và quân đang chiếu.\n3. Ăn quân (Capture): Dùng một quân của mình ăn quân đang chiếu vua.\nLưu ý: Không được đi bất kỳ nước nào để lộ Vua vào thế bị chiếu (kể cả di chuyển quân đang bị ghim). Nếu bị "chiếu đôi" (2 quân cùng chiếu một lúc), bắt buộc phải chạy Vua!',
+            en: 'You must escape check immediately via CPR:\n1. Capture the attacking piece.\n2. Protect / Block the check with another piece.\n3. Run away with the King to a safe square.\nYou may never make a move that leaves your King in check. In double check, the King must move!',
+          },
+        },
+        {
+          type: 'tryit',
+          fen: '4k3/8/8/8/8/8/4r3/4K3 w - - 0 1',
+          solution: ['e1f1', 'e1d1', 'e1e2'],
+          targetMove: 'e1e2',
+          caption: {
+            vi: 'Thử ngay: Xe Đen e2 đang chiếu Vua Trắng e1. Vua Trắng ăn luôn Xe!',
+            en: 'Try it: Black Rook on e2 checks White King on e1. Capture the Rook!',
+          },
+          whyWrong: {
+            vi: 'Vua có thể ăn luôn Xe e2 hoặc di chuyển sang d1/f1 để thoát chiếu.',
+            en: 'King can capture the rook or step to d1/f1.',
+          },
+        },
+      ],
+    },
+    {
+      id: 'checkmate',
+      title: { vi: '6. Chiếu hết (Checkmate)', en: '6. Checkmate' },
+      summary: {
+        vi: 'Vua bị chiếu mà KHÔNG CÓ CÁCH NÀO để thoát → Ván cờ kết thúc, bên chiếu hết thắng cuộc!',
+        en: 'The King is in check and has NO legal way to escape → Checkmate! Game over.',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: 'Chiếu hết là chiến thắng tối hậu trong cờ vua. Ngay khi chiếu hết xảy ra, ván cờ kết thúc ngay mà không cần đợi đối phương di chuyển.',
+            en: 'Checkmate is the ultimate triumph in chess. The game concludes immediately the instant checkmate is delivered.',
+          },
+        },
+        {
+          type: 'tryit',
+          fen: '6k1/5ppp/8/8/8/8/8/3R2K1 w - - 0 1',
+          solution: ['d1d8'],
+          caption: {
+            vi: 'Thử ngay: Chiếu hết hàng cuối (Back-rank mate) bằng Xe d1 lên d8#.',
+            en: 'Try it: Deliver Back-Rank Checkmate with Rook d1 to d8#.',
+          },
+          whyWrong: {
+            vi: 'Hãy đưa Xe lên hàng 8 để giáng đòn chiếu hết!',
+            en: 'Bring the Rook up to rank 8 to deliver mate.',
+          },
+        },
+      ],
+    },
+    {
+      id: 'stalemate',
+      title: { vi: '7. Hết nước đi (Pat / Stalemate)', en: '7. Stalemate (Draw)' },
+      summary: {
+        vi: 'Đến lượt đi, Vua KHÔNG bị chiếu, nhưng bên đó KHÔNG CÒN bất kỳ nước đi hợp lệ nào → HOÀ CỜ!',
+        en: 'Player to move is NOT in check, but has NO legal moves available → Draw!',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: '⚠️ Chú ý: Dù bạn đang hơn đối phương rất nhiều quân (kể cả hơn cả Hậu và Xe), nếu dồn ép sai khiến đối phương rơi vào thế Pat thì ván cờ lập tức bị xử hoà! Luôn để cho Vua đối phương có ô di chuyển nếu chưa chiếu.',
+            en: '⚠️ Caution: Even with overwhelming material advantage, delivering stalemate results in a draw! Always ensure the opponent retains a legal move unless giving check.',
+          },
+        },
+        {
+          type: 'board',
+          fen: '7k/5Q2/6K1/8/8/8/8/8 b - - 0 1',
+          highlights: ['h8'],
+          crosses: ['g8', 'h7'],
+          caption: {
+            vi: 'Thế Pat kinh điển: Vua Đen không bị chiếu, nhưng cả g8 lẫn h7 đều bị kiểm soát. Ván cờ HOÀ.',
+            en: 'Classic stalemate: Black King is not in check, but cannot move anywhere. Game is a DRAW.',
+          },
+        },
+      ],
+    },
+    {
+      id: 'castling',
+      title: { vi: '8. Nhập thành (Castling) ★', en: '8. Castling ★' },
+      special: true,
+      summary: {
+        vi: 'Nước đi đặc biệt duy nhất cho phép di chuyển cả Vua và Xe trong cùng một lượt!',
+        en: 'The unique special move allowing King and Rook to move simultaneously in one turn!',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: 'Mục đích: Đưa Vua vào vị trí an toàn ở góc và đưa Xe ra trung tâm tấn công.\n• Nhập thành cánh Vua (O-O): Vua đi 2 ô sang phải (e1→g1), Xe h1 nhảy qua sang f1.\n• Nhập thành cánh Hậu (O-O-O): Vua đi 2 ô sang trái (e1→c1), Xe a1 nhảy qua sang d1.\n\n5 ĐIỀU KIỆN BẮT BUỘC:\n1. Cả Vua và Xe tham gia chưa từng di chuyển lần nào.\n2. Toàn bộ các ô nằm giữa Vua và Xe phải hoàn toàn trống.\n3. Vua KHÔNG đang bị chiếu (không được nhập thành để thoát chiếu).\n4. Vua KHÔNG đi qua ô đang bị quân đối phương kiểm soát/tấn công.\n5. Ô đích mà Vua hạ cánh KHÔNG bị đối phương tấn công.\n\n💡 Lưu ý: Xe đi qua ô bị tấn công (như ô b1) vẫn được phép nhập thành!',
+            en: 'Purpose: Tucks King safely into corner and activates Rook.\n• Kingside (O-O): King moves 2 squares right (e1→g1), Rook jumps to f1.\n• Queenside (O-O-O): King moves 2 squares left (e1→c1), Rook jumps to d1.\n\n5 MANDATORY CONDITIONS:\n1. King and chosen Rook have never moved.\n2. All squares between them are vacant.\n3. King is NOT currently in check.\n4. King does not pass through any attacked square.\n5. King does not land on an attacked square.\n\n💡 Note: The Rook CAN pass through an attacked square (e.g. b1)!',
+          },
+        },
+        {
+          type: 'tryit',
+          fen: 'r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1',
+          solution: ['e1g1'],
+          caption: {
+            vi: 'Thử ngay: Nhập thành cánh vua cho Trắng bằng cách đi Vua e1 sang g1!',
+            en: 'Try it: Castle kingside for White by moving King e1 to g1!',
+          },
+          whyWrong: {
+            vi: 'Di chuyển Vua e1 đến g1 (2 ô về phía Xe cánh vua).',
+            en: 'Move King e1 to g1 (two squares towards the Rook).',
+          },
+        },
+      ],
+    },
+    {
+      id: 'en-passant',
+      title: { vi: '9. Bắt tốt qua đường (En Passant) ★', en: '9. En Passant ★' },
+      special: true,
+      summary: {
+        vi: 'Nước bắt Tốt đặc biệt khi Tốt đối phương tiến 2 ô vượt qua ô bị Tốt bạn kiểm soát.',
+        en: 'A special pawn capture when enemy pawn advances 2 squares past your pawn’s strike zone.',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: 'Khi nào xảy ra: Khi Tốt của đối phương từ hàng xuất phát tiến 2 ô và dừng ngay bên cạnh Tốt của bạn (Tốt bạn ở hàng 5 với Trắng, hàng 4 với Đen).\nCách bắt: Tốt của bạn ăn chéo vào ô mà Tốt đối phương VỪA ĐI QUA (như thể nó chỉ tiến 1 ô), và loại Tốt đối phương khỏi bàn cờ.\n⚠️ CHỈ ĐƯỢC BẮT NGAY LẬP TỨC: Nước bắt này chỉ có hiệu lực ngay trong lượt đi kế tiếp! Nếu bạn đi nước khác, quyền bắt tốt qua đường của thế đó sẽ vĩnh viễn biến mất.',
+            en: 'When it occurs: When an enemy pawn advances 2 squares from its home rank and lands directly adjacent to your pawn (your pawn on 5th rank for White, 4th rank for Black).\nHow to capture: Your pawn captures diagonally onto the skipped square behind the enemy pawn, removing it from the board.\n⚠️ IMMEDIATELY ONLY: Must be played on the very next turn! If delayed, the right is forfeit.',
+          },
+        },
+        {
+          type: 'tryit',
+          fen: 'rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2',
+          solution: ['e5d6'],
+          caption: {
+            vi: 'Thử ngay: Đen vừa đi d7-d5. Dùng Tốt Trắng e5 ăn tốt qua đường sang d6!',
+            en: 'Try it: Black just played d7-d5. Capture en passant with White pawn e5 to d6!',
+          },
+          whyWrong: {
+            vi: 'Đi Tốt từ e5 sang d6 để thực hiện bắt tốt qua đường.',
+            en: 'Move pawn e5 to d6 to execute en passant.',
+          },
+        },
+      ],
+    },
+    {
+      id: 'promotion',
+      title: { vi: '10. Phong cấp (Pawn Promotion) ★', en: '10. Promotion ★' },
+      special: true,
+      summary: {
+        vi: 'Khi Tốt tiến đến hàng cuối cùng (hàng 8 với Trắng, hàng 1 với Đen), nó được phong cấp!',
+        en: 'When a Pawn reaches the furthest rank (rank 8 for White, rank 1 for Black), it promotes!',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: 'Bắt buộc phong cấp: Tốt phải đổi thành Hậu, Xe, Tượng hoặc Mã cùng màu ngay trong nước đi đó (không thành Vua, không giữ nguyên là Tốt).\nKhông giới hạn số lượng: Bạn có thể sở hữu 2, 3 hoặc nhiều Hậu trên bàn cờ cùng lúc!\n"Phong cấp thấp" (Underpromotion): Đa số trường hợp chọn Hậu (quân mạnh nhất), nhưng đôi khi phong thành Mã để chiếu ngay, hoặc thành Xe/Tượng để tránh rơi vào thế Pat.',
+            en: 'Mandatory transformation: Pawn must become a Queen, Rook, Bishop, or Knight of same color immediately (cannot remain a Pawn, cannot become a King).\nNo limit: You can have multiple Queens on the board simultaneously!\nUnderpromotion: While Queen is most common, promoting to Knight can deliver immediate forks/checks, or to Rook/Bishop to avoid stalemate.',
+          },
+        },
+        {
+          type: 'tryit',
+          fen: 'k7/4P3/8/8/8/8/8/4K3 w - - 0 1',
+          solution: ['e7e8q', 'e7e8r', 'e7e8b', 'e7e8n'],
+          targetMove: 'e7e8q',
+          caption: {
+            vi: 'Thử ngay: Tiến Tốt e7 lên e8 và phong cấp thành Hậu!',
+            en: 'Try it: Advance Pawn e7 to e8 and promote to Queen!',
+          },
+          whyWrong: {
+            vi: 'Hãy đẩy Tốt lên ô e8 để phong cấp.',
+            en: 'Push the pawn to e8 to promote.',
+          },
+        },
+      ],
+    },
+    {
+      id: 'draws',
+      title: { vi: '11. Các trường hợp Hoà cờ', en: '11. Draw Conditions' },
+      summary: {
+        vi: 'Các quy định chi tiết dẫn đến kết quả hoà trong thi đấu cờ vua.',
+        en: 'Detailed official regulations leading to a draw in chess.',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: '1. Hết nước đi (Pat): Bên đến lượt không bị chiếu nhưng không có nước đi hợp lệ.\n2. Lặp lại thế cờ 3 lần (Threefold repetition): Cùng một thế cờ (cùng quyền đi, nhập thành, bắt tốt) lặp lại 3 lần trong ván.\n3. Luật 50 nước: 50 nước liên tiếp của cả hai bên không có nước đi Tốt nào và không có quân nào bị ăn.\n4. Không đủ quân chiếu hết: Các trường hợp như Vua đối Vua; Vua+Tượng đối Vua; Vua+Mã đối Vua; Vua+Tượng đối Vua+Tượng cùng màu ô.\n5. Thoả thuận hoà: Một bên gửi lời đề nghị hoà và đối phương đồng ý.',
+            en: '1. Stalemate: No legal moves and not in check.\n2. Threefold Repetition: The identical board position occurs 3 times.\n3. 50-Move Rule: 50 consecutive turns without a pawn move or capture.\n4. Insufficient Material: K vs K; K+B vs K; K+N vs K; K+B vs K+B (same-color bishops).\n5. Mutual Agreement: Both players agree to a draw.',
+          },
+        },
+        {
+          type: 'board',
+          fen: '4k3/4b3/8/8/8/8/4B3/4K3 w - - 0 1',
+          caption: {
+            vi: 'Vua + Tượng đối Vua + Tượng (Tượng khác màu ô có thể chiếu hết trên lý thuyết, nhưng cùng màu ô là hoà tự động).',
+            en: 'Insufficient material example when bishops cannot ever cooperate to force checkmate.',
+          },
+        },
+      ],
+    },
+    {
+      id: 'endings',
+      title: { vi: '12. Thắng thua khác & Đồng hồ', en: '12. Resign & Clocks' },
+      summary: {
+        vi: 'Quy định về đầu hàng (bỏ cuộc) và luật thời gian trong trò chơi.',
+        en: 'Rules regarding resignation and chess clocks.',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: '• Đầu hàng: Người chơi có thể chủ động bấm nút "Đầu hàng" bất cứ lúc nào nếu nhận thấy thế trận không thể cứu vãn.\n• HẾT GIỜ = XỬ THUA: Nếu bạn bật chế độ Đồng hồ trong Cài đặt và để thời gian đếm về 0 trước khi đi quân, bạn sẽ bị xử THUA ngay lập tức (bất kể bạn còn bao nhiêu quân trên bàn cờ).\n• 2 kiểu đồng hồ:\n  - Mỗi nước (Per move): Mỗi lượt có số giây nhất định (ví dụ 30 giây), đi xong sẽ hồi lại đầy đủ cho lượt kế tiếp.\n  - Cả ván (Game clock): Quỹ thời gian chung (ví dụ 10 phút + 5 giây cộng dồn mỗi nước).\n• Cảnh báo 5 giây cuối: Khi còn dưới 5 giây, màn hình sẽ hiện số đếm ngược to và âm thanh nhịp gỗ dồn dập cảnh báo!',
+            en: '• Resignation: You can resign at any time if the position is lost.\n• TIMEOUT = LOSS: If clock is enabled and your time expires before moving, you LOSE immediately regardless of material remaining.\n• 2 Clock types:\n  - Per move: Resets each turn (e.g. 30 s).\n  - Game clock: Shared bank with Fischer increment (e.g. 10m + 5s).\n• Last 5 seconds: Prominent visual countdown & rising audio alert!',
+          },
+        },
+      ],
+    },
+    {
+      id: 'notation',
+      title: { vi: '13. Ký hiệu nước đi (SAN)', en: '13. Move Notation' },
+      summary: {
+        vi: 'Cách đọc và ghi chép biên bản các nước đi trong cờ vua.',
+        en: 'How to read standard algebraic notation in chess records.',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: '• Chữ cái đại diện: V (King - K), H (Queen - Q), X (Rook - R), T (Bishop - B), M (Knight - N). Tốt không có chữ cái.\n• Tên ô: chữ cột + số hàng (ví dụ: e4, c5).\n• x: ăn quân (ví dụ: exd5, Nxf6).\n• +: chiếu vua (ví dụ: Qh5+).\n• #: chiếu hết (ví dụ: Qxf7#).\n• O-O: nhập thành cánh vua; O-O-O: nhập thành cánh hậu.\n• =H (=Q): phong cấp thành Hậu.',
+            en: '• Piece letters: K (King), Q (Queen), R (Rook), B (Bishop), N (Knight). Pawns have no letter.\n• Square name: file + rank (e.g., e4, c5).\n• x: capture (e.g. exd5, Nxf6).\n• +: check (e.g. Qh5+).\n• #: checkmate (e.g. Qxf7#).\n• O-O: kingside castling; O-O-O: queenside castling.\n• =Q: promotion to Queen.',
+          },
+        },
+      ],
+    },
+    {
+      id: 'tips',
+      title: { vi: '14. Mẹo cho người mới bắt đầu', en: '14. Beginner Tips' },
+      summary: {
+        vi: 'Những nguyên lý chiến thuật cơ bản giúp bạn chơi tốt hơn ngay từ ván đầu.',
+        en: 'Fundamental opening principles to elevate your game immediately.',
+      },
+      blocks: [
+        {
+          type: 'p',
+          text: {
+            vi: '1. Kiểm soát trung tâm: Các ô e4, d4, e5, d5 là ngã tư trung tâm quan trọng nhất.\n2. Phát triển Mã và Tượng sớm: Đưa các quân nhẹ ra trận trước khi xuất kích Hậu.\n3. Đừng đưa Hậu ra quá sớm: Hậu dễ bị các quân nhỏ của đối phương tấn công đuổi bắt.\n4. Nhập thành sớm: Bảo vệ an toàn cho Vua và kết nối hai Xe.\n5. Đặt câu hỏi trước mỗi nước: "Đối phương vừa đi nước đó nhằm đe dọa điều gì?"',
+            en: '1. Control the center: Squares e4, d4, e5, d5 dominate the board.\n2. Develop Knights & Bishops early.\n3. Avoid bringing the Queen out prematurely.\n4. Castle early for King safety.\n5. Always ask: "What does my opponent’s last move threaten?"',
+          },
+        },
+      ],
+    },
+    {
+      id: 'glossary',
+      title: { vi: '15. Bảng thuật ngữ Cờ vua', en: '15. Chess Glossary' },
+      summary: {
+        vi: 'Bảng đối chiếu thuật ngữ Cờ vua Việt - Anh.',
+        en: 'Bilingual Vietnamese - English chess terminology table.',
+      },
+      blocks: [
+        {
+          type: 'glossary',
+          terms: [
+            { vi: 'Chiếu', en: 'Check', desc: 'Đe dọa bắt Vua' },
+            { vi: 'Chiếu hết', en: 'Checkmate', desc: 'Vua bị chiếu không thể thoát' },
+            { vi: 'Pat', en: 'Stalemate', desc: 'Hết nước đi hợp lệ và không bị chiếu' },
+            { vi: 'Nhập thành', en: 'Castling', desc: 'Vua và Xe cùng di chuyển' },
+            { vi: 'Bắt tốt qua đường', en: 'En passant', desc: 'Ăn Tốt vừa nhảy 2 ô' },
+            { vi: 'Phong cấp', en: 'Promotion', desc: 'Tốt đến hàng cuối biến thành quân khác' },
+            { vi: 'Ghim', en: 'Pin', desc: 'Quân không thể rời đi vì để lộ Vua/quân lớn' },
+            { vi: 'Chiếu đôi', en: 'Double check', desc: 'Hai quân cùng chiếu Vua' },
+            { vi: 'Đòn đôi', en: 'Fork', desc: 'Một quân tấn công cùng lúc hai mục tiêu' },
+            { vi: 'Khai cuộc', en: 'Opening', desc: 'Giai đoạn phát triển quân ban đầu' },
+            { vi: 'Tàn cuộc', en: 'Endgame', desc: 'Giai đoạn ít quân tranh tài' },
+          ],
+        },
+      ],
+    },
+  ];
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = RULES_SECTIONS;
+  } else if (typeof window !== 'undefined') {
+    window.RULES_SECTIONS = RULES_SECTIONS;
+  }
+})();
+
+</script>
+  <script type="module">
+import * as THREE from 'three';
+
+const APP_ID = 'chess';
+const APP_VERSION = '1.0.0';
+const MAKER = '';
+
+// Storage helper with strict namespacing
+const store = {
+  get(key, fallback = null) {
+    try {
+      const v = localStorage.getItem('chess:' + key);
+      return v ? JSON.parse(v) : fallback;
+    } catch {
+      return fallback;
+    }
+  },
+  set(key, val) {
+    try {
+      localStorage.setItem('chess:' + key, JSON.stringify(val));
+    } catch {
+      console.warn('Storage failed');
+    }
+  },
+  remove(key) {
+    try {
+      localStorage.removeItem('chess:' + key);
+    } catch {}
+  },
+  removeAll() {
+    try {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('chess:')) keys.push(k);
+      }
+      keys.forEach((k) => localStorage.removeItem(k));
+    } catch {}
+  },
+};
+
+// Default settings
+const DEFAULT_SETTINGS = {
+  v: 1,
+  timer: { kind: 'off', perMoveMs: 30000, baseMs: 600000, incMs: 0 },
+  countdownFx: true,
+  vibrate: true,
+  legalDots: true,
+  coords: true,
+  autoQueen: false,
+  pvpUndo: true,
+  rotatePvp: false,
+  ruleHints: true,
+  notation: 'letters',
+  music: false,
+  sfx: true,
+};
+
+let settings = Object.assign({}, DEFAULT_SETTINGS, store.get('settings', {}));
+
+// Audio Engine setup
+let audioCtx = null;
+let sfxGain = null;
+let musicGain = null;
+let isAudioUnlocked = false;
+let bgmSynth = null;
+let bgmLoop = null;
+
+function initAudio() {
+  if (isAudioUnlocked) return;
+  try {
+    if (typeof Tone !== 'undefined') {
+      Tone.start();
+      audioCtx = Tone.context.rawContext || Tone.context;
+    } else {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    sfxGain = audioCtx.createGain();
+    sfxGain.gain.value = settings.sfx ? 0.7 : 0;
+    sfxGain.connect(audioCtx.destination);
+
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = settings.music ? 0.5 : 0;
+    musicGain.connect(audioCtx.destination);
+
+    // Register chess specific SFX on House.SFX
+    if (window.House && window.House.SFX) {
+      window.House.SFX.capture = (c, o, t) => {
+        window.House.play(c, o, 'place', 2);
+        setTimeout(() => window.House.play(c, o, 'place', 1), 60);
+      };
+      window.House.SFX.check = (c, o, t) => {
+        window.House.play(c, o, 'place', 2);
+        setTimeout(() => window.House.play(c, o, 'tap'), 80);
+      };
+      window.House.SFX.castle = (c, o, t) => {
+        window.House.play(c, o, 'place', 1);
+        setTimeout(() => window.House.play(c, o, 'place', 1), 120);
+      };
+      window.House.SFX.promote = (c, o, t) => {
+        window.House.play(c, o, 'win');
+      };
+      window.House.SFX.countdown = (c, o, t, n = 5) => {
+        const freqs = { 5: 523.25, 4: 587.33, 3: 659.25, 2: 783.99, 1: 880 };
+        const g = c.createGain();
+        g.connect(o);
+        const gainVal = 0.3 + (5 - n) * 0.08;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(gainVal, t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+        const osc = c.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freqs[n] || 523.25;
+        osc.connect(g);
+        osc.start(t);
+        osc.stop(t + 0.22);
+      };
+      window.House.SFX.timeUp = (c, o, t) => {
+        window.House.play(c, o, 'invalid');
+        setTimeout(() => window.House.play(c, o, 'lose'), 120);
+      };
+    }
+
+    isAudioUnlocked = true;
+    document.getElementById('audio-unlock-chip').style.display = 'none';
+    if (settings.music) startBgm();
+  } catch (e) {
+    console.warn('Audio unlock failed', e);
+  }
+}
+
+function playSound(name, ...args) {
+  if (!settings.sfx || !audioCtx || !isAudioUnlocked) return;
+  if (window.House && window.House.SFX[name]) {
+    window.House.SFX[name](audioCtx, sfxGain, audioCtx.currentTime + 0.01, ...args);
+  }
+}
+
+function startBgm() {
+  if (!settings.music || !isAudioUnlocked || typeof Tone === 'undefined') return;
+  try {
+    if (!bgmSynth) {
+      bgmSynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.2, decay: 0.8, sustain: 0.5, release: 1.2 },
+      }).toDestination();
+      bgmSynth.volume.value = -12;
+    }
+    Tone.Transport.bpm.value = 76;
+    const chords = [
+      ['A3', 'C4', 'E4', 'G4', 'B4'], // Am9
+      ['D3', 'F#4', 'A4', 'C5', 'E5'], // D9
+      ['G3', 'B3', 'D4', 'F#4', 'A4'], // Gmaj7
+      ['C3', 'E4', 'G4', 'B4', 'D5'],  // Cmaj7
+    ];
+    let step = 0;
+    if (bgmLoop) bgmLoop.dispose();
+    bgmLoop = new Tone.Loop((time) => {
+      bgmSynth.triggerAttackRelease(chords[step % chords.length], '2m', time);
+      step++;
+    }, '2m').start(0);
+    Tone.Transport.start();
+  } catch (e) {
+    console.warn('BGM error', e);
+  }
+}
+
+function stopBgm() {
+  if (typeof Tone !== 'undefined' && Tone.Transport) {
+    Tone.Transport.stop();
+    if (bgmLoop) bgmLoop.dispose();
+    bgmLoop = null;
+  }
+}
+
+// Line icon glyphs rendering for 3D tokens and 2D mini boards
+const GLYPHS = {
+  // SVG paths for chess pieces (2px stroke, round caps, 32x32 viewbox)
+  pawn: '<circle cx="16" cy="11" r="5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M11 25c1-6 9-6 10 0M8 27h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  knight: '<path d="M12 26h10M11 22c2-8 0-11 5-14 3 2 4 4 3 7l4 2-5 3c-2 2-3 4-7 2z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  bishop: '<path d="M16 6v3M16 9c-4 3-5 9 0 14 5-5 4-11 0-14zM13 16h6M10 26h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  rook: '<path d="M9 25h14M11 25v-10h10v10M9 11h14v4H9zM10 11V8h3v2h2V8h2v2h3V8h2v3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  queen: '<path d="M7 14l3 9h12l3-9-4 3-5-7-5 7-4-3zM8 26h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="13" r="1.5" fill="currentColor"/><circle cx="16" cy="8" r="1.5" fill="currentColor"/><circle cx="25" cy="13" r="1.5" fill="currentColor"/>',
+  king: '<path d="M16 6v5M13.5 8.5h5M10 26h12M11 23c-3-6 2-10 5-10s8 4 5 10z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+};
+
+const PIECE_TYPE_MAP = { 1: 'pawn', 2: 'knight', 3: 'bishop', 4: 'rook', 5: 'queen', 6: 'king' };
+
+// Generate canvas texture for a piece token
+function createPieceTexture(type, isWhite) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  const cs = getComputedStyle(document.documentElement);
+
+  const discColor = cs.getPropertyValue(isWhite ? '--piece-light' : '--piece-dark').trim() || (isWhite ? '#FBF8F2' : '#2B2622');
+  const inkColor = cs.getPropertyValue(isWhite ? '--piece-light-ink' : '--piece-dark-ink').trim() || (isWhite ? '#2B2622' : '#F3EDE2');
+
+  // Disc background
+  ctx.fillStyle = discColor;
+  ctx.beginPath();
+  ctx.arc(64, 64, 60, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Contrast rim
+  ctx.strokeStyle = inkColor;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // Draw piece glyph
+  const svgXml = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 32 32" color="${inkColor}">${GLYPHS[type]}</svg>`;
+  const img = new Image();
+  const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgXml);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  img.onload = () => {
+    ctx.drawImage(img, 24, 24, 80, 80);
+    tex.needsUpdate = true;
+    requestRender();
+  };
+  img.src = url;
+
+  return tex;
+}
+
+// Three.js Scene, Camera, Renderer
+let scene, camera, renderer;
+let boardGroup, piecesGroup, overlayGroup;
+let pieceTextures = {};
+let squareMeshes = [];
+let pieceMeshes = [];
+let animList = [];
+let isFlipped = false;
+let renderRequested = false;
+
+function requestRender() {
+  if (!renderRequested) {
+    renderRequested = true;
+    requestAnimationFrame(render);
+  }
+}
+
+function render() {
+  renderRequested = false;
+  const now = performance.now();
+  let animating = false;
+
+  // Process active animations
+  for (let i = animList.length - 1; i >= 0; i--) {
+    const a = animList[i];
+    const t = (now - a.start) / a.dur;
+    if (t >= 1) {
+      a.mesh.position.copy(a.toPos);
+      if (a.onEnd) a.onEnd();
+      animList.splice(i, 1);
+    } else {
+      animating = true;
+      const ease = 0.5 - Math.cos(t * Math.PI) / 2; // Smooth cosine ease
+      a.mesh.position.lerpVectors(a.fromPos, a.toPos, ease);
+    }
+  }
+
+  if (renderer && scene && camera) {
+    renderer.render(scene, camera);
+  }
+
+  if (animating) {
+    requestRender();
+  }
+}
+
+function initThree() {
+  const canvas = document.getElementById('chess-canvas');
+  const container = canvas.parentElement;
+  const size = container.clientWidth || 360;
+
+  scene = new THREE.Scene();
+
+  const aspect = 1;
+  const d = 4.6; // Board is 8x8 units (-4 to +4)
+  camera = new THREE.OrthographicCamera(-d, d, d, -d, 0.1, 100);
+  camera.position.set(0, 10, 0);
+  camera.lookAt(0, 0, 0);
+
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setSize(size, size);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // Lights
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.9);
+  scene.add(hemiLight);
+
+  const dirLight = new THREE.DirectionalLight(0xfff3e0, 0.6);
+  dirLight.position.set(-5, 12, -5);
+  scene.add(dirLight);
+
+  boardGroup = new THREE.Group();
+  piecesGroup = new THREE.Group();
+  overlayGroup = new THREE.Group();
+  scene.add(boardGroup);
+  scene.add(overlayGroup);
+  scene.add(piecesGroup);
+
+  buildBoard();
+  initPieceTextures();
+
+  window.addEventListener('resize', onResize);
+  window.addEventListener('housethemechange', () => {
+    updateThemeColors();
+  });
+
+  setupInput();
+  requestRender();
+}
+
+function onResize() {
+  const canvas = document.getElementById('chess-canvas');
+  if (!canvas) return;
+  const container = canvas.parentElement;
+  const size = Math.min(container.clientWidth, container.clientHeight);
+  if (size > 0 && renderer) {
+    renderer.setSize(size, size);
+    requestRender();
+  }
+}
+
+function updateThemeColors() {
+  initPieceTextures();
+  buildBoard();
+  syncBoard3D();
+}
+
+function initPieceTextures() {
+  pieceTextures = {};
+  for (const [code, type] of Object.entries(PIECE_TYPE_MAP)) {
+    pieceTextures[code] = createPieceTexture(type, true);   // White
+    pieceTextures[-code] = createPieceTexture(type, false); // Black
+  }
+}
+
+function sqToPos(sq) {
+  const file = sq & 7;
+  const rank = sq >> 3;
+  // File: 0..7 -> -3.5 to +3.5. Rank: 0..7 -> +3.5 to -3.5 (rank 1 at bottom, rank 8 at top)
+  let x = file - 3.5;
+  let z = -(rank - 3.5);
+  if (isFlipped) {
+    x = -x;
+    z = -z;
+  }
+  return new THREE.Vector3(x, 0, z);
+}
+
+function posToSq(pos) {
+  let file = Math.round(pos.x + 3.5);
+  let rank = Math.round(-pos.z + 3.5);
+  if (isFlipped) {
+    file = 7 - file;
+    rank = 7 - rank;
+  }
+  if (file < 0 || file > 7 || rank < 0 || rank > 7) return -1;
+  return (rank << 3) | file;
+}
+
+function buildBoard() {
+  while (boardGroup.children.length) boardGroup.remove(boardGroup.children[0]);
+  squareMeshes = [];
+
+  const cs = getComputedStyle(document.documentElement);
+  const sqLightHex = cs.getPropertyValue('--sq-light').trim() || '#EFE3CC';
+  const sqDarkHex = cs.getPropertyValue('--sq-dark').trim() || '#C9A97E';
+  const boardLineHex = cs.getPropertyValue('--board-line').trim() || '#8C7A62';
+
+  const geom = new THREE.BoxGeometry(0.99, 0.08, 0.99);
+  const matLight = new THREE.MeshStandardMaterial({ color: sqLightHex, roughness: 0.8 });
+  const matDark = new THREE.MeshStandardMaterial({ color: sqDarkHex, roughness: 0.8 });
+
+  for (let r = 0; r < 8; r++) {
+    for (let f = 0; f < 8; f++) {
+      const sq = (r << 3) | f;
+      const isLight = ((r + f) % 2) === 1; // standard chess board: a1 (0,0) is dark, b1 (0,1) is light
+      const mesh = new THREE.Mesh(geom, isLight ? matLight : matDark);
+      mesh.position.set(f - 3.5, -0.04, -(r - 3.5));
+      mesh.userData = { sq };
+      boardGroup.add(mesh);
+      squareMeshes[sq] = mesh;
+    }
+  }
+
+  // Border frame
+  const frameGeom = new THREE.BoxGeometry(8.3, 0.06, 8.3);
+  const frameMat = new THREE.MeshStandardMaterial({ color: boardLineHex, roughness: 0.7 });
+  const frame = new THREE.Mesh(frameGeom, frameMat);
+  frame.position.set(0, -0.09, 0);
+  boardGroup.add(frame);
+
+  requestRender();
+}
+
+// 3D Wooden Token creation
+function createTokenMesh(val) {
+  const geom = new THREE.CylinderGeometry(0.42, 0.42, 0.12, 32);
+  const cs = getComputedStyle(document.documentElement);
+  const isWhite = val > 0;
+  const sideColor = cs.getPropertyValue(isWhite ? '--piece-light' : '--piece-dark').trim() || (isWhite ? '#FBF8F2' : '#2B2622');
+
+  const sideMat = new THREE.MeshStandardMaterial({ color: sideColor, roughness: 0.7 });
+  const topMat = new THREE.MeshBasicMaterial({ map: pieceTextures[val], transparent: true });
+  const bottomMat = sideMat;
+
+  const materials = [sideMat, topMat, bottomMat];
+  const mesh = new THREE.Mesh(geom, materials);
+  mesh.castShadow = false;
+  mesh.userData = { pieceVal: val };
+  return mesh;
+}
+
+// Sync 3D Pieces with current game state
+function syncBoard3D(prevBoard = null) {
+  while (piecesGroup.children.length) piecesGroup.remove(piecesGroup.children[0]);
+  pieceMeshes = [];
+
+  const b = curGame ? curGame.state.board : ChessRules.initial().board;
+  for (let sq = 0; sq < 64; sq++) {
+    const val = b[sq];
+    if (val !== 0) {
+      const mesh = createTokenMesh(val);
+      const pos = sqToPos(sq);
+      mesh.position.set(pos.x, 0.06, pos.z);
+      mesh.userData.sq = sq;
+      piecesGroup.add(mesh);
+      pieceMeshes[sq] = mesh;
+    }
+  }
+  requestRender();
+}
+
+function animateMove(move, onDone) {
+  const mesh = pieceMeshes[move.from];
+  if (!mesh) {
+    syncBoard3D();
+    if (onDone) onDone();
+    return;
+  }
+
+  const fromPos = sqToPos(move.from);
+  const toPos = sqToPos(move.to);
+
+  // If capture, remove captured mesh
+  if (pieceMeshes[move.to]) {
+    piecesGroup.remove(pieceMeshes[move.to]);
+    delete pieceMeshes[move.to];
+  }
+  if (move.flags & ChessRules.FLAGS.EP) {
+    const epSq = curGame.state.ep - (curGame.state.turn === 1 ? -8 : 8);
+    if (pieceMeshes[epSq]) {
+      piecesGroup.remove(pieceMeshes[epSq]);
+      delete pieceMeshes[epSq];
+    }
+  }
+
+  mesh.position.set(fromPos.x, 0.06, fromPos.z);
+  animList.push({
+    mesh,
+    fromPos: mesh.position.clone(),
+    toPos: new THREE.Vector3(toPos.x, 0.06, toPos.z),
+    start: performance.now(),
+    dur: 180,
+    onEnd: () => {
+      syncBoard3D();
+      if (onDone) onDone();
+    },
+  });
+  requestRender();
+}
+
+// Overlays (selection, legal dots, check pulse)
+let selectedSq = -1;
+let legalMovesForSelected = [];
+let dotsGroup = new THREE.Group();
+
+function updateOverlays() {
+  while (overlayGroup.children.length) overlayGroup.remove(overlayGroup.children[0]);
+
+  if (selectedSq >= 0 && settings.legalDots) {
+    const cs = getComputedStyle(document.documentElement);
+    const accentHex = cs.getPropertyValue('--accent').trim() || '#B8432E';
+
+    // Highlight selected square
+    const selPos = sqToPos(selectedSq);
+    const selGeom = new THREE.PlaneGeometry(0.96, 0.96);
+    selGeom.rotateX(-Math.PI / 2);
+    const selMat = new THREE.MeshBasicMaterial({ color: accentHex, transparent: true, opacity: 0.35 });
+    const selMesh = new THREE.Mesh(selGeom, selMat);
+    selMesh.position.set(selPos.x, 0.01, selPos.z);
+    overlayGroup.add(selMesh);
+
+    // Legal move dots
+    const dotGeom = new THREE.CircleGeometry(0.16, 24);
+    dotGeom.rotateX(-Math.PI / 2);
+    const ringGeom = new THREE.RingGeometry(0.35, 0.44, 28);
+    ringGeom.rotateX(-Math.PI / 2);
+
+    for (const m of legalMovesForSelected) {
+      const pos = sqToPos(m.to);
+      const isCap = (m.captured !== 0) || (m.flags & ChessRules.FLAGS.EP);
+      const geom = isCap ? ringGeom : dotGeom;
+      const mat = new THREE.MeshBasicMaterial({ color: accentHex, transparent: true, opacity: isCap ? 0.7 : 0.55 });
+      const dot = new THREE.Mesh(geom, mat);
+      dot.position.set(pos.x, 0.015, pos.z);
+      overlayGroup.add(dot);
+    }
+  }
+
+  // Check pulse highlight on King
+  if (curGame && ChessRules.inCheck(curGame.state, curGame.state.turn)) {
+    const kingSq = curGame.state.turn === 1 ? curGame.state.kings[0] : curGame.state.kings[1];
+    if (kingSq >= 0) {
+      const kPos = sqToPos(kingSq);
+      const cs = getComputedStyle(document.documentElement);
+      const dangerHex = cs.getPropertyValue('--danger').trim() || '#B8432E';
+      const chkGeom = new THREE.PlaneGeometry(0.98, 0.98);
+      chkGeom.rotateX(-Math.PI / 2);
+      const chkMat = new THREE.MeshBasicMaterial({ color: dangerHex, transparent: true, opacity: 0.45 });
+      const chkMesh = new THREE.Mesh(chkGeom, chkMat);
+      chkMesh.position.set(kPos.x, 0.012, kPos.z);
+      overlayGroup.add(chkMesh);
+    }
+  }
+
+  requestRender();
+}
+
+// User Interaction & Pointer Handling
+let isDragging = false;
+let dragStartPointer = { x: 0, y: 0 };
+let draggedMesh = null;
+let originalMeshPos = null;
+
+function setupInput() {
+  const canvas = document.getElementById('chess-canvas');
+  if (!canvas) return;
+
+  canvas.addEventListener('pointerdown', (e) => {
+    initAudio();
+    if (!curGame || curGame.isOver || isAIThinking || curGame.isReplay) return;
+
+    const sq = getSquareFromEvent(e);
+    if (sq < 0) return;
+
+    dragStartPointer = { x: e.clientX, y: e.clientY };
+    isDragging = false;
+
+    // Tap-tap handling
+    if (selectedSq >= 0) {
+      const chosenMove = legalMovesForSelected.find((m) => m.to === sq);
+      if (chosenMove) {
+        applyHumanMove(chosenMove);
+        selectedSq = -1;
+        legalMovesForSelected = [];
+        updateOverlays();
+        return;
+      }
+    }
+
+    // Select piece
+    const piece = curGame.state.board[sq];
+    if (piece !== 0 && (piece * curGame.state.turn > 0)) {
+      if (curGame.mode === 'pve' && curGame.humanSide !== (curGame.state.turn === 1 ? 'w' : 'b')) {
+        return;
+      }
+      selectedSq = sq;
+      legalMovesForSelected = ChessRules.legalMovesFrom(curGame.state, sq);
+      updateOverlays();
+      draggedMesh = pieceMeshes[sq];
+      if (draggedMesh) originalMeshPos = draggedMesh.position.clone();
+      canvas.setPointerCapture(e.pointerId);
+    } else {
+      if (selectedSq >= 0) {
+        playSound('invalid');
+      }
+      selectedSq = -1;
+      legalMovesForSelected = [];
+      updateOverlays();
+    }
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    if (!draggedMesh) return;
+    const dist = Math.hypot(e.clientX - dragStartPointer.x, e.clientY - dragStartPointer.y);
+    if (dist > 8) {
+      isDragging = true;
+      const worldPos = getRaycastGroundPos(e);
+      if (worldPos) {
+        draggedMesh.position.set(worldPos.x, 0.35, worldPos.z);
+        requestRender();
+      }
+    }
+  });
+
+  canvas.addEventListener('pointerup', (e) => {
+    if (draggedMesh) {
+      if (isDragging) {
+        const targetSq = getSquareFromEvent(e);
+        const chosenMove = legalMovesForSelected.find((m) => m.to === targetSq);
+        if (chosenMove) {
+          applyHumanMove(chosenMove);
+          selectedSq = -1;
+          legalMovesForSelected = [];
+          updateOverlays();
+        } else {
+          draggedMesh.position.copy(originalMeshPos);
+          requestRender();
+        }
+      }
+      draggedMesh = null;
+    }
+    isDragging = false;
+  });
+}
+
+function getSquareFromEvent(e) {
+  const canvas = document.getElementById('chess-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+
+  const d = 4.6;
+  const worldX = x * d;
+  const worldZ = -y * d;
+  return posToSq(new THREE.Vector3(worldX, 0, worldZ));
+}
+
+function getRaycastGroundPos(e) {
+  const canvas = document.getElementById('chess-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+  const d = 4.6;
+  return new THREE.Vector3(x * d, 0, -y * d);
+}
+
+// Game Session & Controller
+let curGame = null;
+let isAIThinking = false;
+let clockInterval = null;
+let lastTickTime = performance.now();
+
+class ClockController {
+  constructor(timerConfig, onTick, onLowTime, onTimeout) {
+    this.config = timerConfig; // { kind: 'off'|'move'|'game', perMoveMs, baseMs, incMs }
+    this.onTick = onTick;
+    this.onLowTime = onLowTime;
+    this.onTimeout = onTimeout;
+    this.wMs = timerConfig.kind === 'move' ? timerConfig.perMoveMs : timerConfig.baseMs;
+    this.bMs = timerConfig.kind === 'move' ? timerConfig.perMoveMs : timerConfig.baseMs;
+    this.running = false;
+    this.activeSide = 1; // 1 = White, -1 = Black
+    this.started = false;
+    this.lastLowFired = 0;
+  }
+
+  start(side) {
+    if (this.config.kind === 'off') return;
+    this.activeSide = side;
+    this.running = true;
+    this.started = true;
+    this.lastLowFired = 0;
+  }
+
+  pause() {
+    this.running = false;
+  }
+
+  resume() {
+    if (this.started && this.config.kind !== 'off') {
+      this.running = true;
+    }
+  }
+
+  switch(justMovedSide) {
+    if (this.config.kind === 'off') return;
+    if (this.config.kind === 'move') {
+      // Reset mover's clock to full for next turn
+      if (justMovedSide === 1) this.wMs = this.config.perMoveMs;
+      else this.bMs = this.config.perMoveMs;
+    } else if (this.config.kind === 'game') {
+      // Add Fischer increment to the mover
+      if (justMovedSide === 1) this.wMs += this.config.incMs;
+      else this.bMs += this.config.incMs;
+    }
+    this.activeSide = -justMovedSide;
+    this.lastLowFired = 0;
+  }
+
+  tick(deltaMs) {
+    if (!this.running || this.config.kind === 'off') return;
+
+    if (this.activeSide === 1) {
+      this.wMs = Math.max(0, this.wMs - deltaMs);
+    } else {
+      this.bMs = Math.max(0, this.bMs - deltaMs);
+    }
+
+    const curMs = this.activeSide === 1 ? this.wMs : this.bMs;
+    this.onTick(this.wMs, this.bMs, this.activeSide);
+
+    // 5-second low time triggers
+    if (curMs <= 5000 && curMs > 0) {
+      const sec = Math.ceil(curMs / 1000);
+      if (sec !== this.lastLowFired && sec >= 1 && sec <= 5) {
+        this.lastLowFired = sec;
+        this.onLowTime(sec, this.activeSide);
+      }
+    }
+
+    if (curMs <= 0) {
+      this.running = false;
+      this.onTimeout(this.activeSide);
+    }
+  }
+}
+
+// AI Web Worker initialization
+let aiWorker = null;
+let currentSearchId = 0;
+
+function initAIWorker() {
+  if (aiWorker) return;
+  const workerSrc = `
+    const ChessRules = (${ChessRules.toString()})();
+    const ChessAI = (${ChessAI.toString()})(ChessRules);
+    self.onmessage = function(e) {
+      const { id, fen, level, timeBudgetMs, historyHashes } = e.data;
+      const res = ChessAI.search(fen, level, timeBudgetMs, historyHashes);
+      self.postMessage({ id, result: res });
+    };
+  `;
+  const blob = new Blob([workerSrc], { type: 'application/javascript' });
+  aiWorker = new Worker(URL.createObjectURL(blob));
+  aiWorker.onmessage = (e) => {
+    const { id, result } = e.data;
+    if (id === currentSearchId && curGame && !curGame.isOver) {
+      handleAIMove(result);
+    }
+  };
+}
+
+function startNewGame(options) {
+  const mode = options.mode || 'pve';
+  const aiLevel = options.aiLevel || 'medium';
+  let humanSide = options.humanSide || 'w';
+  if (humanSide === 'random') humanSide = Math.random() < 0.5 ? 'w' : 'b';
+
+  const timerConfig = options.timer || settings.timer;
+  const startState = ChessRules.initial();
+
+  curGame = {
+    id: Date.now().toString(),
+    mode,
+    aiLevel,
+    humanSide,
+    timerConfig,
+    state: startState,
+    startFEN: ChessRules.toFEN(startState),
+    moves: [],
+    isOver: false,
+    result: null,
+    reason: null,
+    isReplay: false,
+  };
+
+  isFlipped = (curGame.mode === 'pve' && curGame.humanSide === 'b');
+
+  // Clock
+  if (curGame.clock) curGame.clock.pause();
+  curGame.clock = new ClockController(
+    timerConfig,
+    onClockTick,
+    onLowTime,
+    onTimeout
+  );
+
+  showScreen('game-screen');
+  buildBoard();
+  syncBoard3D();
+  updateUI();
+  updateOverlays();
+
+  // If PvE and Human is Black, AI plays White's first move
+  if (curGame.mode === 'pve' && curGame.humanSide === 'b') {
+    triggerAIMove();
+  }
+}
+
+function applyHumanMove(move) {
+  if (!curGame || curGame.isOver) return;
+
+  // Check if promotion
+  if ((move.flags & ChessRules.FLAGS.PROMO) && !settings.autoQueen) {
+    showPromoDialog(move, (promoPiece) => {
+      move.promo = promoPiece;
+      executeMove(move);
+    });
+    return;
+  } else if ((move.flags & ChessRules.FLAGS.PROMO) && settings.autoQueen) {
+    move.promo = ChessRules.Q;
+  }
+
+  executeMove(move);
+}
+
+function executeMove(move) {
+  const movedSide = curGame.state.turn;
+  const san = ChessRules.toSAN(curGame.state, move);
+  const uci = ChessRules.toUCI(move);
+
+  // Stop countdown FX
+  stopCountdownFX();
+
+  // Clock update
+  if (!curGame.clock.started && movedSide === 1) {
+    curGame.clock.start(-1); // Clock starts after White's first move
+  } else {
+    curGame.clock.switch(movedSide);
+  }
+
+  // SFX
+  if (move.flags & ChessRules.FLAGS.PROMO) playSound('promote');
+  else if (move.flags & ChessRules.FLAGS.CASTLE_K || move.flags & ChessRules.FLAGS.CASTLE_Q) playSound('castle');
+  else if (move.captured !== 0 || (move.flags & ChessRules.FLAGS.EP)) playSound('capture');
+  else playSound('place', movedSide);
+
+  // Apply to engine
+  curGame.state = ChessRules.make(curGame.state, move);
+  curGame.moves.push({
+    uci,
+    san,
+    t: performance.now(),
+    clock: [curGame.clock.wMs, curGame.clock.bMs],
+  });
+
+  animateMove(move, () => {
+    checkGameStatus();
+    saveAutosave();
+    updateUI();
+
+    // Check SFX
+    if (!curGame.isOver && ChessRules.inCheck(curGame.state, curGame.state.turn)) {
+      playSound('check');
+    }
+
+    // Trigger AI reply if needed
+    if (!curGame.isOver && curGame.mode === 'pve' && curGame.state.turn === (curGame.humanSide === 'w' ? -1 : 1)) {
+      triggerAIMove();
+    }
+  });
+}
+
+function triggerAIMove() {
+  if (!curGame || curGame.isOver) return;
+  isAIThinking = true;
+  updateStatusLine();
+  initAIWorker();
+
+  currentSearchId++;
+  const searchId = currentSearchId;
+  const thinkStart = performance.now();
+
+  // Cap AI time budget so it never flags (Section 15.4)
+  const remaining = curGame.state.turn === 1 ? curGame.clock.wMs : curGame.clock.bMs;
+  let timeBudget = 800;
+  if (curGame.timerConfig.kind !== 'off') {
+    timeBudget = Math.min(800, remaining - 1500, Math.max(150, remaining * 0.1));
+  }
+
+  aiWorker.postMessage({
+    id: searchId,
+    fen: ChessRules.toFEN(curGame.state),
+    level: curGame.aiLevel,
+    timeBudgetMs: Math.max(150, timeBudget),
+    historyHashes: curGame.state.history,
+  });
+}
+
+function handleAIMove(result) {
+  isAIThinking = false;
+  if (!curGame || curGame.isOver || !result || !result.uci) return;
+
+  const move = ChessRules.fromUCI(curGame.state, result.uci);
+  if (move) {
+    executeMove(move);
+  }
+}
+
+function checkGameStatus() {
+  const st = ChessRules.status(curGame.state);
+  if (st.over) {
+    endGame(st.result, st.reason);
+  }
+}
+
+function endGame(result, reason) {
+  if (!curGame || curGame.isOver) return;
+  curGame.isOver = true;
+  curGame.result = result;
+  curGame.reason = reason;
+  curGame.clock.pause();
+  stopCountdownFX();
+
+  // SFX
+  if (reason === 'checkmate') {
+    const humanWon = (curGame.humanSide === 'w' && result === '1-0') || (curGame.humanSide === 'b' && result === '0-1');
+    playSound(humanWon ? 'win' : 'lose');
+  } else if (reason === 'stalemate' || reason === 'threefold' || reason === 'fifty' || reason === 'insufficient') {
+    playSound('draw');
+  } else if (reason === 'timeout') {
+    playSound('timeUp');
+  }
+
+  saveRecord();
+  store.remove('current');
+
+  setTimeout(() => {
+    showGameOverDialog(result, reason);
+  }, 500);
+}
+
+// Timeout handler (R6)
+function onTimeout(sideToMove) {
+  if (!curGame || curGame.isOver) return;
+  const loser = sideToMove === 1 ? 'w' : 'b';
+  const winner = sideToMove === 1 ? 'b' : 'w';
+  const result = loser === 'w' ? '0-1' : '1-0';
+  endGame(result, 'timeout');
+}
+
+// 5-second countdown FX (R7)
+function onLowTime(sec, side) {
+  if (!curGame || curGame.isOver) return;
+  const isHumanTurn = curGame.mode === 'pvp' || (curGame.humanSide === (side === 1 ? 'w' : 'b'));
+  if (!isHumanTurn) return;
+
+  if (settings.countdownFx) {
+    const overlay = document.getElementById('countdown-overlay');
+    const numEl = document.getElementById('countdown-num');
+    const glow = document.getElementById('board-glow');
+    if (overlay && numEl && glow) {
+      overlay.style.display = 'flex';
+      glow.style.display = 'block';
+      numEl.textContent = sec;
+      numEl.style.animation = 'none';
+      void numEl.offsetWidth; // Trigger reflow
+      numEl.style.animation = 'countPop 1s cubic-bezier(.34, 1.56, .64, 1) forwards';
+    }
+  }
+
+  playSound('countdown', sec);
+  if (settings.vibrate && navigator.vibrate) {
+    navigator.vibrate(sec === 0 ? [60, 40, 120] : 30);
+  }
+}
+
+function stopCountdownFX() {
+  const overlay = document.getElementById('countdown-overlay');
+  const glow = document.getElementById('board-glow');
+  if (overlay) overlay.style.display = 'none';
+  if (glow) glow.style.display = 'none';
+}
+
+function onClockTick(wMs, bMs, activeSide) {
+  const topClock = document.getElementById('top-clock');
+  const bottomClock = document.getElementById('bottom-clock');
+  if (!topClock || !bottomClock) return;
+
+  const isWhiteBottom = (curGame.mode === 'pvp' && !isFlipped) || (curGame.mode === 'pve' && curGame.humanSide === 'w');
+  const whiteClockEl = isWhiteBottom ? bottomClock : topClock;
+  const blackClockEl = isWhiteBottom ? topClock : bottomClock;
+
+  whiteClockEl.textContent = formatClock(wMs);
+  blackClockEl.textContent = formatClock(bMs);
+
+  whiteClockEl.classList.toggle('active', activeSide === 1);
+  blackClockEl.classList.toggle('active', activeSide === -1);
+
+  whiteClockEl.classList.toggle('danger', wMs <= 10000 && curGame.timerConfig.kind !== 'off');
+  blackClockEl.classList.toggle('danger', bMs <= 10000 && curGame.timerConfig.kind !== 'off');
+}
+
+function formatClock(ms) {
+  if (curGame && curGame.timerConfig.kind === 'off') return '--:--';
+  if (ms <= 0) return '0:00';
+  const totalSec = Math.floor(ms / 1000);
+  if (totalSec < 10) {
+    const tenths = Math.floor((ms % 1000) / 100);
+    return `${totalSec}.${tenths}`;
+  }
+  const mins = Math.floor(totalSec / 60);
+  const secs = totalSec % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// UI Updating & DOM Helpers
+function updateUI() {
+  if (!curGame) return;
+  updateStatusLine();
+  updateMoveLists();
+  updateCapturedTrays();
+  updatePlayerBars();
+  updateOverlays();
+}
+
+function updateStatusLine() {
+  const line = document.getElementById('game-status-line');
+  const sideLine = document.getElementById('side-status');
+  if (!line) return;
+
+  let txt = '';
+  if (curGame.isOver) {
+    txt = curGame.result === '1-0' ? 'Trắng thắng!' : curGame.result === '0-1' ? 'Đen thắng!' : 'Hoà!';
+  } else if (isAIThinking) {
+    txt = 'Máy đang nghĩ…';
+  } else if (ChessRules.inCheck(curGame.state, curGame.state.turn)) {
+    txt = 'Chiếu!';
+  } else {
+    txt = curGame.state.turn === 1 ? 'Lượt của Trắng' : 'Lượt của Đen';
+  }
+
+  line.textContent = txt;
+  if (sideLine) sideLine.textContent = txt;
+}
+
+function updatePlayerBars() {
+  const topName = document.getElementById('top-name');
+  const bottomName = document.getElementById('bottom-name');
+  const topAvatar = document.getElementById('top-avatar');
+  const bottomAvatar = document.getElementById('bottom-avatar');
+
+  if (curGame.mode === 'pve') {
+    if (curGame.humanSide === 'w') {
+      bottomName.textContent = 'Bạn (Trắng)';
+      topName.textContent = `Máy (${curGame.aiLevel === 'easy' ? 'Dễ' : curGame.aiLevel === 'medium' ? 'Vừa' : 'Khó'})`;
+      bottomAvatar.className = 'player-avatar white';
+      bottomAvatar.textContent = '♔';
+      topAvatar.className = 'player-avatar black';
+      topAvatar.textContent = '♚';
+    } else {
+      bottomName.textContent = 'Bạn (Đen)';
+      topName.textContent = `Máy (${curGame.aiLevel === 'easy' ? 'Dễ' : curGame.aiLevel === 'medium' ? 'Vừa' : 'Khó'})`;
+      bottomAvatar.className = 'player-avatar black';
+      bottomAvatar.textContent = '♚';
+      topAvatar.className = 'player-avatar white';
+      topAvatar.textContent = '♔';
+    }
+  } else {
+    bottomName.textContent = isFlipped ? 'Đen' : 'Trắng';
+    topName.textContent = isFlipped ? 'Trắng' : 'Đen';
+    bottomAvatar.className = isFlipped ? 'player-avatar black' : 'player-avatar white';
+    bottomAvatar.textContent = isFlipped ? '♚' : '♔';
+    topAvatar.className = isFlipped ? 'player-avatar white' : 'player-avatar black';
+    topAvatar.textContent = isFlipped ? '♔' : '♚';
+  }
+}
+
+function updateCapturedTrays() {
+  const topTray = document.getElementById('top-tray');
+  const bottomTray = document.getElementById('bottom-tray');
+  if (!topTray || !bottomTray) return;
+
+  // Count captured pieces by comparing starting pieces to current board
+  const counts = { 1: 8, 2: 2, 3: 2, 4: 2, 5: 1, '-1': 8, '-2': 2, '-3': 2, '-4': 2, '-5': 1 };
+  for (let sq = 0; sq < 64; sq++) {
+    const p = curGame.state.board[sq];
+    if (p !== 0 && Math.abs(p) !== 6) {
+      if (counts[p] > 0) counts[p]--;
+    }
+  }
+
+  let wCaptured = ''; // White captured pieces (lost by Black)
+  let bCaptured = ''; // Black captured pieces (lost by White)
+  const symbols = { 1: '♙', 2: '♘', 3: '♗', 4: '♖', 5: '♕' };
+
+  for (let t = 5; t >= 1; t--) {
+    for (let i = 0; i < counts[-t]; i++) wCaptured += symbols[t];
+    for (let i = 0; i < counts[t]; i++) bCaptured += symbols[t];
+  }
+
+  const isWhiteBottom = (curGame.mode === 'pve' && curGame.humanSide === 'w') || (!isFlipped && curGame.mode === 'pvp');
+  bottomTray.textContent = isWhiteBottom ? wCaptured : bCaptured;
+  topTray.textContent = isWhiteBottom ? bCaptured : wCaptured;
+}
+
+function updateMoveLists() {
+  const sideList = document.getElementById('side-move-list');
+  if (!sideList) return;
+  sideList.innerHTML = '';
+
+  const moves = curGame.moves;
+  for (let i = 0; i < moves.length; i += 2) {
+    const row = document.createElement('div');
+    row.className = 'move-row';
+    const num = Math.floor(i / 2) + 1;
+    const wMove = moves[i] ? moves[i].san : '';
+    const bMove = moves[i + 1] ? moves[i + 1].san : '';
+
+    row.innerHTML = `
+      <span class="num">${num}.</span>
+      <span class="move-cell ${i === moves.length - 1 ? 'current' : ''}">${wMove}</span>
+      <span class="move-cell ${i + 1 === moves.length - 1 ? 'current' : ''}">${bMove}</span>
+    `;
+    sideList.appendChild(row);
+  }
+  sideList.scrollTop = sideList.scrollHeight;
+}
+
+// Promotion Dialog
+function showPromoDialog(move, onPick) {
+  const dialog = document.getElementById('dialog-promo');
+  const container = document.getElementById('promo-options');
+  container.innerHTML = '';
+
+  const pieces = [
+    { type: ChessRules.Q, name: 'Hậu / Queen', key: 'queen' },
+    { type: ChessRules.R, name: 'Xe / Rook', key: 'rook' },
+    { type: ChessRules.B, name: 'Tượng / Bishop', key: 'bishop' },
+    { type: ChessRules.N, name: 'Mã / Knight', key: 'knight' },
+  ];
+
+  pieces.forEach((p) => {
+    const btn = document.createElement('div');
+    btn.className = 'promo-item';
+    btn.innerHTML = `
+      <svg viewBox="0 0 32 32">${GLYPHS[p.key]}</svg>
+      <span style="font-size:var(--fs-xs); font-weight:600;">${p.name}</span>
+    `;
+    btn.onclick = () => {
+      dialog.close();
+      onPick(p.type);
+    };
+    container.appendChild(btn);
+  });
+
+  dialog.showModal();
+}
+
+function showGameOverDialog(result, reason) {
+  const dialog = document.getElementById('dialog-game-over');
+  const title = document.getElementById('game-over-title');
+  const desc = document.getElementById('game-over-desc');
+  const link = document.getElementById('link-game-over-rule');
+
+  title.textContent = result === '1-0' ? 'Trắng thắng!' : result === '0-1' ? 'Đen thắng!' : 'Hoà cờ!';
+  const reasonMap = {
+    checkmate: 'Chiếu hết',
+    stalemate: 'Hết nước đi hợp lệ (Pat)',
+    threefold: 'Lặp lại thế cờ 3 lần',
+    fifty: 'Luật 50 nước',
+    insufficient: 'Không đủ quân chiếu hết',
+    timeout: 'Hết thời gian',
+    resign: 'Đối phương đầu hàng',
+  };
+  desc.textContent = `Lý do: ${reasonMap[reason] || reason}`;
+
+  // Link to relevant rule section
+  const ruleSectionMap = {
+    stalemate: '#rules/stalemate',
+    threefold: '#rules/draws',
+    fifty: '#rules/draws',
+    insufficient: '#rules/draws',
+    timeout: '#rules/endings',
+    checkmate: '#rules/checkmate',
+  };
+  if (ruleSectionMap[reason]) {
+    link.href = ruleSectionMap[reason];
+    link.style.display = 'inline';
+  } else {
+    link.style.display = 'none';
+  }
+
+  dialog.showModal();
+}
+
+// Persistence: autosave & history
+function saveAutosave() {
+  if (!curGame || curGame.isOver) return;
+  store.set('current', {
+    v: 1,
+    session: {
+      id: curGame.id,
+      mode: curGame.mode,
+      aiLevel: curGame.aiLevel,
+      humanSide: curGame.humanSide,
+      timerConfig: curGame.timerConfig,
+      startFEN: curGame.startFEN,
+      moves: curGame.moves,
+    },
+  });
+}
+
+function saveRecord() {
+  if (!curGame) return;
+  const records = store.get('records', { v: 1, games: [] });
+  const rec = {
+    v: 1,
+    id: curGame.id,
+    startedAt: curGame.id,
+    endedAt: Date.now().toString(),
+    mode: curGame.mode,
+    aiLevel: curGame.aiLevel,
+    humanSide: curGame.humanSide,
+    timer: curGame.timerConfig,
+    moves: curGame.moves,
+    status: curGame.result === '1/2-1/2' ? 'draw' : 'win',
+    winner: curGame.result === '1-0' ? 'w' : curGame.result === '0-1' ? 'b' : null,
+    loser: curGame.result === '1-0' ? 'b' : curGame.result === '0-1' ? 'w' : null,
+    reason: curGame.reason,
+    pgn: ChessRules.toPGN({ moves: curGame.moves.map((m) => m.san) }),
+  };
+  records.games.unshift(rec);
+  if (records.games.length > 200) records.games.pop(); // Cap 200
+  store.set('records', records);
+}
+
+// Rules Page Renderer (15 sections + Mini boards + Try-it)
+function renderRulesPage() {
+  const toc = document.getElementById('rules-toc');
+  const content = document.getElementById('rules-content');
+  if (!toc || !content || !window.RULES_SECTIONS) return;
+
+  toc.innerHTML = '';
+  content.innerHTML = '';
+  const lang = (window.House && window.House.i18n) ? window.House.i18n.lang : 'vi';
+
+  window.RULES_SECTIONS.forEach((sec, idx) => {
+    // TOC Chip
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = sec.title[lang] || sec.title.vi;
+    chip.onclick = () => {
+      document.querySelectorAll('.rules-toc-chips .chip').forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      const el = document.getElementById('sec-' + sec.id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    };
+    toc.appendChild(chip);
+
+    // Section Card
+    const card = document.createElement('div');
+    card.id = 'sec-' + sec.id;
+    card.className = 'panel rule-card';
+    card.innerHTML = `<h3>${sec.title[lang] || sec.title.vi}</h3><p style="font-weight:600; color:var(--muted);">${sec.summary[lang] || sec.summary.vi}</p>`;
+
+    sec.blocks.forEach((block) => {
+      if (block.type === 'p') {
+        const p = document.createElement('p');
+        p.textContent = block.text[lang] || block.text.vi;
+        card.appendChild(p);
+      } else if (block.type === 'board') {
+        const boardEl = createMiniBoard(block.fen, block.highlights || [], block.crosses || []);
+        card.appendChild(boardEl);
+        if (block.caption) {
+          const cap = document.createElement('div');
+          cap.style.cssText = 'font-size:var(--fs-xs); color:var(--muted); text-align:center; margin-top:4px;';
+          cap.textContent = block.caption[lang] || block.caption.vi;
+          card.appendChild(cap);
+        }
+      } else if (block.type === 'tryit') {
+        const tryBox = document.createElement('div');
+        tryBox.className = 'tryit-box';
+        tryBox.innerHTML = `<strong>Thử ngay / Try it:</strong><div style="font-size:var(--fs-xs); color:var(--muted); margin:4px 0 8px;">${block.caption[lang] || block.caption.vi}</div>`;
+
+        let tryState = ChessRules.fromFEN(block.fen);
+        let miniSelected = -1;
+        const feedback = document.createElement('div');
+        feedback.className = 'tryit-feedback';
+
+        const updateMini = () => {
+          const oldBoard = tryBox.querySelector('.mini-board-wrap');
+          if (oldBoard) oldBoard.remove();
+
+          const bEl = createInteractiveMiniBoard(tryState, miniSelected, (clickedSq) => {
+            initAudio();
+            if (miniSelected >= 0) {
+              const uci = ChessRules.toCoord(miniSelected) + ChessRules.toCoord(clickedSq);
+              const legals = ChessRules.legalMoves(tryState);
+              const target = legals.find((m) => ChessRules.toUCI(m).startsWith(uci));
+
+              if (target && block.solution.includes(ChessRules.toUCI(target))) {
+                tryState = ChessRules.make(tryState, target);
+                miniSelected = -1;
+                updateMini();
+                playSound('place', 1);
+                feedback.className = 'tryit-feedback success';
+                feedback.textContent = 'Chính xác! Nước đi rất hay.';
+                // Mark try-it done
+                markRuleDone(sec.id);
+              } else {
+                playSound('invalid');
+                feedback.className = 'tryit-feedback wrong';
+                feedback.textContent = block.whyWrong[lang] || block.whyWrong.vi;
+                miniSelected = -1;
+                updateMini();
+              }
+            } else {
+              const p = tryState.board[clickedSq];
+              if (p !== 0 && p * tryState.turn > 0) {
+                miniSelected = clickedSq;
+                updateMini();
+              }
+            }
+          });
+          tryBox.insertBefore(bEl, feedback);
+        };
+
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'btn';
+        retryBtn.style.cssText = 'margin-top:8px; font-size:var(--fs-xs); min-height:36px;';
+        retryBtn.textContent = 'Làm lại';
+        retryBtn.onclick = () => {
+          tryState = ChessRules.fromFEN(block.fen);
+          miniSelected = -1;
+          feedback.textContent = '';
+          updateMini();
+        };
+
+        tryBox.appendChild(feedback);
+        tryBox.appendChild(retryBtn);
+        card.appendChild(tryBox);
+        updateMini();
+      } else if (block.type === 'glossary') {
+        const table = document.createElement('table');
+        table.style.cssText = 'width:100%; border-collapse:collapse; font-size:var(--fs-sm); margin-top:8px;';
+        table.innerHTML = '<tr style="border-bottom:1px solid var(--line); text-align:left;"><th>Tiếng Việt</th><th>English</th><th>Mô tả</th></tr>';
+        block.terms.forEach((t) => {
+          const row = document.createElement('tr');
+          row.style.borderBottom = '1px solid var(--line)';
+          row.innerHTML = `<td style="padding:6px 4px; font-weight:600;">${t.vi}</td><td style="padding:6px 4px;">${t.en}</td><td style="padding:6px 4px; color:var(--muted);">${t.desc}</td>`;
+          table.appendChild(row);
+        });
+        card.appendChild(table);
+      }
+    });
+
+    content.appendChild(card);
+  });
+}
+
+function createMiniBoard(fen, highlights = [], crosses = []) {
+  const wrap = document.createElement('div');
+  wrap.className = 'mini-board-wrap';
+  const state = ChessRules.fromFEN(fen);
+  const cs = getComputedStyle(document.documentElement);
+
+  for (let r = 7; r >= 0; r--) {
+    for (let f = 0; f < 8; f++) {
+      const sq = (r << 3) | f;
+      const coord = ChessRules.toCoord(sq);
+      const isLight = ((r + f) % 2) === 1;
+
+      const sqEl = document.createElement('div');
+      sqEl.className = `mini-sq ${isLight ? 'light' : 'dark'}`;
+      if (highlights.includes(coord)) sqEl.classList.add('highlight');
+      if (crosses.includes(coord)) sqEl.classList.add('cross');
+
+      const piece = state.board[sq];
+      if (piece !== 0) {
+        const type = PIECE_TYPE_MAP[Math.abs(piece)];
+        const isWhite = piece > 0;
+        const ink = cs.getPropertyValue(isWhite ? '--piece-light-ink' : '--piece-dark-ink').trim() || (isWhite ? '#2B2622' : '#F3EDE2');
+        const disc = cs.getPropertyValue(isWhite ? '--piece-light' : '--piece-dark').trim() || (isWhite ? '#FBF8F2' : '#2B2622');
+        sqEl.innerHTML = `<svg class="mini-glyph" viewBox="0 0 32 32" style="background:${disc}; border-radius:50%; border:1.5px solid ${ink}; color:${ink};">${GLYPHS[type]}</svg>`;
+      }
+      wrap.appendChild(sqEl);
+    }
+  }
+  return wrap;
+}
+
+function createInteractiveMiniBoard(state, selectedSq, onSquareClick) {
+  const wrap = document.createElement('div');
+  wrap.className = 'mini-board-wrap';
+  const legals = selectedSq >= 0 ? ChessRules.legalMovesFrom(state, selectedSq) : [];
+  const cs = getComputedStyle(document.documentElement);
+
+  for (let r = 7; r >= 0; r--) {
+    for (let f = 0; f < 8; f++) {
+      const sq = (r << 3) | f;
+      const isLight = ((r + f) % 2) === 1;
+
+      const sqEl = document.createElement('button');
+      sqEl.className = `mini-sq ${isLight ? 'light' : 'dark'}`;
+      if (sq === selectedSq) sqEl.classList.add('highlight');
+      if (legals.some((m) => m.to === sq)) sqEl.classList.add('dot');
+
+      const piece = state.board[sq];
+      if (piece !== 0) {
+        const type = PIECE_TYPE_MAP[Math.abs(piece)];
+        const isWhite = piece > 0;
+        const ink = cs.getPropertyValue(isWhite ? '--piece-light-ink' : '--piece-dark-ink').trim();
+        const disc = cs.getPropertyValue(isWhite ? '--piece-light' : '--piece-dark').trim();
+        sqEl.innerHTML = `<svg class="mini-glyph" viewBox="0 0 32 32" style="background:${disc}; border-radius:50%; border:1.5px solid ${ink}; color:${ink};">${GLYPHS[type]}</svg>`;
+      }
+
+      sqEl.onclick = () => onSquareClick(sq);
+      wrap.appendChild(sqEl);
+    }
+  }
+  return wrap;
+}
+
+function markRuleDone(secId) {
+  const seen = store.get('hintsSeen', { rulesDone: [] });
+  if (!seen.rulesDone) seen.rulesDone = [];
+  if (!seen.rulesDone.includes(secId)) {
+    seen.rulesDone.push(secId);
+    store.set('hintsSeen', seen);
+  }
+}
+
+// Router and Navigation
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach((el) => {
+    el.classList.toggle('hidden', el.id !== screenId);
+  });
+  if (screenId === 'rules-screen') {
+    renderRulesPage();
+  }
+}
+
+function handleRoute() {
+  const hash = window.location.hash;
+  if (hash.startsWith('#rules')) {
+    if (curGame && curGame.clock) curGame.clock.pause();
+    showScreen('rules-screen');
+    const part = hash.replace('#rules/', '');
+    if (part && part !== '#rules') {
+      setTimeout(() => {
+        const target = document.getElementById('sec-' + part);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  } else {
+    if (curGame && !curGame.isOver) {
+      showScreen('game-screen');
+      if (curGame.clock) curGame.clock.resume();
+    } else {
+      showScreen('start-screen');
+    }
+  }
+}
+
+// App Initialization
+function initApp() {
+  const prefs = window.House ? window.House.prefs.load() : { theme: 'auto', lang: 'vi' };
+  if (window.House) {
+    window.House.applyTheme(prefs.theme);
+    window.House.i18n.setLang(prefs.lang);
+  }
+
+  initThree();
+
+  // Check autosave
+  const autosave = store.get('current');
+  const resumeBtn = document.getElementById('btn-resume');
+  if (autosave && autosave.session) {
+    resumeBtn.style.display = 'inline-flex';
+  }
+
+  // Event Listeners
+  document.getElementById('btn-play').onclick = () => {
+    initAudio();
+    document.getElementById('dialog-new-game').showModal();
+  };
+
+  resumeBtn.onclick = () => {
+    initAudio();
+    const save = store.get('current');
+    if (save && save.session) {
+      startNewGame(save.session);
+      // Replay moves
+      for (const m of save.session.moves) {
+        const realMove = ChessRules.fromUCI(curGame.state, m.uci);
+        if (realMove) curGame.state = ChessRules.make(curGame.state, realMove);
+      }
+      curGame.moves = save.session.moves;
+      syncBoard3D();
+      updateUI();
+    }
+  };
+
+  document.getElementById('btn-rules').onclick = () => {
+    window.location.hash = '#rules';
+  };
+  document.getElementById('btn-game-rules').onclick = () => {
+    window.location.hash = '#rules';
+  };
+  document.getElementById('btn-rules-back').onclick = () => {
+    window.location.hash = '';
+    handleRoute();
+  };
+
+  document.getElementById('btn-start-settings').onclick = () => {
+    document.getElementById('dialog-settings').showModal();
+  };
+  document.getElementById('btn-desktop-settings').onclick = () => {
+    document.getElementById('dialog-settings').showModal();
+  };
+  document.getElementById('btn-close-settings').onclick = () => {
+    document.getElementById('dialog-settings').close();
+  };
+
+  document.getElementById('btn-history').onclick = () => {
+    showHistoryDialog();
+  };
+  document.getElementById('btn-close-history').onclick = () => {
+    document.getElementById('dialog-history').close();
+  };
+
+  document.getElementById('btn-menu').onclick = () => {
+    document.getElementById('dialog-menu').showModal();
+  };
+  document.getElementById('btn-menu-close').onclick = () => {
+    document.getElementById('dialog-menu').close();
+  };
+  document.getElementById('btn-menu-resign').onclick = () => {
+    document.getElementById('dialog-menu').close();
+    if (confirm('Bạn có chắc muốn đầu hàng?')) {
+      endGame(curGame.humanSide === 'w' ? '0-1' : '1-0', 'resign');
+    }
+  };
+  document.getElementById('btn-menu-new').onclick = () => {
+    document.getElementById('dialog-menu').close();
+    document.getElementById('dialog-new-game').showModal();
+  };
+
+  document.getElementById('btn-flip').onclick = () => {
+    isFlipped = !isFlipped;
+    buildBoard();
+    syncBoard3D();
+    updateUI();
+  };
+
+  document.getElementById('btn-undo').onclick = () => {
+    if (!curGame || curGame.isOver || isAIThinking || curGame.moves.length === 0) return;
+    const pliesToUndo = curGame.mode === 'pve' ? 2 : 1;
+    for (let k = 0; k < pliesToUndo && curGame.moves.length > 0; k++) {
+      curGame.moves.pop();
+    }
+    // Replay from startFEN
+    curGame.state = ChessRules.fromFEN(curGame.startFEN);
+    for (const m of curGame.moves) {
+      const realM = ChessRules.fromUCI(curGame.state, m.uci);
+      if (realM) curGame.state = ChessRules.make(curGame.state, realM);
+    }
+    syncBoard3D();
+    updateUI();
+  };
+
+  // Start Game button inside Dialog New Game
+  document.getElementById('btn-cancel-new-game').onclick = () => {
+    document.getElementById('dialog-new-game').close();
+  };
+  document.getElementById('btn-start-game').onclick = () => {
+    const mode = document.querySelector('#seg-mode button.active').dataset.val;
+    const aiLevel = document.querySelector('#seg-ai button.active').dataset.val;
+    const humanSide = document.querySelector('#seg-side button.active').dataset.val;
+    const timerKind = document.querySelector('#seg-timer-kind button.active').dataset.val;
+
+    let timer = { kind: timerKind, perMoveMs: 30000, baseMs: 600000, incMs: 0 };
+    if (timerKind === 'move') timer.perMoveMs = 30000;
+    else if (timerKind === 'game') timer.baseMs = 600000;
+
+    document.getElementById('dialog-new-game').close();
+    startNewGame({ mode, aiLevel, humanSide, timer });
+  };
+
+  // Segmented controls handler
+  document.querySelectorAll('.segmented').forEach((seg) => {
+    seg.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      seg.querySelectorAll('button').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (seg.id === 'seg-theme') {
+        window.House.prefs.save({ theme: btn.dataset.val });
+        window.House.applyTheme(btn.dataset.val);
+      } else if (seg.id === 'seg-lang') {
+        window.House.prefs.save({ lang: btn.dataset.val });
+        window.House.i18n.setLang(btn.dataset.val);
+        renderRulesPage();
+      }
+    });
+  });
+
+  // Settings resets
+  document.getElementById('btn-reset-data').onclick = () => {
+    if (confirm('Khôi phục toàn bộ cài đặt cờ vua về mặc định?')) {
+      store.removeAll();
+      location.reload();
+    }
+  };
+
+  document.getElementById('btn-clear-history').onclick = () => {
+    if (confirm('Xoá toàn bộ lịch sử đấu?')) {
+      store.set('records', { v: 1, games: [] });
+      showHistoryDialog();
+    }
+  };
+
+  document.getElementById('btn-rematch').onclick = () => {
+    document.getElementById('dialog-game-over').close();
+    startNewGame(curGame);
+  };
+  document.getElementById('btn-over-new').onclick = () => {
+    document.getElementById('dialog-game-over').close();
+    document.getElementById('dialog-new-game').showModal();
+  };
+  document.getElementById('btn-over-replay').onclick = () => {
+    document.getElementById('dialog-game-over').close();
+    enterReplayMode(curGame.moves);
+  };
+
+  window.addEventListener('hashchange', handleRoute);
+  handleRoute();
+
+  // Run in-page self-test if ?test is present
+  if (window.location.search.includes('test')) {
+    runInPageTests();
+  }
+}
+
+function showHistoryDialog() {
+  const dialog = document.getElementById('dialog-history');
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+
+  const records = store.get('records', { v: 1, games: [] });
+  if (records.games.length === 0) {
+    list.innerHTML = '<div style="text-align:center; color:var(--muted); padding:20px;">Chưa có ván đấu nào.</div>';
+  } else {
+    records.games.forEach((g) => {
+      const row = document.createElement('div');
+      row.className = 'panel';
+      row.style.cssText = 'padding:10px 14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;';
+      const outcome = g.status === 'draw' ? 'Hoà' : g.winner === g.humanSide ? 'Thắng' : 'Thua';
+      row.innerHTML = `
+        <div>
+          <div style="font-weight:700;">${g.mode === 'pve' ? 'Vs Máy (' + g.aiLevel + ')' : 'Hai người'}</div>
+          <div style="font-size:var(--fs-xs); color:var(--muted);">${g.reason || ''} • ${g.moves.length} nước</div>
+        </div>
+        <div class="chip" style="font-weight:700; ${outcome === 'Thắng' ? 'background:var(--ok); color:#fff;' : outcome === 'Thua' ? 'background:var(--danger); color:#fff;' : ''}">${outcome}</div>
+      `;
+      row.onclick = () => {
+        dialog.close();
+        enterReplayMode(g.moves);
+      };
+      list.appendChild(row);
+    });
+  }
+  dialog.showModal();
+}
+
+function enterReplayMode(moves) {
+  curGame.isReplay = true;
+  curGame.clock.pause();
+  curGame.state = ChessRules.fromFEN(curGame.startFEN);
+  let ply = 0;
+
+  const bar = document.getElementById('replay-bar');
+  const slider = document.getElementById('replay-slider');
+  bar.style.display = 'flex';
+  slider.max = moves.length;
+  slider.value = 0;
+
+  const stepTo = (targetPly) => {
+    ply = Math.max(0, Math.min(moves.length, targetPly));
+    slider.value = ply;
+    curGame.state = ChessRules.fromFEN(curGame.startFEN);
+    for (let i = 0; i < ply; i++) {
+      const m = ChessRules.fromUCI(curGame.state, moves[i].uci);
+      if (m) curGame.state = ChessRules.make(curGame.state, m);
+    }
+    syncBoard3D();
+    updateUI();
+  };
+
+  document.getElementById('btn-replay-start').onclick = () => stepTo(0);
+  document.getElementById('btn-replay-prev').onclick = () => stepTo(ply - 1);
+  document.getElementById('btn-replay-next').onclick = () => stepTo(ply + 1);
+  document.getElementById('btn-replay-end').onclick = () => stepTo(moves.length);
+  slider.oninput = (e) => stepTo(parseInt(e.target.value, 10));
+
+  document.getElementById('btn-replay-exit').onclick = () => {
+    bar.style.display = 'none';
+    curGame.isReplay = false;
+    stepTo(moves.length);
+  };
+
+  stepTo(0);
+}
+
+// In-Page Self Test Runner (?test)
+function runInPageTests() {
+  console.log('--- STARTING IN-PAGE TESTS ---');
+  let pass = 0, fail = 0;
+  const assertTest = (desc, cond) => {
+    if (cond) {
+      console.log('✓ PASS:', desc);
+      pass++;
+    } else {
+      console.error('✗ FAIL:', desc);
+      fail++;
+    }
+  };
+
+  // 1. Perft checks
+  const s0 = ChessRules.initial();
+  assertTest('Initial perft depth 1 == 20', ChessRules.perft(s0, 1) === 20);
+  assertTest('Initial perft depth 2 == 400', ChessRules.perft(s0, 2) === 400);
+
+  // 2. Rulesdocs try-it validation
+  window.RULES_SECTIONS.forEach((sec) => {
+    sec.blocks.forEach((blk) => {
+      if (blk.type === 'tryit') {
+        const s = ChessRules.fromFEN(blk.fen);
+        const legals = ChessRules.legalMoves(s).map((m) => ChessRules.toUCI(m));
+        const hasSol = blk.solution.some((sol) => legals.includes(sol));
+        assertTest(`Try-it task in "${sec.id}" has valid legal solution`, hasSol);
+      }
+    });
+  });
+
+  // 3. Storage isolation test
+  store.set('test_key', 123);
+  assertTest('Storage set works', store.get('test_key') === 123);
+  store.remove('test_key');
+  assertTest('Storage remove works', store.get('test_key') === null);
+
+  console.log(`\nTests finished: ${pass} passed, ${fail} failed`);
+}
+
+// Kickoff
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+
+</script>
+</body>
+</html>
