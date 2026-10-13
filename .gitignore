@@ -1,1 +1,9 @@
 tmp/
+temp/
+out/
+dist/
+build/
+target/
+
+node_modules/
+.venv/
