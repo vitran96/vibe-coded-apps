@@ -36,8 +36,8 @@
   }
 
   function getPieceRotation(z) {
-    // Top board (z < 0) faces UP (+PI/2); Bottom board (z >= 0) faces DOWN (-PI/2)
-    return z < 0 ? Math.PI / 2 : -Math.PI / 2;
+    // Top board (z < 0): -PI/2; Bottom board (z >= 0): +PI/2
+    return z < 0 ? -Math.PI / 2 : Math.PI / 2;
   }
 
   function createBoardCanvas() {

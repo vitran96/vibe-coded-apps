@@ -3689,8 +3689,8 @@ if (typeof module !== 'undefined' && module.exports) {
   }
 
   function getPieceRotation(z) {
-    // Top board (z < 0) faces UP (+PI/2); Bottom board (z >= 0) faces DOWN (-PI/2)
-    return z < 0 ? Math.PI / 2 : -Math.PI / 2;
+    // Top board (z < 0): -PI/2; Bottom board (z >= 0): +PI/2
+    return z < 0 ? -Math.PI / 2 : Math.PI / 2;
   }
 
   function createBoardCanvas() {
@@ -5319,14 +5319,14 @@ if (typeof module !== 'undefined' && module.exports) {
     // Minimal contrast checker passes for defined palette tokens
     assert('Token contrast checks in 4 themes', contrastAllPass);
 
-    // 10. Piece 3D glyph orientation (top board faces UP Math.PI / 2, bottom board faces DOWN -Math.PI / 2)
+    // 10. Piece 3D glyph orientation (top board -Math.PI / 2, bottom board Math.PI / 2)
     if (XQ.Render && XQ.Render.getPieceMeshes) {
       const meshes = XQ.Render.getPieceMeshes();
       if (meshes.length > 0) {
-        const topPass = meshes.filter(p => p.mesh.position.z < 0).every(p => Math.abs(p.mesh.rotation.y - Math.PI / 2) < 0.001);
-        const botPass = meshes.filter(p => p.mesh.position.z >= 0).every(p => Math.abs(p.mesh.rotation.y - (-Math.PI / 2)) < 0.001);
-        assert('Top board pieces face UP (Math.PI / 2)', topPass);
-        assert('Bottom board pieces face DOWN (-Math.PI / 2)', botPass);
+        const topPass = meshes.filter(p => p.mesh.position.z < 0).every(p => Math.abs(p.mesh.rotation.y - (-Math.PI / 2)) < 0.001);
+        const botPass = meshes.filter(p => p.mesh.position.z >= 0).every(p => Math.abs(p.mesh.rotation.y - Math.PI / 2) < 0.001);
+        assert('Top board pieces rotation (-Math.PI / 2)', topPass);
+        assert('Bottom board pieces rotation (Math.PI / 2)', botPass);
       }
     }
 

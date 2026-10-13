@@ -29,9 +29,9 @@ Before finalizing any changes or reviews, always execute this mandatory checklis
      - `rotation.y = Math.PI` points glyphs sideways to the **LEFT** (world `-X`).
      - **NEVER** set `rotation.y` to `0` or `Math.PI` — that makes piece glyphs face sideways to the left or right!
      - **Orientation rule (board position based, regardless of color):**
-       - **Top board pieces (`coords.z < 0`, ranks 5..9):** MUST be set to `mesh.rotation.y = Math.PI / 2` (+90°). This rotates local `+X` into world `-Z`, making characters face **UP** towards the top of the board/screen.
-       - **Bottom board pieces (`coords.z >= 0`, ranks 0..4):** MUST be set to `mesh.rotation.y = -Math.PI / 2` (-90°). This rotates local `+X` into world `+Z`, making characters face **DOWN** towards the bottom of the board/screen.
-       - Use helper `getPieceRotation(z) = z < 0 ? Math.PI / 2 : -Math.PI / 2`.
+       - **Top board pieces (`coords.z < 0`, ranks 5..9):** MUST be set to `mesh.rotation.y = -Math.PI / 2` (-90°).
+       - **Bottom board pieces (`coords.z >= 0`, ranks 0..4):** MUST be set to `mesh.rotation.y = Math.PI / 2` (+90°).
+       - Use helper `getPieceRotation(z) = z < 0 ? -Math.PI / 2 : Math.PI / 2`.
        - When a piece moves across the river, its orientation must update to match the destination board half upon move completion.
 
 4. **Verify Board Orientation & Automation (No Manual Flip Button):**
@@ -180,6 +180,6 @@ Before finalizing any changes or reviews, always execute this mandatory checklis
   2. Setting `rotation.y = 0` or `Math.PI` pointed glyphs to screen right (`+X`) and left (`-X`).
   3. Branching on `piece > 0` coupled orientation to piece color instead of board position, causing pieces on the top board to face backwards or invert incorrectly when crossing the river.
 - **Fix:**
-  1. In [src/render.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/render.js), added `getPieceRotation(z)` where top board (`z < 0`) is strictly `Math.PI / 2` (facing UP) and bottom board (`z >= 0`) is strictly `-Math.PI / 2` (facing DOWN), regardless of color.
+  1. In [src/render.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/render.js), added `getPieceRotation(z)` where top board (`z < 0`) is strictly `-Math.PI / 2` and bottom board (`z >= 0`) is strictly `Math.PI / 2`, regardless of color.
   2. Applied `getPieceRotation(coords.z)` in `syncBoard()`, `refreshPieces()`, and on move completion in `animateMove()`.
-  3. Updated piece orientation unit tests in [src/tests.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/tests.js) to assert position-based orientation (`z < 0` -> `Math.PI / 2`, `z >= 0` -> `-Math.PI / 2`).
+  3. Updated piece orientation unit tests in [src/tests.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/tests.js) to assert position-based orientation (`z < 0` -> `-Math.PI / 2`, `z >= 0` -> `Math.PI / 2`).
