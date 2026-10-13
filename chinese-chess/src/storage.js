@@ -1,6 +1,7 @@
-// storage.js — localStorage manager namespaced with co-tuong:*
+// storage.js — localStorage manager namespaced with cotuong_*
 (() => {
-  const PREFIX = 'co-tuong:';
+  const PREFIX = 'cotuong_';
+  const LEGACY_PREFIX = 'co-tuong:';
 
   const DEFAULT_SETTINGS = {
     v: 1,
@@ -33,7 +34,7 @@
 
   function getRaw(key, fallback = null) {
     try {
-      const data = localStorage.getItem(PREFIX + key);
+      const data = localStorage.getItem(PREFIX + key) ?? localStorage.getItem(LEGACY_PREFIX + key);
       if (!data) return fallback;
       return JSON.parse(data);
     } catch {
@@ -68,6 +69,7 @@
   function removeRaw(key) {
     try {
       localStorage.removeItem(PREFIX + key);
+      localStorage.removeItem(LEGACY_PREFIX + key);
     } catch {}
   }
 
@@ -76,7 +78,7 @@
       const keys = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith(PREFIX)) keys.push(k);
+        if (k && (k.startsWith(PREFIX) || k.startsWith(LEGACY_PREFIX))) keys.push(k);
       }
       keys.forEach(k => localStorage.removeItem(k));
     } catch {}

@@ -1200,7 +1200,7 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
 
       <div class="form-group" style="text-align:center; padding-top:var(--sp-2);">
         <div style="color:var(--muted); font-size:var(--fs-xs);">
-          Phiên bản <span id="app-version-label">1.0.0</span>
+          Phiên bản <span id="app-version-label">1.1.0</span>
         </div>
         <button id="btn-install-app" class="btn" style="display:none; margin-top:8px;" data-i18n="common.install">Cài ứng dụng</button>
       </div>
@@ -1277,16 +1277,23 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
 // Exposes window.House. Games add their own strings/sounds on top; they do not change these.
 (() => {
   const THEMES = ['auto', 'giay', 'dem', 'sonmai', 'bien'];
-  const PREFS_KEY = 'house:prefs'; // the ONE intentionally shared key: theme + language follow the player across games
+  const PREFS_KEY = 'house:prefs'; // shared theme + language across games
+  const APP_PREFS_KEY = 'cotuong_prefs';
 
   const prefs = {
     load() {
-      try { const p = JSON.parse(localStorage.getItem(PREFS_KEY)); if (p && p.v === 1 && p.theme && p.theme !== 'auto' && p.theme !== 'dem') return p; } catch {}
+      try {
+        const p = JSON.parse(localStorage.getItem(APP_PREFS_KEY) ?? localStorage.getItem(PREFS_KEY));
+        if (p && p.v === 1 && p.theme && p.theme !== 'auto' && p.theme !== 'dem') return p;
+      } catch {}
       return { v: 1, theme: 'giay', lang: 'vi' };
     },
     save(patch) {
       const next = { ...prefs.load(), ...patch, v: 1 };
-      try { localStorage.setItem(PREFS_KEY, JSON.stringify(next)); } catch {}
+      try {
+        localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+        localStorage.setItem(APP_PREFS_KEY, JSON.stringify(next));
+      } catch {}
       return next;
     },
   };
@@ -3057,9 +3064,10 @@ if (typeof module !== 'undefined' && module.exports) {
 
 </script>
   <script>
-// storage.js — localStorage manager namespaced with co-tuong:*
+// storage.js — localStorage manager namespaced with cotuong_*
 (() => {
-  const PREFIX = 'co-tuong:';
+  const PREFIX = 'cotuong_';
+  const LEGACY_PREFIX = 'co-tuong:';
 
   const DEFAULT_SETTINGS = {
     v: 1,
@@ -3092,7 +3100,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
   function getRaw(key, fallback = null) {
     try {
-      const data = localStorage.getItem(PREFIX + key);
+      const data = localStorage.getItem(PREFIX + key) ?? localStorage.getItem(LEGACY_PREFIX + key);
       if (!data) return fallback;
       return JSON.parse(data);
     } catch {
@@ -3127,6 +3135,7 @@ if (typeof module !== 'undefined' && module.exports) {
   function removeRaw(key) {
     try {
       localStorage.removeItem(PREFIX + key);
+      localStorage.removeItem(LEGACY_PREFIX + key);
     } catch {}
   }
 
@@ -3135,7 +3144,7 @@ if (typeof module !== 'undefined' && module.exports) {
       const keys = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith(PREFIX)) keys.push(k);
+        if (k && (k.startsWith(PREFIX) || k.startsWith(LEGACY_PREFIX))) keys.push(k);
       }
       keys.forEach(k => localStorage.removeItem(k));
     } catch {}
@@ -5163,7 +5172,10 @@ if (typeof module !== 'undefined' && module.exports) {
 
     // Web manifest
     const pal = window.House ? window.House.palette() : {};
-    const baseUrl = new URL('./', window.location.href).href;
+    let baseUrl = './';
+    try {
+      baseUrl = new URL('./', window.location.href).href;
+    } catch {}
     const manifest = {
       name: 'Cờ Tướng',
       short_name: 'Cờ Tướng',
@@ -5856,7 +5868,7 @@ if (typeof module !== 'undefined' && module.exports) {
 import * as THREE from 'three';
 
 (() => {
-  const APP_VERSION = '1.0.0';
+  const APP_VERSION = '1.1.0';
   const MAKER = '';
 
   let game = null;
@@ -6522,13 +6534,33 @@ import * as THREE from 'three';
     const canvas3d = document.getElementById('canvas-3d');
     const container3d = document.querySelector('.board-container');
 
-    window.XQ.Render.init(THREE, canvas3d, container3d);
-    window.XQ.Input.init(canvas3d, {
-      onMove: (m) => Controller.makeMove(m)
-    });
-    window.XQ.AiClient.init();
-    window.XQ.Pwa.init();
-    window.XQ.RulesPage.init();
+    try {
+      window.XQ.Render.init(THREE, canvas3d, container3d);
+    } catch (e) {
+      console.warn('Render.init failed:', e);
+    }
+    try {
+      window.XQ.Input.init(canvas3d, {
+        onMove: (m) => Controller.makeMove(m)
+      });
+    } catch (e) {
+      console.warn('Input.init failed:', e);
+    }
+    try {
+      window.XQ.AiClient.init();
+    } catch (e) {
+      console.warn('AiClient.init failed:', e);
+    }
+    try {
+      window.XQ.Pwa.init();
+    } catch (e) {
+      console.warn('Pwa.init failed:', e);
+    }
+    try {
+      window.XQ.RulesPage.init();
+    } catch (e) {
+      console.warn('RulesPage.init failed:', e);
+    }
 
     // Check if resume available
     const savedCurrent = window.XQ.Storage.loadCurrent();

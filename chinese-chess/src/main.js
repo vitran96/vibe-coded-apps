@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 
 (() => {
-  const APP_VERSION = '1.0.0';
+  const APP_VERSION = '1.1.0';
   const MAKER = '';
 
   let game = null;
@@ -668,13 +668,33 @@ import * as THREE from 'three';
     const canvas3d = document.getElementById('canvas-3d');
     const container3d = document.querySelector('.board-container');
 
-    window.XQ.Render.init(THREE, canvas3d, container3d);
-    window.XQ.Input.init(canvas3d, {
-      onMove: (m) => Controller.makeMove(m)
-    });
-    window.XQ.AiClient.init();
-    window.XQ.Pwa.init();
-    window.XQ.RulesPage.init();
+    try {
+      window.XQ.Render.init(THREE, canvas3d, container3d);
+    } catch (e) {
+      console.warn('Render.init failed:', e);
+    }
+    try {
+      window.XQ.Input.init(canvas3d, {
+        onMove: (m) => Controller.makeMove(m)
+      });
+    } catch (e) {
+      console.warn('Input.init failed:', e);
+    }
+    try {
+      window.XQ.AiClient.init();
+    } catch (e) {
+      console.warn('AiClient.init failed:', e);
+    }
+    try {
+      window.XQ.Pwa.init();
+    } catch (e) {
+      console.warn('Pwa.init failed:', e);
+    }
+    try {
+      window.XQ.RulesPage.init();
+    } catch (e) {
+      console.warn('RulesPage.init failed:', e);
+    }
 
     // Check if resume available
     const savedCurrent = window.XQ.Storage.loadCurrent();

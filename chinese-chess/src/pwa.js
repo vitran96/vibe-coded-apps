@@ -55,7 +55,10 @@
 
     // Web manifest
     const pal = window.House ? window.House.palette() : {};
-    const baseUrl = new URL('./', window.location.href).href;
+    let baseUrl = './';
+    try {
+      baseUrl = new URL('./', window.location.href).href;
+    } catch {}
     const manifest = {
       name: 'Cờ Tướng',
       short_name: 'Cờ Tướng',

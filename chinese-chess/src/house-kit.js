@@ -2,16 +2,23 @@
 // Exposes window.House. Games add their own strings/sounds on top; they do not change these.
 (() => {
   const THEMES = ['auto', 'giay', 'dem', 'sonmai', 'bien'];
-  const PREFS_KEY = 'house:prefs'; // the ONE intentionally shared key: theme + language follow the player across games
+  const PREFS_KEY = 'house:prefs'; // shared theme + language across games
+  const APP_PREFS_KEY = 'cotuong_prefs';
 
   const prefs = {
     load() {
-      try { const p = JSON.parse(localStorage.getItem(PREFS_KEY)); if (p && p.v === 1 && p.theme && p.theme !== 'auto' && p.theme !== 'dem') return p; } catch {}
+      try {
+        const p = JSON.parse(localStorage.getItem(APP_PREFS_KEY) ?? localStorage.getItem(PREFS_KEY));
+        if (p && p.v === 1 && p.theme && p.theme !== 'auto' && p.theme !== 'dem') return p;
+      } catch {}
       return { v: 1, theme: 'giay', lang: 'vi' };
     },
     save(patch) {
       const next = { ...prefs.load(), ...patch, v: 1 };
-      try { localStorage.setItem(PREFS_KEY, JSON.stringify(next)); } catch {}
+      try {
+        localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+        localStorage.setItem(APP_PREFS_KEY, JSON.stringify(next));
+      } catch {}
       return next;
     },
   };
