@@ -1166,6 +1166,14 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
       </div>
 
       <div class="form-group">
+        <label class="form-label" data-i18n="game.allowUndo">Đi lại (Undo)</label>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span data-i18n="game.set.allowUndoDesc">Cho phép đi lại nước cờ</span>
+          <input type="checkbox" id="settings-undo-toggle" checked style="transform:scale(1.3);">
+        </div>
+      </div>
+
+      <div class="form-group">
         <label class="form-label" data-i18n="settings.audio">Âm thanh</label>
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span data-i18n="settings.sfx">Hiệu ứng âm thanh</span>
@@ -1443,6 +1451,7 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
       'game.replay.review': 'Xem lại',
       'game.replay.endedCheckmate': 'Ván cờ đã kết thúc. Vui lòng lùi lại 1–2 nước trong Xem lại để chơi tiếp!',
       'game.allowUndo': 'Đi lại (Undo)',
+      'game.set.allowUndoDesc': 'Cho phép đi lại nước cờ',
       'common.enabled': 'Bật',
       'common.disabled': 'Tắt',
       'common.replayMatches': 'Xem lại ván đấu',
@@ -1530,6 +1539,7 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
       'game.replay.review': 'Replay',
       'game.replay.endedCheckmate': 'Game ended in checkmate. Step back 1–2 moves in Replay to continue playing!',
       'game.allowUndo': 'Allow Undo',
+      'game.set.allowUndoDesc': 'Allow taking back moves',
       'common.enabled': 'On',
       'common.disabled': 'Off',
       'common.replayMatches': 'Watch Replays',
@@ -3049,6 +3059,7 @@ if (typeof module !== 'undefined' && module.exports) {
     labels: 'han', // 'han' | 'viet'
     showMoves: true,
     lastMove: true,
+    allowUndo: true,
     confirm: false,
     faceToFace: false,
     perpetual: true,
@@ -6329,11 +6340,12 @@ import * as THREE from 'three';
     },
 
     undo() {
-      if (!game || game.status !== 'in_progress' || game.plies.length === 0) return;
+      if (!game || game.status !== 'in_progress') return;
       if (game.rules && game.rules.allowUndo === false) {
-        if (window.House) window.House.toast(window.House.i18n.lang === 'vi' ? 'Ván đấu không cho phép đi lại!' : 'Undo is disabled in this match!');
+        window.XQ.toast(window.House && window.House.i18n.lang === 'en' ? 'Undo is disabled in this match!' : 'Ván đấu không cho phép đi lại!');
         return;
       }
+      if (game.plies.length === 0) return;
       window.XQ.AiClient.cancel();
 
       const pliesToUndo = (game.mode === 'pve' && game.plies.length >= 2) ? 2 : 1;

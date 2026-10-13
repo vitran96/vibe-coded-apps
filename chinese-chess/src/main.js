@@ -522,11 +522,12 @@ import * as THREE from 'three';
     },
 
     undo() {
-      if (!game || game.status !== 'in_progress' || game.plies.length === 0) return;
+      if (!game || game.status !== 'in_progress') return;
       if (game.rules && game.rules.allowUndo === false) {
-        if (window.House) window.House.toast(window.House.i18n.lang === 'vi' ? 'Ván đấu không cho phép đi lại!' : 'Undo is disabled in this match!');
+        window.XQ.toast(window.House && window.House.i18n.lang === 'en' ? 'Undo is disabled in this match!' : 'Ván đấu không cho phép đi lại!');
         return;
       }
+      if (game.plies.length === 0) return;
       window.XQ.AiClient.cancel();
 
       const pliesToUndo = (game.mode === 'pve' && game.plies.length >= 2) ? 2 : 1;
