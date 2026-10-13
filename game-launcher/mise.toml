@@ -1,0 +1,19 @@
+[tasks.build]
+description = "Build frontend assets into dist/"
+run = "npm run build"
+
+[tasks."build:app"]
+description = "Compile desktop Tauri application binary"
+run = "nix-shell -p pkg-config glib gtk3 webkitgtk_4_1 --run 'cargo build --manifest-path src-tauri/Cargo.toml'"
+
+[tasks.test]
+description = "Run unit test suite"
+run = "npm test"
+
+[tasks.dev]
+description = "Start development web server"
+run = "npm run dev"
+
+[tasks.check]
+description = "Verify frontend and cargo check compilation"
+run = "npm run build && nix-shell -p pkg-config glib gtk3 webkitgtk_4_1 --run 'cargo check --manifest-path src-tauri/Cargo.toml'"

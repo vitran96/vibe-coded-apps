@@ -1,0 +1,18 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Launcher permissions",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:path:default",
+    "http:default",
+    {
+      "identifier": "http:allow-fetch",
+      "allow": [{ "url": "https://*/*" }, { "url": "http://*/*" }]
+    },
+    "fs:default",
+    "fs:allow-appdata-read-recursive",
+    "fs:allow-appdata-write-recursive"
+  ]
+}

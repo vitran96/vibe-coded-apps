@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Launcher</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body class="light-theme">
+  <div id="app">
+    <!-- Left Navigation Sidebar -->
+    <aside id="sidebar" aria-label="Main Navigation">
+      <div class="sidebar-brand">
+        <span class="brand-icon">🎮</span>
+        <span class="brand-title">Games</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button id="btn-library" class="nav-btn active" title="View Game Library">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span class="nav-text">Library</span>
+        </button>
+
+        <button id="btn-settings" class="nav-btn" title="Open Settings & Game Storage">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span class="nav-text">Settings</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Viewports -->
+    <main id="main-content">
+      <!-- View 1: Library Grid -->
+      <section id="library-view" aria-label="Game Library View">
+        <header class="view-header">
+          <h1>Game Library</h1>
+          <p class="view-instructions">Select any game below to play or download. Large buttons are provided for easy clicking.</p>
+        </header>
+        <div id="game-list" class="grid"></div>
+      </section>
+
+      <!-- View 2: Settings & Storage Manager -->
+      <section id="settings-view" class="hidden" aria-label="Settings View">
+        <header class="view-header">
+          <h1>Launcher Settings</h1>
+          <p class="view-instructions">Manage updates and local game storage below.</p>
+        </header>
+        <div class="settings-container">
+          <div class="settings-card">
+            <h2>Global Preferences</h2>
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-global-auto-update" />
+              <span>Automatically update all games without prompting</span>
+            </label>
+          </div>
+
+          <div class="settings-card">
+            <h2>Installed Games & Cache Management</h2>
+            <div id="settings-game-list" class="settings-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View 3: Sandboxed Player -->
+      <section id="player-view" class="hidden" aria-label="Game Player View">
+        <div class="player-topbar">
+          <button id="btn-exit-game" class="btn-exit" title="Exit Game and Return to Library">
+            ← Exit Game (Back to Library)
+          </button>
+        </div>
+        <div class="player-frame-container">
+          <iframe 
+            id="game-frame" 
+            sandbox="allow-scripts allow-same-origin allow-pointer-lock"
+            allow="autoplay; fullscreen"
+            title="Active Game Frame">
+          </iframe>
+        </div>
+      </section>
+    </main>
+
+    <!-- Update Selection Modal Dialog -->
+    <div id="update-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-dialog">
+        <h2 id="modal-title">Updates Available</h2>
+        <p class="modal-subtitle">New versions are ready for your installed games. Select which ones to update:</p>
+        <div id="update-modal-list" class="update-list-box"></div>
+        
+        <div class="modal-options">
+          <label class="checkbox-label">
+            <input type="checkbox" id="chk-dont-ask" />
+            <span>Don't ask again (always auto-update games in the future)</span>
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button id="btn-update-skip" class="btn-text" title="Skip Updates for Now">Skip Updates for Now</button>
+          <button id="btn-update-selected" class="btn-secondary" title="Update Selected Games">Update Selected Games</button>
+          <button id="btn-update-all" class="btn-primary" title="Update All Games Now">Update All Games Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
