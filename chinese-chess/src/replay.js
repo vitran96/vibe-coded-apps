@@ -44,6 +44,17 @@
 
     const plyLabel = document.getElementById('replay-ply-label');
     if (plyLabel) plyLabel.textContent = `${currentPly} / ${movesList.length}`;
+
+    // Highlight current move in side table
+    const cells = document.querySelectorAll('#side-movelist-container .move-cell');
+    cells.forEach(c => c.classList.remove('active-ply'));
+    if (currentPly > 0) {
+      const activeCell = document.querySelector(`#side-movelist-container .move-cell[data-ply="${currentPly - 1}"]`);
+      if (activeCell) {
+        activeCell.classList.add('active-ply');
+        activeCell.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
   }
 
   function stepForward() {
@@ -83,11 +94,15 @@
   }
 
   const Replay = {
-    start(record) {
+    start(record, initialPly) {
       activeRecord = record;
       buildPositions(record);
       currentPly = 0;
       isPlaying = false;
+
+      // Board flip based on human side
+      const humanSide = (record.humanSide !== undefined) ? record.humanSide : (record.ai ? -record.ai.side : 1);
+      window.XQ.Render.setFlipped(humanSide === -1);
 
       // Switch to game screen in replay mode
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -96,8 +111,6 @@
 
       const replayBar = document.getElementById('replay-toolbar');
       if (replayBar) replayBar.style.display = 'flex';
-      const normalBar = document.getElementById('game-normal-toolbar');
-      if (normalBar) normalBar.style.display = 'none';
 
       // Setup scrubber slider
       const slider = document.getElementById('replay-scrubber');
@@ -107,22 +120,36 @@
         slider.value = 0;
       }
 
+      // Populate move list and player bars in side panel
+      const dummyGame = {
+        plies: movesList.map(mStr => ({ m: window.XQ.iccsToMove(mStr) })),
+        rules: record.rules,
+        mode: record.mode,
+        humanSide,
+        ai: record.ai,
+        timeLeft: record.timeLeft
+      };
+      window.XQ.ui.updatePlayerBars(dummyGame);
+      window.XQ.ui.updateMoveListTable(dummyGame);
+
       window.XQ.Input.setEnabled(false);
-      goToPly(0);
+      const startAt = (initialPly !== undefined && initialPly !== null) ? initialPly : 0;
+      goToPly(startAt);
     },
 
-    stop() {
+    stop(skipRestore = false) {
       pause();
       activeRecord = null;
       const replayBar = document.getElementById('replay-toolbar');
       if (replayBar) replayBar.style.display = 'none';
-      const normalBar = document.getElementById('game-normal-toolbar');
-      if (normalBar) normalBar.style.display = 'flex';
 
       window.XQ.Input.setEnabled(true);
-      // Restore live game
-      if (window.XQ.controller) {
-        window.XQ.controller.restoreLiveBoard();
+      if (!skipRestore) {
+        if (window.XQ.controller && window.XQ.controller.getGame() && window.XQ.controller.getGame().status === 'in_progress') {
+          window.XQ.controller.restoreLiveBoard();
+        } else {
+          window.XQ.ui.showScreen('screen-start');
+        }
       }
     },
 
@@ -136,7 +163,13 @@
       playbackSpeed = speed;
       if (isPlaying) play();
     },
-    goToPly
+    goToPly,
+    getActiveRecord() {
+      return activeRecord;
+    },
+    getCurrentPly() {
+      return currentPly;
+    }
   };
 
   window.XQ = window.XQ || {};

@@ -7,6 +7,7 @@
     labels: 'han', // 'han' | 'viet'
     showMoves: true,
     lastMove: true,
+    allowUndo: true,
     confirm: false,
     faceToFace: false,
     perpetual: true,
@@ -26,7 +27,8 @@
     v: 1,
     mode: 'pve', // 'pve' | 'pvp'
     level: 'medium', // 'easy' | 'medium' | 'hard'
-    side: 'red' // 'red' | 'black' | 'random'
+    side: 'red', // 'red' | 'black' | 'random'
+    allowUndo: true
   };
 
   function getRaw(key, fallback = null) {
@@ -147,8 +149,13 @@
     saveRecord(record) {
       const recs = getRaw('records', { v: 1, items: [] });
       const items = Array.isArray(recs.items) ? recs.items : [];
-      // Prepend newest record
-      items.unshift(record);
+      const existingIdx = items.findIndex(r => r.id === record.id);
+      if (existingIdx >= 0) {
+        items[existingIdx] = record;
+      } else {
+        // Prepend newest record
+        items.unshift(record);
+      }
       // Cap at 200 records
       if (items.length > 200) items.length = 200;
       setRaw('records', { v: 1, items });

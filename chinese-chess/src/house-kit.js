@@ -6,8 +6,8 @@
 
   const prefs = {
     load() {
-      try { const p = JSON.parse(localStorage.getItem(PREFS_KEY)); if (p && p.v === 1) return p; } catch {}
-      return { v: 1, theme: 'auto', lang: 'vi' };
+      try { const p = JSON.parse(localStorage.getItem(PREFS_KEY)); if (p && p.v === 1 && p.theme && p.theme !== 'auto' && p.theme !== 'dem') return p; } catch {}
+      return { v: 1, theme: 'giay', lang: 'vi' };
     },
     save(patch) {
       const next = { ...prefs.load(), ...patch, v: 1 };
@@ -17,7 +17,7 @@
   };
 
   const dark = matchMedia('(prefers-color-scheme: dark)');
-  const resolve = (name) => (name === 'auto' || !THEMES.includes(name)) ? (dark.matches ? 'dem' : 'giay') : name;
+  const resolve = (name) => (!name || name === 'auto' || !THEMES.includes(name)) ? 'giay' : name;
 
   function applyTheme(name) {
     const id = resolve(name);

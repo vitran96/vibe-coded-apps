@@ -10,10 +10,11 @@ import * as THREE from 'three';
   let countdownSec = 0;
   let tabHidden = false;
 
-  // Initialize House kit prefs and theme
-  const prefs = window.House ? window.House.prefs.load() : { theme: 'auto', lang: 'vi' };
+  const prefs = window.House ? window.House.prefs.load() : { theme: 'giay', lang: 'vi' };
+  const initialTheme = (prefs.theme && prefs.theme !== 'auto' && prefs.theme !== 'dem') ? prefs.theme : 'giay';
   if (window.House) {
-    window.House.applyTheme(prefs.theme);
+    window.House.prefs.save({ theme: initialTheme });
+    window.House.applyTheme(initialTheme);
     window.House.i18n.setLang(prefs.lang);
   }
 
@@ -26,8 +27,30 @@ import * as THREE from 'three';
       if (timerInterval) clearInterval(timerInterval);
 
       // Record old game as abandoned if in progress with >= 1 ply
-      if (game && game.status === 'in_progress' && game.plies && game.plies.length > 0) {
-        this.recordFinishedGame('abandoned', null, null, 'abandoned');
+      const savedCur = window.XQ.Storage.loadCurrent();
+      const prevGame = (game && game.status === 'in_progress' && game.plies && game.plies.length > 0) ? game : (savedCur && savedCur.status === 'in_progress' && savedCur.plies && savedCur.plies.length > 0 ? savedCur : null);
+      if (prevGame) {
+        const rec = {
+          v: 1,
+          id: prevGame.id,
+          startedAt: prevGame.startedAt,
+          endedAt: Date.now(),
+          mode: prevGame.mode,
+          humanSide: prevGame.humanSide,
+          ai: prevGame.ai,
+          rules: prevGame.rules,
+          moves: prevGame.plies.map(p => window.XQ.moveToIccs(p.m)).join(' '),
+          times: prevGame.plies.map(p => p.t),
+          timeLeft: prevGame.timeLeft,
+          undoCount: prevGame.undoCount,
+          status: 'abandoned',
+          winner: null,
+          loser: null,
+          endedOnTurn: prevGame.pos.side === 1 ? 'red' : 'black',
+          moveCount: prevGame.plies.length,
+          reason: 'abandoned'
+        };
+        window.XQ.Storage.saveRecord(rec);
       }
 
       const settings = window.XQ.Storage.loadSettings();
@@ -42,6 +65,7 @@ import * as THREE from 'three';
       const incSec = (options.timer && options.timer.inc) || settings.timer.inc || 5;
 
       const initialTime = timerMode === 'move' ? moveSec : baseSec;
+      const allowUndo = (options.allowUndo !== false);
 
       game = {
         id: 'g_' + Date.now().toString(36),
@@ -54,6 +78,7 @@ import * as THREE from 'three';
           startFen: window.XQ.START_FEN,
           perpetual: settings.perpetual !== false,
           moveLimit: settings.moveLimit !== false,
+          allowUndo,
           timer: { mode: timerMode, moveSec, base: baseSec, inc: incSec }
         },
         pos: window.XQ.parseFen(window.XQ.START_FEN),
@@ -71,7 +96,7 @@ import * as THREE from 'three';
       };
 
       // Remember new game choices
-      window.XQ.Storage.saveNewGame({ mode, level, side: options.side });
+      window.XQ.Storage.saveNewGame({ mode, level, side: options.side, allowUndo });
 
       // Board flip depending on whether player 1 plays red or black
       const flipBoard = (humanSide === -1);
@@ -87,6 +112,7 @@ import * as THREE from 'three';
       window.XQ.ui.updateMoveListTable(game);
       window.XQ.Input.setEnabled(true);
 
+      this.updateUndoButtonState();
       this.startTimerLoop();
       this.autosave();
 
@@ -94,6 +120,16 @@ import * as THREE from 'three';
       if (mode === 'pve' && game.pos.side !== humanSide) {
         this.triggerAiMove();
       }
+    },
+
+    updateUndoButtonState() {
+      const undoBtn = document.getElementById('btn-action-undo');
+      if (!undoBtn) return;
+      const canUndo = (!game || (game.rules && game.rules.allowUndo !== false));
+      undoBtn.disabled = !canUndo;
+      undoBtn.style.opacity = canUndo ? '1' : '0.35';
+      undoBtn.style.cursor = canUndo ? 'pointer' : 'not-allowed';
+      undoBtn.title = canUndo ? 'Đi lại' : (window.House && window.House.i18n.lang === 'en' ? 'Undo is disabled' : 'Đi lại đã tắt');
     },
 
     resumeGame() {
@@ -119,7 +155,125 @@ import * as THREE from 'three';
       window.XQ.ui.updateMoveListTable(game);
       window.XQ.Input.setEnabled(true);
 
+      this.updateUndoButtonState();
       this.startTimerLoop();
+    },
+
+    playFromRecord(record, plyIndex) {
+      if (!record) return false;
+
+      const movesList = record.moves ? record.moves.trim().split(/\s+/).filter(Boolean) : [];
+      const maxPlies = movesList.length;
+      let targetPly = (plyIndex !== undefined && plyIndex !== null) ? plyIndex : maxPlies;
+      if (targetPly < 0) targetPly = 0;
+      if (targetPly > maxPlies) targetPly = maxPlies;
+
+      const startFen = (record.rules && record.rules.startFen) || window.XQ.START_FEN;
+      let pos = window.XQ.parseFen(startFen);
+      const plies = [];
+      const history = [window.XQ.zobristHash(pos)];
+
+      for (let i = 0; i < targetPly; i++) {
+        const m = window.XQ.iccsToMove(movesList[i]);
+        pos = window.XQ.applyMove(pos, m);
+        history.push(window.XQ.zobristHash(pos));
+        plies.push({ m, t: (record.times && record.times[i]) || 0 });
+      }
+
+      const curRules = {
+        perpetual: true,
+        moveLimit: true,
+        ...(record.rules || {}),
+        startFen
+      };
+
+      // Check if position is already checkmated / drawn at targetPly
+      const checkOver = window.XQ.gameStatus(pos, history, curRules);
+      if (checkOver.over && checkOver.status === 'win') {
+        const msg = window.House ? window.House.i18n.t('game.replay.endedCheckmate') : 'Ván cờ đã kết thúc. Hãy lùi lại 1-2 nước trong Xem lại để chơi tiếp!';
+        if (window.House) window.House.toast(msg);
+        return false;
+      }
+
+      // Exit replay mode if active
+      if (window.XQ.Replay) {
+        window.XQ.Replay.stop(true);
+      }
+
+      // Close dialogs
+      window.XQ.ui.closeDialog('dialog-history');
+      window.XQ.ui.closeDialog('dialog-gameover');
+
+      const mode = record.mode || 'pve';
+      const humanSide = (record.humanSide !== undefined) ? record.humanSide : (record.ai ? -record.ai.side : 1);
+      const ai = mode === 'pve' ? (record.ai || { level: 'medium', side: -humanSide }) : null;
+
+      const timerMode = (record.rules && record.rules.timer && record.rules.timer.mode) || 'off';
+      const moveSec = (record.rules && record.rules.timer && record.rules.timer.moveSec) || 60;
+      const baseSec = (record.rules && record.rules.timer && record.rules.timer.base) || 600;
+      const incSec = (record.rules && record.rules.timer && record.rules.timer.inc) || 5;
+      const initialTime = timerMode === 'move' ? moveSec : baseSec;
+
+      let lastMoveFrom = -1;
+      let lastMoveTo = -1;
+      if (targetPly > 0) {
+        const lastM = window.XQ.iccsToMove(movesList[targetPly - 1]);
+        lastMoveFrom = (lastM >> 7) & 0x7F;
+        lastMoveTo = lastM & 0x7F;
+      }
+
+      game = {
+        id: 'g_' + Date.now().toString(36),
+        startedAt: Date.now(),
+        endedAt: null,
+        mode,
+        humanSide,
+        ai,
+        rules: curRules,
+        pos,
+        plies,
+        history,
+        undoCount: 0,
+        status: 'in_progress',
+        winner: null,
+        loser: null,
+        reason: null,
+        timer: { mode: timerMode, moveSec, base: baseSec, inc: incSec },
+        timeLeft: timerMode !== 'off' ? { red: initialTime, black: initialTime } : null,
+        lastMoveFrom,
+        lastMoveTo
+      };
+
+      // Board flip
+      window.XQ.Render.setFlipped(humanSide === -1);
+
+      // Switch to game screen
+      window.XQ.ui.showScreen('screen-game');
+      window.XQ.Render.syncBoard(game.pos);
+      window.XQ.Render.clearHighlights();
+      if (lastMoveFrom >= 0 && lastMoveTo >= 0) {
+        window.XQ.Render.showLastMove(lastMoveFrom, lastMoveTo);
+      }
+      window.XQ.ui.updatePlayerBars(game);
+      window.XQ.ui.updateClocks(game, game.pos.side);
+      window.XQ.ui.updateMoveListTable(game);
+      window.XQ.Input.setEnabled(true);
+
+      this.updateUndoButtonState();
+      this.startTimerLoop();
+      this.autosave();
+      this.autoRecordMatch();
+
+      // If PvE and AI turn
+      if (mode === 'pve' && game.pos.side !== humanSide) {
+        this.triggerAiMove();
+      }
+
+      if (window.House) {
+        window.House.toast(window.House.i18n.lang === 'vi' ? 'Đã nạp ván cờ — Tiếp tục thi đấu!' : 'Game loaded — Ready to play!');
+      }
+
+      return true;
     },
 
     startTimerLoop() {
@@ -245,6 +399,7 @@ import * as THREE from 'three';
         } else {
           window.XQ.Input.setEnabled(true);
           this.autosave();
+          this.autoRecordMatch();
 
           // AI reply in PvE mode
           if (game.mode === 'pve' && game.pos.side !== game.humanSide) {
@@ -269,15 +424,26 @@ import * as THREE from 'three';
       }
 
       window.XQ.AiClient.requestMove(fen, {
-        level: game.ai.level,
+        level: (game.ai && game.ai.level) || 'medium',
         timeBudget,
         historyHashes: game.history,
         movesHistory,
         rules: game.rules
       }, (reply) => {
-        if (!game || game.status !== 'in_progress') return;
+        if (!game || game.status !== 'in_progress') {
+          window.XQ.Input.setEnabled(true);
+          return;
+        }
         if (reply && reply.moveInt) {
           this.makeMove(reply.moveInt);
+        } else {
+          const legals = window.XQ.legalMoves(game.pos);
+          if (legals.length > 0) {
+            this.makeMove(legals[0]);
+          } else {
+            const status = window.XQ.gameStatus(game.pos, game.history, game.rules);
+            this.finishGame(status);
+          }
         }
       });
     },
@@ -303,31 +469,34 @@ import * as THREE from 'three';
         window.XQ.Audio.play('draw');
       }
 
-      this.recordFinishedGame(status.status, status.winner, status.loser, status.reason);
+      this.autoRecordMatch(status.status, status.winner, status.loser, status.reason);
       window.XQ.Storage.clearCurrent();
       window.XQ.ui.showGameOver(status);
     },
 
-    recordFinishedGame(status, winner, loser, reason) {
-      if (!game) return;
+    autoRecordMatch(statusOverride, winnerOverride, loserOverride, reasonOverride) {
+      if (!game || !game.id) return;
+      if (game.plies.length === 0 && !statusOverride) return;
+
       const rec = {
         v: 1,
         id: game.id,
         startedAt: game.startedAt,
-        endedAt: Date.now(),
+        endedAt: (statusOverride && statusOverride !== 'in_progress') ? Date.now() : (game.endedAt || Date.now()),
         mode: game.mode,
+        humanSide: game.humanSide,
         ai: game.ai,
         rules: game.rules,
         moves: game.plies.map(p => window.XQ.moveToIccs(p.m)).join(' '),
         times: game.plies.map(p => p.t),
         timeLeft: game.timeLeft,
         undoCount: game.undoCount,
-        status,
-        winner,
-        loser,
+        status: statusOverride || game.status || 'in_progress',
+        winner: winnerOverride !== undefined ? winnerOverride : game.winner,
+        loser: loserOverride !== undefined ? loserOverride : game.loser,
         endedOnTurn: game.pos.side === 1 ? 'red' : 'black',
         moveCount: game.plies.length,
-        reason
+        reason: reasonOverride !== undefined ? reasonOverride : game.reason
       };
       window.XQ.Storage.saveRecord(rec);
     },
@@ -354,6 +523,10 @@ import * as THREE from 'three';
 
     undo() {
       if (!game || game.status !== 'in_progress' || game.plies.length === 0) return;
+      if (game.rules && game.rules.allowUndo === false) {
+        if (window.House) window.House.toast(window.House.i18n.lang === 'vi' ? 'Ván đấu không cho phép đi lại!' : 'Undo is disabled in this match!');
+        return;
+      }
       window.XQ.AiClient.cancel();
 
       const pliesToUndo = (game.mode === 'pve' && game.plies.length >= 2) ? 2 : 1;
@@ -386,6 +559,7 @@ import * as THREE from 'three';
       window.XQ.ui.updateMoveListTable(game);
       window.XQ.Input.setEnabled(true);
       this.autosave();
+      this.autoRecordMatch();
     },
 
     flip() {
@@ -405,24 +579,44 @@ import * as THREE from 'three';
       });
     },
 
-    offerDraw() {
-      if (!game || game.status !== 'in_progress') return;
-      if (game.mode === 'pvp') {
-        window.XQ.ui.openDialog('dialog-draw-offer');
-      } else {
-        // AI eval check: ply >= 40 and within ±50 cp
-        const ev = window.XQ.evaluate(game.pos);
-        if (game.plies.length >= 40 && Math.abs(ev) <= 50) {
-          this.finishGame({
-            status: 'draw',
-            winner: null,
-            loser: null,
-            reason: 'agreement'
-          });
+    replayToPly(targetPly) {
+      if (!game || game.plies.length === 0) return;
+      const rec = {
+        v: 1,
+        id: game.id,
+        startedAt: game.startedAt,
+        mode: game.mode,
+        humanSide: game.humanSide,
+        ai: game.ai,
+        rules: game.rules,
+        moves: game.plies.map(p => window.XQ.moveToIccs(p.m)).join(' '),
+        timeLeft: game.timeLeft
+      };
+      window.XQ.Replay.start(rec, targetPly);
+    },
+
+    startReplayCurrentGame() {
+      if (!game || game.plies.length === 0) {
+        const records = window.XQ.Storage.loadRecords();
+        if (records && records.length > 0) {
+          window.XQ.Replay.start(records[0], 0);
         } else {
-          window.XQ.toast(window.House.i18n.t('game.aiDeclinesDraw'));
+          window.XQ.toast('Chưa có nước đi nào để xem lại');
         }
+        return;
       }
+      const rec = {
+        v: 1,
+        id: game.id,
+        startedAt: game.startedAt,
+        mode: game.mode,
+        humanSide: game.humanSide,
+        ai: game.ai,
+        rules: game.rules,
+        moves: game.plies.map(p => window.XQ.moveToIccs(p.m)).join(' '),
+        timeLeft: game.timeLeft
+      };
+      window.XQ.Replay.start(rec, 0);
     }
   };
 
@@ -435,7 +629,7 @@ import * as THREE from 'three';
   });
 
   // DOM Event Bindings
-  document.addEventListener('DOMContentLoaded', () => {
+  function boot() {
     const canvas3d = document.getElementById('canvas-3d');
     const container3d = document.querySelector('.board-container');
 
@@ -466,21 +660,43 @@ import * as THREE from 'three';
       window.XQ.ui.updateHistoryList();
       window.XQ.ui.openDialog('dialog-history');
     });
+    document.getElementById('btn-start-replay')?.addEventListener('click', () => {
+      window.XQ.ui.updateHistoryList();
+      window.XQ.ui.openDialog('dialog-history');
+    });
     document.getElementById('btn-start-settings')?.addEventListener('click', () => {
       window.XQ.ui.openDialog('dialog-settings');
     });
 
-    // Right side menu panel action buttons (horizontal with text)
+    // Right side menu panel action box buttons
     document.getElementById('btn-action-undo')?.addEventListener('click', () => Controller.undo());
-    document.getElementById('btn-action-resign')?.addEventListener('click', () => Controller.resign());
+    document.getElementById('btn-action-resign')?.addEventListener('click', () => {
+      window.XQ.ui.openDialog('dialog-resign-confirm');
+    });
+    document.getElementById('btn-action-replay')?.addEventListener('click', () => {
+      Controller.startReplayCurrentGame();
+    });
     document.getElementById('btn-action-newgame')?.addEventListener('click', () => {
       window.XQ.ui.openDialog('dialog-newgame');
+    });
+    document.getElementById('btn-action-history')?.addEventListener('click', () => {
+      window.XQ.ui.updateHistoryList();
+      window.XQ.ui.openDialog('dialog-history');
     });
     document.getElementById('btn-action-rules')?.addEventListener('click', () => {
       window.XQ.RulesPage.open('screen-game');
     });
     document.getElementById('btn-action-settings')?.addEventListener('click', () => {
       window.XQ.ui.openDialog('dialog-settings');
+    });
+
+    // Resign in-game dialog confirm/cancel buttons
+    document.getElementById('btn-resign-cancel')?.addEventListener('click', () => {
+      window.XQ.ui.closeDialog('dialog-resign-confirm');
+    });
+    document.getElementById('btn-resign-confirm')?.addEventListener('click', () => {
+      window.XQ.ui.closeDialog('dialog-resign-confirm');
+      Controller.resign();
     });
 
     // Game menu options
@@ -490,7 +706,7 @@ import * as THREE from 'three';
     });
     document.getElementById('menu-item-resign')?.addEventListener('click', () => {
       window.XQ.ui.closeDialog('dialog-game-menu');
-      Controller.resign();
+      window.XQ.ui.openDialog('dialog-resign-confirm');
     });
     document.getElementById('menu-item-settings')?.addEventListener('click', () => {
       window.XQ.ui.closeDialog('dialog-game-menu');
@@ -500,6 +716,15 @@ import * as THREE from 'three';
     // New game sheet chips & Start button
     let selectedMode = 'pve', selectedLevel = 'medium', selectedSide = 'red';
     let selectedTimerMode = 'off', selectedMoveSec = 60, selectedBaseSec = 600, selectedIncSec = 5;
+    let selectedAllowUndo = true;
+
+    const savedNg = window.XQ.Storage.loadNewGame();
+    if (savedNg && savedNg.allowUndo !== undefined) {
+      selectedAllowUndo = (savedNg.allowUndo !== false);
+      document.querySelectorAll('.chip-undo').forEach(c => {
+        c.classList.toggle('selected', c.dataset.val === String(selectedAllowUndo));
+      });
+    }
 
     function bindChipGroup(selector, onSelect) {
       document.querySelectorAll(selector).forEach(chip => {
@@ -518,6 +743,7 @@ import * as THREE from 'three';
     });
     bindChipGroup('.chip-level', (val) => { selectedLevel = val; });
     bindChipGroup('.chip-side', (val) => { selectedSide = val; });
+    bindChipGroup('.chip-undo', (val) => { selectedAllowUndo = (val === 'true'); });
     bindChipGroup('.chip-timer-mode', (val) => {
       selectedTimerMode = val;
       const moveOpts = document.getElementById('timer-opts-move');
@@ -538,6 +764,7 @@ import * as THREE from 'three';
         mode: selectedMode,
         level: selectedLevel,
         side: selectedSide,
+        allowUndo: selectedAllowUndo,
         timer: {
           mode: selectedTimerMode,
           moveSec: selectedMoveSec,
@@ -550,7 +777,7 @@ import * as THREE from 'three';
     // Settings sheet
     const themeSelect = document.getElementById('settings-theme-select');
     if (themeSelect) {
-      themeSelect.value = window.House.prefs.load().theme;
+      themeSelect.value = initialTheme;
       themeSelect.addEventListener('change', (e) => {
         window.House.prefs.save({ theme: e.target.value });
         window.House.applyTheme(e.target.value);
@@ -623,6 +850,13 @@ import * as THREE from 'three';
     document.getElementById('btn-replay-next')?.addEventListener('click', () => window.XQ.Replay.stepForward());
     document.getElementById('btn-replay-end')?.addEventListener('click', () => window.XQ.Replay.goToPly(999));
     document.getElementById('btn-replay-exit')?.addEventListener('click', () => window.XQ.Replay.stop());
+    document.getElementById('btn-replay-play-from-here')?.addEventListener('click', () => {
+      const rec = window.XQ.Replay.getActiveRecord();
+      const ply = window.XQ.Replay.getCurrentPly();
+      if (rec) {
+        Controller.playFromRecord(rec, ply);
+      }
+    });
     document.getElementById('replay-scrubber')?.addEventListener('input', (e) => {
       window.XQ.Replay.goToPly(parseInt(e.target.value, 10));
     });
@@ -652,13 +886,18 @@ import * as THREE from 'three';
       window.XQ.ui.openDialog('dialog-newgame');
     });
 
-    // Draw offer confirm button
-    document.getElementById('btn-draw-accept')?.addEventListener('click', () => {
-      window.XQ.ui.closeDialog('dialog-draw-offer');
-      Controller.finishGame({ status: 'draw', winner: null, loser: null, reason: 'agreement' });
+    // Auto-record active match before unload
+    window.addEventListener('beforeunload', () => {
+      const g = Controller.getGame();
+      if (g && g.status === 'in_progress' && g.plies && g.plies.length > 0) {
+        Controller.autoRecordMatch();
+      }
     });
-    document.getElementById('btn-draw-decline')?.addEventListener('click', () => {
-      window.XQ.ui.closeDialog('dialog-draw-offer');
-    });
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 })();

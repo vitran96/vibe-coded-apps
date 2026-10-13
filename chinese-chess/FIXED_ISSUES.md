@@ -70,3 +70,57 @@ This document tracks identified bugs, design corrections, and architectural rule
 - **Symptom:** "Cầu hoà" (Offer draw) button was present in game menu.
 - **Root Cause:** Speculative multiplayer draw feature.
 - **Fix:** Removed "Cầu hoà" button and associated dialog in [src/index.html](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/index.html) and event handlers in [src/main.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/main.js).
+
+### Issue #007: Inability to Play Old Ended or Forfeited Games (Interactive Replay)
+- **Symptom:** Previously ended or forfeited matches could only be observed passively through the replay scrubber with board interaction locked; players could not play from the ended/forfeited board state or retry the position.
+- **Root Cause:** Replay system only supported passive scrubbing (`Input.setEnabled(false)`); there was no controller API to spin up a live game from recorded plies/FEN, no "Chơi tiếp" button in History, and no "Chơi từ đây" button in the replay viewer toolbar. Furthermore, `humanSide` was not persisted in records, and in-game side panel lacked a History button.
+- **Fix:** 
+  1. Implemented `playFromRecord(record, plyIndex)` in [src/main.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/main.js), reconstructing board state and move history to allow instant live play against AI or human from any ply (including the final forfeited position).
+  2. Added "Chơi từ đây" (`#btn-replay-play-from-here`) to the replay toolbar in [src/index.html](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/index.html).
+  3. Added "Chơi tiếp" (`.btn-history-play`) alongside "Xem lại" in the History list in [src/ui.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/ui.js).
+  4. Added "Lịch sử" (`#btn-action-history`) to `.panel-menu-actions` on the game screen.
+  5. Saved `humanSide` in records and ensured board orientation and side notation sync correctly during replay and play resumption.
+
+### Issue #008: Missing Undo Toggle in New Game Menu & Real-Time Auto-Recording for Watching Past Matches
+- **Symptom:** 
+  1. New Game menu lacked a toggle setting to enable or disable the Undo ("Đi lại") action.
+  2. Matches were only recorded upon formal checkmate/resignation/draw modals. Any match refreshed, left, or abandoned was lost, leaving players unable to find and watch their recent games.
+- **Root Cause:** 
+  1. `dialog-newgame` did not have an `allowUndo` option, and `Controller.undo()` had no rule gating.
+  2. Storage saving was coupled solely to `finishGame()` rather than per-ply streaming.
+- **Fix:** 
+  1. Added `allowUndo` toggle chips (`Bật` / `Tắt`) to `dialog-newgame` in [src/index.html](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/index.html), persisted preference in storage, and dynamically disabled the in-game undo button when turned off.
+  2. Implemented `autoRecordMatch()` in [src/main.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/main.js) and in-place record updating by ID in [src/storage.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/storage.js) to continuously auto-record every move, undo, page reload, and game termination.
+### Issue #009: Bot Unresponsiveness & Game Freeze
+- **Symptom:** Regardless of AI level (easy, medium, hard), the bot would fail to make a move after player input, leaving the game in an unplayable frozen state until browser refresh.
+- **Root Cause:**
+  1. The Web Worker in `src/ai-client.js` lacked error handlers (`worker.onerror`) and a watchdog timeout. When a blob worker failed or encountered silent errors, no message returned to the main thread.
+  2. The main thread disabled input via `window.XQ.Input.setEnabled(false)` while waiting for the AI. Because no callback was invoked, input remained disabled forever.
+- **Fix:**
+  1. Added `worker.onerror` handler and try-catch wrappers inside the worker in [src/ai-client.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/ai-client.js).
+  2. Added an automatic watchdog timeout in `requestMove()` to fall back seamlessly to synchronous `window.XQ.searchRoot` on the main thread if the worker hangs or errors.
+  3. Added legal-move fallbacks so AI always plays a move and re-enables player input, guaranteeing the game never freezes.
+
+### Issue #010: UI Modernization (Right Side Panel Menu, Box Buttons, In-Game Forfeit Dialog, Default Light Theme, Move History & Replay)
+- **Symptom:**
+  1. Menu was not properly structured in a dedicated right side panel with move history above the menu.
+  2. Menu buttons lacked clean rectangular box button styling with explicit text.
+  3. Draw button was redundant and non-functional.
+  4. Forfeit (Xin thua) lacked an in-game confirmation dialog (or used browser alert).
+  5. Settings button did not open reliably due to DOMContentLoaded event race condition.
+  6. Dark theme was applied by default on devices with dark mode preference.
+  7. Replay feature was missing from side panel and move history table.
+- **Root Cause:**
+  1. `document.addEventListener('DOMContentLoaded', ...)` in [src/main.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/main.js) did not handle cases where `document.readyState !== 'loading'`, leading to unattached click handlers.
+  2. Forfeit immediately called `resign()` without an in-game modal dialog.
+  3. Default theme was `'auto'`, resolving to `'dem'` (dark).
+  4. Move history table in side panel lacked clickable cells and replay integration.
+- **Fix:**
+  1. Replaced DOMContentLoaded listener with a robust `boot()` check (`document.readyState === 'loading' ? ... : boot()`).
+  2. Moved move history (`#side-movelist-container`) above the menu actions in `#game-side-panel`, and styled `.panel-menu-actions` as a 2-column grid of rectangular box buttons (`.btn-action`) with icons and text ("Đi lại", "Xin thua", "Xem lại", "Ván mới", "Lịch sử", "Luật chơi", "Cài đặt").
+  3. Fully removed any draw button from game UI.
+  4. Added `<dialog id="dialog-resign-confirm">` for forfeit confirmation in [src/index.html](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/index.html) with custom "Huỷ" and "Xin thua" buttons, eliminating browser alerts.
+  5. Defaulted default theme to light theme (`giay`) in [src/house-kit.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/house-kit.js), [src/index.html](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/index.html), and [src/main.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/main.js).
+  6. Added `#btn-action-replay` ("Xem lại") to the side panel menu and made each move cell in the move list table clickable to instantly jump to and inspect that move in replay mode.
+
+

@@ -195,7 +195,8 @@
 
     updateMoveListTable(game) {
       const container = document.getElementById('movelist-container');
-      if (!container) return;
+      const sideContainer = document.getElementById('side-movelist-container');
+      if (!container && !sideContainer) return;
 
       const plies = game.plies || [];
       const lang = window.House ? window.House.i18n.lang : 'vi';
@@ -211,23 +212,38 @@
         curPos = window.XQ.applyMove(curPos, redM);
 
         let blackNot = '';
-        if (i + 1 < plies.length) {
+        const hasBlack = (i + 1 < plies.length);
+        if (hasBlack) {
           const blackM = plies[i + 1].m;
           blackNot = window.XQ.notation(curPos, blackM, lang);
           curPos = window.XQ.applyMove(curPos, blackM);
         }
 
-        html += `<tr><td>${moveNum}</td><td>${redNot}</td><td>${blackNot}</td></tr>`;
+        html += `<tr><td>${moveNum}</td><td class="move-cell" data-ply="${i}" title="Nước ${i + 1}">${redNot}</td><td class="move-cell" data-ply="${hasBlack ? i + 1 : -1}" title="${hasBlack ? 'Nước ' + (i + 2) : ''}">${blackNot}</td></tr>`;
       }
       html += '</tbody></table>';
 
-      const sideContainer = document.getElementById('side-movelist-container');
+      const attachClickEvents = (el) => {
+        el.innerHTML = html;
+        el.querySelectorAll('.move-cell').forEach(cell => {
+          const plyIdx = parseInt(cell.dataset.ply, 10);
+          if (plyIdx >= 0) {
+            cell.style.cursor = 'pointer';
+            cell.addEventListener('click', () => {
+              if (window.XQ.controller && window.XQ.controller.replayToPly) {
+                window.XQ.controller.replayToPly(plyIdx + 1);
+              }
+            });
+          }
+        });
+      };
+
       if (sideContainer) {
-        sideContainer.innerHTML = html;
+        attachClickEvents(sideContainer);
         sideContainer.scrollTop = sideContainer.scrollHeight;
       }
       if (container) {
-        container.innerHTML = html;
+        attachClickEvents(container);
       }
     },
 
@@ -244,6 +260,9 @@
       const lang = window.House ? window.House.i18n.lang : 'vi';
       const dtf = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
+      const playLabel = window.House ? window.House.i18n.t('game.replay.play') : 'Chơi tiếp';
+      const reviewLabel = window.House ? window.House.i18n.t('game.replay.review') : 'Xem lại';
+
       let html = '';
       records.forEach((rec, idx) => {
         const dateStr = dtf.format(new Date(rec.endedAt || rec.startedAt || Date.now()));
@@ -259,28 +278,51 @@
           badgeClass = 'loss';
           const loserName = rec.loser === 'red' ? 'Đỏ' : 'Đen';
           badgeText = `${loserName} xin thua`;
+        } else if (rec.status === 'in_progress') {
+          badgeClass = 'active';
+          badgeText = window.House ? window.House.i18n.t('game.status.inProgress') : 'Đang chơi';
         } else if (rec.status === 'abandoned') {
           badgeClass = 'abandoned';
           badgeText = 'Bỏ dở';
         }
 
         html += `
-          <div class="history-item" data-index="${idx}">
-            <div>
-              <div style="font-weight:700;">${modeLabel} · ${pliesCount} nước</div>
-              <div style="font-size:var(--fs-xs); color:var(--muted);">${dateStr}</div>
+          <div class="history-item" data-index="${idx}" style="display:flex; justify-content:space-between; align-items:center; gap:var(--sp-2);">
+            <div class="history-item-info" data-index="${idx}" style="flex:1; cursor:pointer;" title="${reviewLabel}">
+              <div style="display:flex; align-items:center; gap:var(--sp-2); flex-wrap:wrap;">
+                <span style="font-weight:700;">${modeLabel} · ${pliesCount} nước</span>
+                <span class="status-badge ${badgeClass}">${badgeText}</span>
+              </div>
+              <div style="font-size:var(--fs-xs); color:var(--muted); margin-top:2px;">${dateStr}</div>
             </div>
-            <div>
-              <span class="status-badge ${badgeClass}">${badgeText}</span>
+            <div style="display:flex; gap:var(--sp-1); align-items:center; flex-shrink:0;">
+              <button class="btn btn-sm btn-primary btn-history-review" data-index="${idx}" title="${reviewLabel}">
+                👁 ${reviewLabel}
+              </button>
+              <button class="btn btn-sm btn-history-play" data-index="${idx}" title="${playLabel}">
+                ▶ ${playLabel}
+              </button>
             </div>
           </div>
         `;
       });
 
       container.innerHTML = html;
-      container.querySelectorAll('.history-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const idx = parseInt(item.dataset.index, 10);
+      container.querySelectorAll('.btn-history-play').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.dataset.index, 10);
+          const rec = records[idx];
+          if (rec) {
+            Ui.closeDialog('dialog-history');
+            window.XQ.controller.playFromRecord(rec);
+          }
+        });
+      });
+
+      container.querySelectorAll('.btn-history-review, .history-item-info').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = parseInt(el.dataset.index, 10);
           const rec = records[idx];
           if (rec) {
             Ui.closeDialog('dialog-history');
@@ -288,6 +330,10 @@
           }
         });
       });
+    },
+
+    renderHistory() {
+      this.updateHistoryList();
     },
 
     showGameOver(result) {
