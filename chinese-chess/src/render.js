@@ -247,7 +247,7 @@
     return atlasCanvas;
   }
 
-  function createPieceMaterial(type, side, rotate180 = false) {
+  function createPieceMaterial(type, side) {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 256;
@@ -258,11 +258,6 @@
     const sx = (type - 1) * tileSize;
     const sy = sideIdx * tileSize;
 
-    if (rotate180) {
-      ctx.translate(128, 128);
-      ctx.rotate(Math.PI);
-      ctx.translate(-128, -128);
-    }
     ctx.drawImage(pieceAtlasCanvas, sx, sy, tileSize, tileSize, 0, 0, 256, 256);
 
     const tex = new THREE.CanvasTexture(canvas);
@@ -464,9 +459,9 @@
 
     refreshPieces() {
       for (const p of pieceMeshes) {
-        const rotateTop = (faceToFace && p.piece < 0);
-        const mats = createPieceMaterial(Math.abs(p.piece), p.piece > 0 ? 1 : -1, rotateTop);
+        const mats = createPieceMaterial(Math.abs(p.piece), p.piece > 0 ? 1 : -1);
         p.mesh.material = mats;
+        p.mesh.rotation.y = p.piece > 0 ? Math.PI / 2 : -Math.PI / 2;
       }
       this.requestRender();
     },
@@ -484,11 +479,11 @@
         if (piece === 0) continue;
 
         const coords = sqToCoords(sq);
-        const rotateTop = (faceToFace && piece < 0);
-        const mats = createPieceMaterial(Math.abs(piece), piece > 0 ? 1 : -1, rotateTop);
+        const mats = createPieceMaterial(Math.abs(piece), piece > 0 ? 1 : -1);
 
         const mesh = new THREE.Mesh(pieceGeometry, mats);
         mesh.position.set(coords.x, 0.08, coords.z);
+        mesh.rotation.y = piece > 0 ? Math.PI / 2 : -Math.PI / 2;
 
         const shadowMesh = new THREE.Mesh(shadowGeometry, shadowMaterial);
         shadowMesh.rotation.x = -Math.PI / 2;

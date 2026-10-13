@@ -220,7 +220,15 @@
         html += `<tr><td>${moveNum}</td><td>${redNot}</td><td>${blackNot}</td></tr>`;
       }
       html += '</tbody></table>';
-      container.innerHTML = html;
+
+      const sideContainer = document.getElementById('side-movelist-container');
+      if (sideContainer) {
+        sideContainer.innerHTML = html;
+        sideContainer.scrollTop = sideContainer.scrollHeight;
+      }
+      if (container) {
+        container.innerHTML = html;
+      }
     },
 
     updateHistoryList() {
@@ -247,6 +255,10 @@
         if (rec.status === 'win') {
           badgeClass = 'win';
           badgeText = rec.winner === 'red' ? 'Đỏ thắng' : 'Đen thắng';
+        } else if (rec.status === 'forfeit') {
+          badgeClass = 'loss';
+          const loserName = rec.loser === 'red' ? 'Đỏ' : 'Đen';
+          badgeText = `${loserName} xin thua`;
         } else if (rec.status === 'abandoned') {
           badgeClass = 'abandoned';
           badgeText = 'Bỏ dở';
@@ -289,7 +301,7 @@
       const humanSide = window.XQ.controller.getGame()?.humanSide || 1;
 
       if (titleEl) {
-        if (result.status === 'win') {
+        if (result.status === 'win' || result.status === 'forfeit') {
           if (isPve) {
             const humanWon = (result.winner === 'red' && humanSide === 1) || (result.winner === 'black' && humanSide === -1);
             titleEl.textContent = humanWon ? window.House.i18n.t('result.youWin') : window.House.i18n.t('result.youLose');

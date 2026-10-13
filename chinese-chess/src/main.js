@@ -73,8 +73,8 @@ import * as THREE from 'three';
       // Remember new game choices
       window.XQ.Storage.saveNewGame({ mode, level, side: options.side });
 
-      // Board flip for human playing Black
-      const flipBoard = (humanSide === -1 && mode === 'pve');
+      // Board flip depending on whether player 1 plays red or black
+      const flipBoard = (humanSide === -1);
       window.XQ.Render.setFlipped(flipBoard);
       window.XQ.Render.setFaceToFace(settings.faceToFace && mode === 'pvp');
 
@@ -108,6 +108,7 @@ import * as THREE from 'three';
       }
 
       window.XQ.ui.showScreen('screen-game');
+      window.XQ.Render.setFlipped(game.humanSide === -1);
       window.XQ.Render.syncBoard(game.pos);
       window.XQ.Render.clearHighlights();
       if (game.lastMoveFrom >= 0 && game.lastMoveTo >= 0) {
@@ -469,28 +470,23 @@ import * as THREE from 'three';
       window.XQ.ui.openDialog('dialog-settings');
     });
 
-    // In-game toolbar buttons
-    document.getElementById('btn-game-undo')?.addEventListener('click', () => Controller.undo());
-    document.getElementById('btn-game-flip')?.addEventListener('click', () => Controller.flip());
-    document.getElementById('btn-game-moves')?.addEventListener('click', () => {
-      window.XQ.ui.updateMoveListTable(Controller.getGame());
-      window.XQ.ui.openDialog('dialog-movelist');
+    // Right side menu panel action buttons (horizontal with text)
+    document.getElementById('btn-action-undo')?.addEventListener('click', () => Controller.undo());
+    document.getElementById('btn-action-resign')?.addEventListener('click', () => Controller.resign());
+    document.getElementById('btn-action-newgame')?.addEventListener('click', () => {
+      window.XQ.ui.openDialog('dialog-newgame');
     });
-    document.getElementById('btn-game-rules')?.addEventListener('click', () => {
+    document.getElementById('btn-action-rules')?.addEventListener('click', () => {
       window.XQ.RulesPage.open('screen-game');
     });
-    document.getElementById('btn-game-menu')?.addEventListener('click', () => {
-      window.XQ.ui.openDialog('dialog-game-menu');
+    document.getElementById('btn-action-settings')?.addEventListener('click', () => {
+      window.XQ.ui.openDialog('dialog-settings');
     });
 
     // Game menu options
     document.getElementById('menu-item-newgame')?.addEventListener('click', () => {
       window.XQ.ui.closeDialog('dialog-game-menu');
       window.XQ.ui.openDialog('dialog-newgame');
-    });
-    document.getElementById('menu-item-draw')?.addEventListener('click', () => {
-      window.XQ.ui.closeDialog('dialog-game-menu');
-      Controller.offerDraw();
     });
     document.getElementById('menu-item-resign')?.addEventListener('click', () => {
       window.XQ.ui.closeDialog('dialog-game-menu');

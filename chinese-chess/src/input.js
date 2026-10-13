@@ -75,10 +75,6 @@
         window.XQ.controller && window.XQ.controller.undo();
         return;
       }
-      if (key === 'f') {
-        window.XQ.controller && window.XQ.controller.flip();
-        return;
-      }
       if (key === '?' || (e.shiftKey && key === '/')) {
         window.XQ.ui && window.XQ.ui.showRulesPage();
         return;
