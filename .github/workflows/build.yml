@@ -1,6 +1,9 @@
 name: Build Desktop App
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       platform:
@@ -16,7 +19,7 @@ on:
         description: 'Publish as GitHub Release'
         required: false
         type: boolean
-        default: false
+        default: true
       release_tag:
         description: 'Release tag name (e.g. v0.1.0; leave blank to use version from tauri.conf.json)'
         required: false
@@ -26,7 +29,7 @@ on:
         description: 'Create release as draft'
         required: false
         type: boolean
-        default: true
+        default: false
       prerelease:
         description: 'Mark release as prerelease'
         required: false
@@ -35,6 +38,9 @@ on:
 
 permissions:
   contents: write
+
+env:
+  APP_NAME: game-launcher
 
 jobs:
   build-linux:
@@ -90,19 +96,40 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: game-launcher
-          tagName: ${{ inputs.create_release && (inputs.release_tag != '' && inputs.release_tag || 'v__VERSION__') || '' }}
-          releaseName: ${{ inputs.create_release && (inputs.release_tag != '' && inputs.release_tag || 'App v__VERSION__') || '' }}
-          releaseDraft: ${{ inputs.release_draft }}
-          prerelease: ${{ inputs.prerelease }}
 
-      - name: Upload Linux artifacts
+      - name: Prepare Linux artifacts
+        run: |
+          VERSION=$(node -p "require('./game-launcher/src-tauri/tauri.conf.json').version")
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+          mkdir -p dist
+          [ -f "game-launcher/src-tauri/target/release/tauri-app" ] && cp "game-launcher/src-tauri/target/release/tauri-app" "dist/${APP_NAME}-${VERSION}-linux-x86_64"
+          for f in game-launcher/src-tauri/target/release/bundle/appimage/*.AppImage; do
+            [ -f "$f" ] && cp "$f" "dist/${APP_NAME}-${VERSION}.AppImage"
+          done
+          for f in game-launcher/src-tauri/target/release/bundle/deb/*.deb; do
+            [ -f "$f" ] && cp "$f" "dist/${APP_NAME}-${VERSION}.deb"
+          done
+          chmod +x dist/* 2>/dev/null || true
+
+      - name: Upload Linux Standalone Binary
         uses: actions/upload-artifact@v4
         with:
-          name: game-launcher-linux-x86_64
-          path: |
-            game-launcher/src-tauri/target/release/bundle/deb/*.deb
-            game-launcher/src-tauri/target/release/bundle/appimage/*.AppImage
-            game-launcher/src-tauri/target/release/tauri-app
+          name: ${{ env.APP_NAME }}-${{ env.APP_VERSION }}-linux-x86_64
+          path: dist/${{ env.APP_NAME }}-${{ env.APP_VERSION }}-linux-x86_64
+          if-no-files-found: warn
+
+      - name: Upload Linux AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.APP_VERSION }}.AppImage
+          path: dist/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.AppImage
+          if-no-files-found: warn
+
+      - name: Upload Linux DEB
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.APP_VERSION }}.deb
+          path: dist/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.deb
           if-no-files-found: warn
 
   build-windows:
@@ -143,17 +170,82 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: game-launcher
-          tagName: ${{ inputs.create_release && (inputs.release_tag != '' && inputs.release_tag || 'v__VERSION__') || '' }}
-          releaseName: ${{ inputs.create_release && (inputs.release_tag != '' && inputs.release_tag || 'App v__VERSION__') || '' }}
-          releaseDraft: ${{ inputs.release_draft }}
-          prerelease: ${{ inputs.prerelease }}
 
-      - name: Upload Windows artifacts
+      - name: Prepare Windows artifacts
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./game-launcher/src-tauri/tauri.conf.json').version")
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+          mkdir -p dist
+          [ -f "game-launcher/src-tauri/target/release/tauri-app.exe" ] && cp "game-launcher/src-tauri/target/release/tauri-app.exe" "dist/${APP_NAME}-${VERSION}.exe"
+          for f in game-launcher/src-tauri/target/release/bundle/nsis/*.exe; do
+            [ -f "$f" ] && cp "$f" "dist/${APP_NAME}-installer-${VERSION}.exe"
+          done
+          for f in game-launcher/src-tauri/target/release/bundle/msi/*.msi; do
+            [ -f "$f" ] && cp "$f" "dist/${APP_NAME}-installer-${VERSION}.msi"
+          done
+
+      - name: Upload Windows Standalone Executable
         uses: actions/upload-artifact@v4
         with:
-          name: game-launcher-windows-x86_64
-          path: |
-            game-launcher/src-tauri/target/release/bundle/nsis/*.exe
-            game-launcher/src-tauri/target/release/bundle/msi/*.msi
-            game-launcher/src-tauri/target/release/tauri-app.exe
+          name: ${{ env.APP_NAME }}-${{ env.APP_VERSION }}.exe
+          path: dist/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.exe
           if-no-files-found: warn
+
+      - name: Upload Windows Installer EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-installer-${{ env.APP_VERSION }}.exe
+          path: dist/${{ env.APP_NAME }}-installer-${{ env.APP_VERSION }}.exe
+          if-no-files-found: warn
+
+      - name: Upload Windows Installer MSI
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-installer-${{ env.APP_VERSION }}.msi
+          path: dist/${{ env.APP_NAME }}-installer-${{ env.APP_VERSION }}.msi
+          if-no-files-found: warn
+
+  release:
+    name: Publish GitHub Release
+    needs: [build-linux, build-windows]
+    if: |
+      always() &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      (github.event_name == 'push' || inputs.create_release != false)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: Determine tag and release name
+        run: |
+          VERSION=$(node -p "require('./game-launcher/src-tauri/tauri.conf.json').version")
+          if [ "${{ github.event_name }}" = "push" ] && [ -n "${{ github.ref_name }}" ]; then
+            TAG="${{ github.ref_name }}"
+          elif [ -n "${{ inputs.release_tag }}" ]; then
+            TAG="${{ inputs.release_tag }}"
+          else
+            TAG="v$VERSION"
+          fi
+          echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+          echo "RELEASE_NAME=v$VERSION" >> $GITHUB_ENV
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_NAME }}
+          generate_release_notes: true
+          draft: ${{ inputs.release_draft || false }}
+          prerelease: ${{ inputs.prerelease || false }}
+          files: release-artifacts/*
