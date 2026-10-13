@@ -432,7 +432,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 const APP_VERSION = '1.1.0';
 const BOARD_SIZES = [30];
 const TIME_PRESETS = [5, 10, 15, 30, 45, 60, 90, 120, 300];
-const LS = { settings: 'caro.settings', current: 'caro.current', records: 'caro.records', iosHint: 'caro.iosHint' };
+const LS = { settings: 'caro_settings', current: 'caro_current', records: 'caro_records', iosHint: 'caro_iosHint' };
 const MAX_RECORDS = 200;
 const I18N = {
   vn: {
@@ -826,7 +826,12 @@ const pieceName = p => (p === 1 ? 'X' : 'O');
 // ============================================================
 const Store = {
   warned: false,
-  read(key) { try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : null; } catch { return null; } },
+  read(key) {
+    try {
+      const s = localStorage.getItem(key) ?? (key.startsWith('caro_') ? localStorage.getItem('caro.' + key.slice(5)) : null);
+      return s ? JSON.parse(s) : null;
+    } catch { return null; }
+  },
   write(key, val) {
     try { localStorage.setItem(key, JSON.stringify(val)); return true; }
     catch {
@@ -834,7 +839,12 @@ const Store = {
       return false;
     }
   },
-  remove(key) { try { localStorage.removeItem(key); } catch { /* ignore */ } },
+  remove(key) {
+    try {
+      localStorage.removeItem(key);
+      if (key.startsWith('caro_')) localStorage.removeItem('caro.' + key.slice(5));
+    } catch { /* ignore */ }
+  },
 };
 
 // Merge only known keys with matching types/enums, so corrupt storage can't break the app.
@@ -1333,6 +1343,7 @@ function runTests() {
   b = mk(N, ['XOOOO.X'], 3, 5); b[1 * N + 1] = 1;
   t('Caro AI: X OOOO _ X is not a five threat for O', ai.patternAt(b, N, R('caro'), 8, 5, 0, 2) !== 7);
   t('Gomoku AI: X OOOO _ X is a five threat for O', ai.patternAt(b, N, R('gomoku'), 8, 5, 0, 2) === 7);
+  t('localStorage keys have caro_ prefix', typeof LS === 'object' && Object.values(LS).every(k => k.startsWith('caro_')));
 
   const failed = results.filter(r => !r.pass);
   console.table(results);
@@ -2201,22 +2212,35 @@ class BoardRenderer {
     const cam = this.camera;
     const halfW = (this.host.clientWidth / 2) / cam.zoom;
     const halfH = (this.host.clientHeight / 2) / cam.zoom;
-    const marginW = halfW * 0.22;
-    const marginH = halfH * 0.22;
+    const S = this.cellSize;
+    const pad = 1.2 * S;
+    const clearanceW = Math.min(2.0 * S, halfW * 0.5);
+    const clearanceH = Math.min(2.0 * S, halfH * 0.5);
 
     let targetX = cam.position.x;
     let targetY = cam.position.y;
 
-    if (wx < cam.position.x - halfW + marginW) {
-      targetX = wx + halfW - marginW;
-    } else if (wx > cam.position.x + halfW - marginW) {
-      targetX = wx - halfW + marginW;
+    const fitsX = halfW >= (this.N / 2 + 0.5) * S;
+    const fitsY = halfH >= (this.N / 2 + 0.5) * S;
+
+    if (!fitsX) {
+      if (wx < cam.position.x - halfW + pad) {
+        targetX = wx + halfW - clearanceW;
+      } else if (wx > cam.position.x + halfW - pad) {
+        targetX = wx - halfW + clearanceW;
+      }
+    } else if (Math.abs(cam.position.x) > 0.1) {
+      targetX = 0;
     }
 
-    if (wy < cam.position.y - halfH + marginH) {
-      targetY = wy + halfH - marginH;
-    } else if (wy > cam.position.y - halfH + marginH) {
-      targetY = wy - halfH + marginH;
+    if (!fitsY) {
+      if (wy < cam.position.y - halfH + pad) {
+        targetY = wy + halfH - clearanceH;
+      } else if (wy > cam.position.y + halfH - pad) {
+        targetY = wy - halfH + clearanceH;
+      }
+    } else if (Math.abs(cam.position.y) > 0.1) {
+      targetY = 0;
     }
 
     if (Math.abs(targetX - cam.position.x) > 0.05 || Math.abs(targetY - cam.position.y) > 0.05) {
@@ -2763,15 +2787,20 @@ class GameController {
     if (this.state !== 'playing' || this.isThinking || this.moves.length === 0) return;
 
     this.timer.stop();
-    const last = this.moves.pop();
-    if (!last.pass) {
-      const idx = last.y * this.session.boardSize + last.x;
-      this.board[idx] = 0;
-      App.renderer.setStone(last.x, last.y, 0, false);
-    }
-    this.turn = last.p;
+    const isBot = this.session && this.session.mode === 'pve' && this.session.ai;
+    const count = isBot ? Math.min(2, this.moves.length) : 1;
 
+    for (let i = 0; i < count; i++) {
+      const last = this.moves.pop();
+      if (!last.pass) {
+        const idx = last.y * this.session.boardSize + last.x;
+        this.board[idx] = 0;
+        App.renderer.setStone(last.x, last.y, 0, false);
+      }
+      this.turn = last.p;
+    }
     this.undoCount++;
+
     const prev = this.moves[this.moves.length - 1];
     if (prev && !prev.pass) {
       App.renderer.setLastMove(prev.x, prev.y);
@@ -2783,7 +2812,9 @@ class GameController {
     this.updateHUD();
     this.autosave();
 
-    if (!this.isAITurn() && this.session.timer.enabled) {
+    if (this.isAITurn()) {
+      this.triggerAIMove();
+    } else if (this.session.timer.enabled) {
       this.timer.start(this.turn, this.session.timer.seconds);
     }
   }

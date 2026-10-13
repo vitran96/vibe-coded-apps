@@ -21,7 +21,14 @@
   - `node scripts/caro.js list` - View code sections, line numbers, and sizes.
   - `node scripts/caro.js view <section|query>` - View isolated sections or search code.
   - `node scripts/caro.js patch "<search>" "<replace>"` - Safe unique string replacement with auto-backup and syntax validation.
-  - `node scripts/caro.js test` - Run all 26 unit tests directly in Node.js.
+  - `node scripts/caro.js test` - Run all 27 unit tests directly in Node.js.
   - `node scripts/caro.js check` - Run comprehensive sanity checks (syntax, tag balance, i18n parity, default language, unit tests).
   - `node scripts/caro.js i18n check` / `list` / `add` - Inspect and maintain translation keys.
 - **Verification Rule:** Always run `node scripts/caro.js check` after making edits to guarantee zero regression.
+
+## 5. Fixed Issues & Regression Invariants
+See [FIXED_ISSUES.md](file:///home/vi-tran/repos/vibe-coded-apps/caro/FIXED_ISSUES.md) for full incident history.
+- **Camera Auto-Move:** Never pan camera if placed piece is comfortably inside viewport. Only pan slightly (`clearance = 2.0 * S`) when piece is within 1.2 cell size of screen edge.
+- **Undo in PvE vs PvP:** In PvE (`session.mode === 'pve' && session.ai`), Undo MUST revert 2 moves (bot + player) so turn returns to the human. In PvP, Undo reverts 1 move.
+- **Storage Prefix:** All `localStorage` keys must have prefix `caro_` (`caro_settings`, `caro_current`, `caro_records`, `caro_iosHint`).
+
