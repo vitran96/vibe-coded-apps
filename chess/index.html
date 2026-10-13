@@ -37,7 +37,7 @@
   --t-fast: 120ms; --t-med: 200ms; --t-slow: 320ms;
 }
 
-/* Theme: Giấy (paper, light) — default when the system is light */
+/* Theme: Giấy (paper, light) — default theme */
 :root, [data-theme="giay"] {
   color-scheme: light;
   --bg: #F3EDE2; --surface: #FBF8F2; --surface-2: #EAE2D4; --line: #D8CCBA;
@@ -50,7 +50,7 @@
   --grain-opacity: .05;
 }
 
-/* Theme: Đêm (night, dark) — default when the system is dark */
+/* Theme: Đêm (night, dark) */
 [data-theme="dem"] {
   color-scheme: dark;
   --bg: #1B1A1F; --surface: #25232A; --surface-2: #2F2C35; --line: #3B3742;
@@ -1174,8 +1174,7 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
             <div>
               <label style="font-weight:600; font-size:var(--fs-sm);" data-i18n="settings.theme">Chủ đề</label>
               <div class="segmented" id="seg-theme" style="margin-top:var(--sp-1);">
-                <button data-val="auto" class="active" data-i18n="theme.auto">Tự động</button>
-                <button data-val="giay" data-i18n="theme.giay">Giấy</button>
+                <button data-val="giay" class="active" data-i18n="theme.giay">Giấy</button>
                 <button data-val="dem" data-i18n="theme.dem">Đêm</button>
                 <button data-val="sonmai" data-i18n="theme.sonmai">Sơn mài</button>
                 <button data-val="bien" data-i18n="theme.bien">Biển</button>
@@ -1218,13 +1217,19 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
 // House kit "Mộc" — shared by every game. Plain script (no imports) so it inlines into a single HTML.
 // Exposes window.House. Games add their own strings/sounds on top; they do not change these.
 (() => {
-  const THEMES = ['auto', 'giay', 'dem', 'sonmai', 'bien'];
+  const THEMES = ['giay', 'dem', 'sonmai', 'bien'];
   const PREFS_KEY = 'house:prefs'; // the ONE intentionally shared key: theme + language follow the player across games
 
   const prefs = {
     load() {
-      try { const p = JSON.parse(localStorage.getItem(PREFS_KEY)); if (p && p.v === 1) return p; } catch {}
-      return { v: 1, theme: 'auto', lang: 'vi' };
+      try {
+        const p = JSON.parse(localStorage.getItem(PREFS_KEY));
+        if (p && p.v === 1) {
+          if (p.theme === 'auto' || !THEMES.includes(p.theme)) p.theme = 'giay';
+          return p;
+        }
+      } catch {}
+      return { v: 1, theme: 'giay', lang: 'vi' };
     },
     save(patch) {
       const next = { ...prefs.load(), ...patch, v: 1 };
@@ -1233,8 +1238,7 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
     },
   };
 
-  const dark = matchMedia('(prefers-color-scheme: dark)');
-  const resolve = (name) => (name === 'auto' || !THEMES.includes(name)) ? (dark.matches ? 'dem' : 'giay') : name;
+  const resolve = (name) => (!THEMES.includes(name) ? 'giay' : name);
 
   function applyTheme(name) {
     const id = resolve(name);
@@ -1246,7 +1250,6 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
     dispatchEvent(new CustomEvent('housethemechange', { detail: { name, id } }));
     return id;
   }
-  dark.addEventListener('change', () => { if (prefs.load().theme === 'auto') applyTheme('auto'); });
 
   // Colors for Three.js: read the CSS tokens so the 3D scene always matches the UI.
   const TOKENS = ['bg', 'surface', 'surface-2', 'line', 'ink', 'muted', 'accent', 'accent-2', 'p1', 'p2', 'board', 'board-line', 'ok', 'warn', 'danger'];
@@ -3359,11 +3362,13 @@ const APP_ID = 'chess';
 const APP_VERSION = '1.0.0';
 const MAKER = '';
 
+const STORAGE_PREFIX = 'covua_';
+
 // Storage helper with strict namespacing
 const store = {
   get(key, fallback = null) {
     try {
-      const v = localStorage.getItem('chess:' + key);
+      const v = localStorage.getItem(STORAGE_PREFIX + key) ?? localStorage.getItem('chess:' + key);
       return v ? JSON.parse(v) : fallback;
     } catch {
       return fallback;
@@ -3371,13 +3376,14 @@ const store = {
   },
   set(key, val) {
     try {
-      localStorage.setItem('chess:' + key, JSON.stringify(val));
+      localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(val));
     } catch {
       console.warn('Storage failed');
     }
   },
   remove(key) {
     try {
+      localStorage.removeItem(STORAGE_PREFIX + key);
       localStorage.removeItem('chess:' + key);
     } catch {}
   },
@@ -3386,7 +3392,7 @@ const store = {
       const keys = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith('chess:')) keys.push(k);
+        if (k && (k.startsWith(STORAGE_PREFIX) || k.startsWith('chess:'))) keys.push(k);
       }
       keys.forEach((k) => localStorage.removeItem(k));
     } catch {}
@@ -4946,7 +4952,7 @@ function syncSettingsUI() {
     });
   }
 
-  const prefs = window.House ? window.House.prefs.load() : { theme: 'auto', lang: 'vi' };
+  const prefs = window.House ? window.House.prefs.load() : { theme: 'giay', lang: 'vi' };
   const segTheme = document.getElementById('seg-theme');
   if (segTheme) {
     segTheme.querySelectorAll('button').forEach((b) => {
@@ -5037,7 +5043,7 @@ function bindSettingsEvents() {
 
 // App Initialization
 function initApp() {
-  const prefs = window.House ? window.House.prefs.load() : { theme: 'auto', lang: 'vi' };
+  const prefs = window.House ? window.House.prefs.load() : { theme: 'giay', lang: 'vi' };
   if (window.House) {
     window.House.applyTheme(prefs.theme);
     window.House.i18n.setLang(prefs.lang);

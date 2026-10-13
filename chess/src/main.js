@@ -4,11 +4,13 @@ const APP_ID = 'chess';
 const APP_VERSION = '1.0.0';
 const MAKER = '';
 
+const STORAGE_PREFIX = 'covua_';
+
 // Storage helper with strict namespacing
 const store = {
   get(key, fallback = null) {
     try {
-      const v = localStorage.getItem('chess:' + key);
+      const v = localStorage.getItem(STORAGE_PREFIX + key) ?? localStorage.getItem('chess:' + key);
       return v ? JSON.parse(v) : fallback;
     } catch {
       return fallback;
@@ -16,13 +18,14 @@ const store = {
   },
   set(key, val) {
     try {
-      localStorage.setItem('chess:' + key, JSON.stringify(val));
+      localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(val));
     } catch {
       console.warn('Storage failed');
     }
   },
   remove(key) {
     try {
+      localStorage.removeItem(STORAGE_PREFIX + key);
       localStorage.removeItem('chess:' + key);
     } catch {}
   },
@@ -31,7 +34,7 @@ const store = {
       const keys = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith('chess:')) keys.push(k);
+        if (k && (k.startsWith(STORAGE_PREFIX) || k.startsWith('chess:'))) keys.push(k);
       }
       keys.forEach((k) => localStorage.removeItem(k));
     } catch {}
@@ -1591,7 +1594,7 @@ function syncSettingsUI() {
     });
   }
 
-  const prefs = window.House ? window.House.prefs.load() : { theme: 'auto', lang: 'vi' };
+  const prefs = window.House ? window.House.prefs.load() : { theme: 'giay', lang: 'vi' };
   const segTheme = document.getElementById('seg-theme');
   if (segTheme) {
     segTheme.querySelectorAll('button').forEach((b) => {
@@ -1682,7 +1685,7 @@ function bindSettingsEvents() {
 
 // App Initialization
 function initApp() {
-  const prefs = window.House ? window.House.prefs.load() : { theme: 'auto', lang: 'vi' };
+  const prefs = window.House ? window.House.prefs.load() : { theme: 'giay', lang: 'vi' };
   if (window.House) {
     window.House.applyTheme(prefs.theme);
     window.House.i18n.setLang(prefs.lang);

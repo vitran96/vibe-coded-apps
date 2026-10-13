@@ -1,13 +1,19 @@
 // House kit "Mộc" — shared by every game. Plain script (no imports) so it inlines into a single HTML.
 // Exposes window.House. Games add their own strings/sounds on top; they do not change these.
 (() => {
-  const THEMES = ['auto', 'giay', 'dem', 'sonmai', 'bien'];
+  const THEMES = ['giay', 'dem', 'sonmai', 'bien'];
   const PREFS_KEY = 'house:prefs'; // the ONE intentionally shared key: theme + language follow the player across games
 
   const prefs = {
     load() {
-      try { const p = JSON.parse(localStorage.getItem(PREFS_KEY)); if (p && p.v === 1) return p; } catch {}
-      return { v: 1, theme: 'auto', lang: 'vi' };
+      try {
+        const p = JSON.parse(localStorage.getItem(PREFS_KEY));
+        if (p && p.v === 1) {
+          if (p.theme === 'auto' || !THEMES.includes(p.theme)) p.theme = 'giay';
+          return p;
+        }
+      } catch {}
+      return { v: 1, theme: 'giay', lang: 'vi' };
     },
     save(patch) {
       const next = { ...prefs.load(), ...patch, v: 1 };
@@ -16,8 +22,7 @@
     },
   };
 
-  const dark = matchMedia('(prefers-color-scheme: dark)');
-  const resolve = (name) => (name === 'auto' || !THEMES.includes(name)) ? (dark.matches ? 'dem' : 'giay') : name;
+  const resolve = (name) => (!THEMES.includes(name) ? 'giay' : name);
 
   function applyTheme(name) {
     const id = resolve(name);
@@ -29,7 +34,6 @@
     dispatchEvent(new CustomEvent('housethemechange', { detail: { name, id } }));
     return id;
   }
-  dark.addEventListener('change', () => { if (prefs.load().theme === 'auto') applyTheme('auto'); });
 
   // Colors for Three.js: read the CSS tokens so the 3D scene always matches the UI.
   const TOKENS = ['bg', 'surface', 'surface-2', 'line', 'ink', 'muted', 'accent', 'accent-2', 'p1', 'p2', 'board', 'board-line', 'ok', 'warn', 'danger'];
