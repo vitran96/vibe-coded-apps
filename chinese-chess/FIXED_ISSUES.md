@@ -23,10 +23,16 @@ Before finalizing any changes or reviews, always execute this mandatory checklis
 
 3. **Verify 3D Piece Glyph Orientation Visually:**
    - In Three.js `CylinderGeometry(0.44, 0.44, 0.16, 48)`:
-     - Top cap UVs with default texture mapping align upright when `rotation.y = 0`.
-     - **Red pieces (facing Red player at bottom):** MUST be set to `mesh.rotation.y = 0`. This ensures characters (both Hán and Việt) read right side up from the bottom of the screen.
-     - **Black pieces (facing Black player at top):** MUST be set to `mesh.rotation.y = Math.PI`. This ensures characters face the opponent on their side of the board.
-     - **NEVER** set `rotation.y` to `Math.PI / 2` or `-Math.PI / 2` — that rotates all piece characters 90° sideways facing left/right.
+     - Top cap UVs align the character vertical head-to-foot axis along local `+X` (head at `+X`, feet at `-X`).
+     - Camera looks down along `-Y`, so screen TOP is world `-Z` (NDC `+Y`), screen BOTTOM is world `+Z` (NDC `-Y`), screen RIGHT is world `+X`, screen LEFT is world `-X`.
+     - `rotation.y = 0` points glyphs sideways to the **RIGHT** (world `+X`).
+     - `rotation.y = Math.PI` points glyphs sideways to the **LEFT** (world `-X`).
+     - **NEVER** set `rotation.y` to `0` or `Math.PI` — that makes piece glyphs face sideways to the left or right!
+     - **Orientation rule (board position based, regardless of color):**
+       - **Top board pieces (`coords.z < 0`, ranks 5..9):** MUST be set to `mesh.rotation.y = Math.PI / 2` (+90°). This rotates local `+X` into world `-Z`, making characters face **UP** towards the top of the board/screen.
+       - **Bottom board pieces (`coords.z >= 0`, ranks 0..4):** MUST be set to `mesh.rotation.y = -Math.PI / 2` (-90°). This rotates local `+X` into world `+Z`, making characters face **DOWN** towards the bottom of the board/screen.
+       - Use helper `getPieceRotation(z) = z < 0 ? Math.PI / 2 : -Math.PI / 2`.
+       - When a piece moves across the river, its orientation must update to match the destination board half upon move completion.
 
 4. **Verify Board Orientation & Automation (No Manual Flip Button):**
    - There must **NOT** be any manual flip button (`Controller.flip` is disabled).
@@ -154,14 +160,26 @@ Before finalizing any changes or reviews, always execute this mandatory checklis
   6. Allowed click events on dimmed undo button so clicking it provides clear toast feedback (`"Ván đấu không cho phép đi lại!"` / `"Undo is disabled in this match!"`) without reverting plies.
 ### Issue #013: 3D Piece Characters Facing Left & Board Flip / Single-Ply Undo Integrity
 - **Symptom:**
-  1. Characters/glyphs on chess pieces were rendered 90° sideways facing left instead of facing the player on their respective sides.
+  1. Characters/glyphs on chess pieces were rendered sideways facing left instead of facing the player on their respective sides (opposite each other).
   2. Manual flip board button or methods existed that could desynchronize board orientation.
   3. Risk of Undo reverting both players' moves at once instead of strictly 1 ply.
 - **Root Cause:**
-  1. `mesh.rotation.y = piece > 0 ? Math.PI / 2 : -Math.PI / 2` rotated cylinder top caps by 90°, making glyphs point sideways/left.
+  1. Setting `rotation.y = 0` or `Math.PI` turned glyphs 90° sideways to the left or right due to Three.js `CylinderGeometry` top-cap UV coordinate system.
   2. `Controller.flip()` provided an ad-hoc flip mechanism that could conflict with Player 1's perspective.
 - **Fix:**
-  1. Updated `src/render.js` so that `mesh.rotation.y = piece > 0 ? 0 : Math.PI` in `syncBoard()` and `refreshPieces()`. Red pieces now face the Red player at bottom (`0`), Black pieces face the Black player at top (`Math.PI`).
-  2. Verified that when Player 1 plays Black (`humanSide === -1`), the board automatically flips 180° (`camera.rotation.z = Math.PI`), making Black pieces appear upright facing the player at the bottom.
-  3. Removed `Controller.flip()` to guarantee orientation only auto-flips based on Player 1's side.
-  4. Verified `Controller.undo()` strictly pops 1 ply per click (`game.plies.pop()`, `game.history.pop()`), undoing only the last Black or White move, never both together.
+  1. Updated `src/render.js` so that `mesh.rotation.y = piece > 0 ? Math.PI / 2 : -Math.PI / 2` in `syncBoard()` and `refreshPieces()`. Red pieces at bottom face DOWN/upright towards bottom player (`Math.PI / 2`), Black pieces at top face UP towards top player (`-Math.PI / 2`).
+  2. Added automated unit test in `src/tests.js` checking piece rotations to prevent regressions.
+  3. Verified that when Player 1 plays Black (`humanSide === -1`), the board automatically flips 180° (`camera.rotation.z = Math.PI`), making Black pieces appear upright facing the player at the bottom.
+  4. Removed `Controller.flip()` to guarantee orientation only auto-flips based on Player 1's side.
+  5. Verified `Controller.undo()` strictly pops 1 ply per click (`game.plies.pop()`, `game.history.pop()`), undoing only the last Black or White move, never both together.
+
+### Issue #014: 3D Piece Characters Facing Sideways / Inverted (Position-Based Orientation)
+- **Symptom:** Black pieces faced right (player 2) and Red pieces faced left (player 1), or pieces faced sideways/inverted relative to their board side.
+- **Root Cause:**
+  1. Top-cap UV head vector aligns with local `+X`. Camera NDC top is world `-Z` and NDC bottom is world `+Z`.
+  2. Setting `rotation.y = 0` or `Math.PI` pointed glyphs to screen right (`+X`) and left (`-X`).
+  3. Branching on `piece > 0` coupled orientation to piece color instead of board position, causing pieces on the top board to face backwards or invert incorrectly when crossing the river.
+- **Fix:**
+  1. In [src/render.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/render.js), added `getPieceRotation(z)` where top board (`z < 0`) is strictly `Math.PI / 2` (facing UP) and bottom board (`z >= 0`) is strictly `-Math.PI / 2` (facing DOWN), regardless of color.
+  2. Applied `getPieceRotation(coords.z)` in `syncBoard()`, `refreshPieces()`, and on move completion in `animateMove()`.
+  3. Updated piece orientation unit tests in [src/tests.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/tests.js) to assert position-based orientation (`z < 0` -> `Math.PI / 2`, `z >= 0` -> `-Math.PI / 2`).

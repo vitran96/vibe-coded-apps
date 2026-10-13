@@ -35,6 +35,11 @@
     return r * 9 + f;
   }
 
+  function getPieceRotation(z) {
+    // Top board (z < 0) faces UP (+PI/2); Bottom board (z >= 0) faces DOWN (-PI/2)
+    return z < 0 ? Math.PI / 2 : -Math.PI / 2;
+  }
+
   function createBoardCanvas() {
     const canvas = document.createElement('canvas');
     canvas.width = 2048;
@@ -465,7 +470,7 @@
       for (const p of pieceMeshes) {
         const mats = createPieceMaterial(Math.abs(p.piece), p.piece > 0 ? 1 : -1);
         p.mesh.material = mats;
-        p.mesh.rotation.y = p.piece > 0 ? 0 : Math.PI;
+        p.mesh.rotation.y = getPieceRotation(sqToCoords(p.sq).z);
       }
       this.requestRender();
     },
@@ -487,7 +492,7 @@
 
         const mesh = new THREE.Mesh(pieceGeometry, mats);
         mesh.position.set(coords.x, 0.08, coords.z);
-        mesh.rotation.y = piece > 0 ? 0 : Math.PI;
+        mesh.rotation.y = getPieceRotation(coords.z);
 
         const shadowMesh = new THREE.Mesh(shadowGeometry, shadowMaterial);
         shadowMesh.rotation.x = -Math.PI / 2;
@@ -551,6 +556,7 @@
         complete: () => {
           pObj.mesh.position.set(endCoords.x, 0.08, endCoords.z);
           pObj.shadowMesh.position.set(endCoords.x, 0.005, endCoords.z);
+          pObj.mesh.rotation.y = getPieceRotation(endCoords.z);
           if (onComplete) onComplete();
         }
       });

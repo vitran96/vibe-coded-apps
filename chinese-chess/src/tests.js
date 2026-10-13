@@ -107,6 +107,17 @@
     // Minimal contrast checker passes for defined palette tokens
     assert('Token contrast checks in 4 themes', contrastAllPass);
 
+    // 10. Piece 3D glyph orientation (top board faces UP Math.PI / 2, bottom board faces DOWN -Math.PI / 2)
+    if (XQ.Render && XQ.Render.getPieceMeshes) {
+      const meshes = XQ.Render.getPieceMeshes();
+      if (meshes.length > 0) {
+        const topPass = meshes.filter(p => p.mesh.position.z < 0).every(p => Math.abs(p.mesh.rotation.y - Math.PI / 2) < 0.001);
+        const botPass = meshes.filter(p => p.mesh.position.z >= 0).every(p => Math.abs(p.mesh.rotation.y - (-Math.PI / 2)) < 0.001);
+        assert('Top board pieces face UP (Math.PI / 2)', topPass);
+        assert('Bottom board pieces face DOWN (-Math.PI / 2)', botPass);
+      }
+    }
+
     // Render test banner in DOM
     const banner = document.createElement('div');
     banner.style.position = 'fixed';
