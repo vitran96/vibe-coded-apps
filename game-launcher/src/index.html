@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,26 +12,26 @@
     <aside id="sidebar" aria-label="Main Navigation">
       <div class="sidebar-brand">
         <span class="brand-icon">🎮</span>
-        <span class="brand-title">Games</span>
+        <span class="brand-title" data-i18n="brand_title">Trò chơi</span>
       </div>
 
       <nav class="sidebar-nav">
-        <button id="btn-library" class="nav-btn active" title="View Game Library">
+        <button id="btn-library" class="nav-btn active" data-i18n-title="nav_library_title" title="Xem thư viện trò chơi">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <rect x="3" y="3" width="7" height="7"></rect>
             <rect x="14" y="3" width="7" height="7"></rect>
             <rect x="14" y="14" width="7" height="7"></rect>
             <rect x="3" y="14" width="7" height="7"></rect>
           </svg>
-          <span class="nav-text">Library</span>
+          <span class="nav-text" data-i18n="nav_library">Thư viện</span>
         </button>
 
-        <button id="btn-settings" class="nav-btn" title="Open Settings & Game Storage">
+        <button id="btn-settings" class="nav-btn" data-i18n-title="nav_settings_title" title="Mở cài đặt & bộ nhớ trò chơi">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
-          <span class="nav-text">Settings</span>
+          <span class="nav-text" data-i18n="nav_settings">Cài đặt</span>
         </button>
       </nav>
     </aside>
@@ -41,8 +41,8 @@
       <!-- View 1: Library Grid -->
       <section id="library-view" aria-label="Game Library View">
         <header class="view-header">
-          <h1>Game Library</h1>
-          <p class="view-instructions">Select any game below to play or download. Large buttons are provided for easy clicking.</p>
+          <h1 data-i18n="library_title">Thư viện trò chơi</h1>
+          <p class="view-instructions" data-i18n="library_desc">Chọn bất kỳ trò chơi nào bên dưới để chơi hoặc tải về. Các nút bấm lớn giúp thao tác dễ dàng.</p>
         </header>
         <div id="game-list" class="grid"></div>
       </section>
@@ -50,20 +50,30 @@
       <!-- View 2: Settings & Storage Manager -->
       <section id="settings-view" class="hidden" aria-label="Settings View">
         <header class="view-header">
-          <h1>Launcher Settings</h1>
-          <p class="view-instructions">Manage updates and local game storage below.</p>
+          <h1 data-i18n="settings_title">Cài đặt trình khởi chạy</h1>
+          <p class="view-instructions" data-i18n="settings_desc">Quản lý cập nhật và bộ nhớ trò chơi cục bộ bên dưới.</p>
         </header>
         <div class="settings-container">
           <div class="settings-card">
-            <h2>Global Preferences</h2>
+            <h2 data-i18n="global_preferences">Tùy chọn chung</h2>
+            <div class="settings-field">
+              <label for="select-language" class="setting-label" data-i18n="language_label">Ngôn ngữ</label>
+              <select id="select-language" class="settings-select">
+                <option value="vi">Tiếng Việt</option>
+                <option value="en">English</option>
+              </select>
+            </div>
             <label class="checkbox-label">
               <input type="checkbox" id="chk-global-auto-update" />
-              <span>Automatically update all games without prompting</span>
+              <span data-i18n="auto_update_all">Tự động cập nhật tất cả trò chơi không cần hỏi</span>
             </label>
           </div>
 
           <div class="settings-card">
-            <h2>Installed Games & Cache Management</h2>
+            <div class="settings-card-header">
+              <h2 data-i18n="storage_management">Trò chơi đã cài & Quản lý bộ nhớ</h2>
+              <button id="btn-remove-all" class="btn-sm btn-danger" data-i18n="btn_remove_all" data-i18n-title="btn_remove_all_title" title="Xóa tất cả trò chơi đã cài">Xóa tất cả</button>
+            </div>
             <div id="settings-game-list" class="settings-list"></div>
           </div>
         </div>
@@ -72,8 +82,8 @@
       <!-- View 3: Sandboxed Player -->
       <section id="player-view" class="hidden" aria-label="Game Player View">
         <div class="player-topbar">
-          <button id="btn-exit-game" class="btn-exit" title="Exit Game and Return to Library">
-            ← Exit Game (Back to Library)
+          <button id="btn-exit-game" class="btn-exit" data-i18n="btn_exit_game" data-i18n-title="btn_exit_game_title" title="Thoát trò chơi và quay lại thư viện">
+            ← Thoát trò chơi (Về thư viện)
           </button>
         </div>
         <div class="player-frame-container">
@@ -90,24 +100,25 @@
     <!-- Update Selection Modal Dialog -->
     <div id="update-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-dialog">
-        <h2 id="modal-title">Updates Available</h2>
-        <p class="modal-subtitle">New versions are ready for your installed games. Select which ones to update:</p>
+        <h2 id="modal-title" data-i18n="modal_updates_title">Có bản cập nhật mới</h2>
+        <p class="modal-subtitle" data-i18n="modal_updates_subtitle">Phiên bản mới đã sẵn sàng cho các trò chơi đã cài. Chọn trò chơi cần cập nhật:</p>
         <div id="update-modal-list" class="update-list-box"></div>
         
         <div class="modal-options">
           <label class="checkbox-label">
             <input type="checkbox" id="chk-dont-ask" />
-            <span>Don't ask again (always auto-update games in the future)</span>
+            <span data-i18n="chk_dont_ask">Không hỏi lại nữa (luôn tự động cập nhật trong tương lai)</span>
           </label>
         </div>
 
         <div class="modal-actions">
-          <button id="btn-update-skip" class="btn-text" title="Skip Updates for Now">Skip Updates for Now</button>
-          <button id="btn-update-selected" class="btn-secondary" title="Update Selected Games">Update Selected Games</button>
-          <button id="btn-update-all" class="btn-primary" title="Update All Games Now">Update All Games Now</button>
+          <button id="btn-update-skip" class="btn-text" data-i18n="btn_skip_updates" data-i18n-title="btn_skip_updates_title" title="Bỏ qua cập nhật lúc này">Để sau</button>
+          <button id="btn-update-selected" class="btn-secondary" data-i18n="btn_update_selected" data-i18n-title="btn_update_selected_title" title="Cập nhật các trò chơi đã chọn">Cập nhật mục đã chọn</button>
+          <button id="btn-update-all" class="btn-primary" data-i18n="btn_update_all" data-i18n-title="btn_update_all_title" title="Cập nhật tất cả trò chơi ngay bây giờ">Cập nhật tất cả ngay</button>
         </div>
       </div>
     </div>
+  </div>
   </div>
   <script type="module" src="./js/main.js"></script>
 </body>

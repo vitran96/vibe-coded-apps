@@ -4,10 +4,12 @@ import {
   saveManifest, 
   installOrUpdateGame, 
   removeGame, 
+  removeAllGames,
   prepareGameForLaunch,
   getGameName
 } from './gameManager.js';
 import { promptUpdatesIfAvailable } from './updateModal.js';
+import { applyI18n, t } from './i18n.js';
 
 function getEl(id) {
   return typeof document !== 'undefined' ? document.getElementById(id) : null;
@@ -28,16 +30,48 @@ export async function init() {
   const btnSettings = getEl('btn-settings');
   const btnExitGame = getEl('btn-exit-game');
   const chkGlobalAuto = getEl('chk-global-auto-update');
+  const selectLanguage = getEl('select-language');
+  const btnRemoveAll = getEl('btn-remove-all');
+
+  const initialManifest = await getManifest();
+  const initialLang = initialManifest.settings?.language || 'vi';
+  applyI18n(initialLang);
 
   if (btnLibrary) btnLibrary.addEventListener('click', showLibrary);
   if (btnSettings) btnSettings.addEventListener('click', showSettings);
-  if (btnExitGame) btnExitGame.addEventListener('click', exitGame);
+  if (btnExitGame) btnExitGame.addEventListener('click', showLibrary);
 
   if (chkGlobalAuto) {
     chkGlobalAuto.addEventListener('change', async (e) => {
       const manifest = await getManifest();
       manifest.settings.globalAutoUpdate = e.target.checked;
       await saveManifest(manifest);
+    });
+  }
+
+  if (selectLanguage) {
+    selectLanguage.addEventListener('change', async (e) => {
+      const manifest = await getManifest();
+      manifest.settings = manifest.settings || {};
+      manifest.settings.language = e.target.value;
+      await saveManifest(manifest);
+      applyI18n(e.target.value);
+      await renderLibrary();
+      await renderSettings();
+    });
+  }
+
+  if (btnRemoveAll) {
+    btnRemoveAll.addEventListener('click', async () => {
+      const manifest = await getManifest();
+      const lang = manifest.settings?.language || 'vi';
+      const hasInstalled = Object.values(manifest.games || {}).some(g => g?.installed);
+      if (!hasInstalled) return;
+      if (confirm(t('confirm_remove_all', lang))) {
+        await removeAllGames();
+        await renderSettings();
+        await renderLibrary();
+      }
     });
   }
 
@@ -95,6 +129,10 @@ export async function syncCatalogAndCheckUpdates() {
     if (chkGlobalAuto) {
       chkGlobalAuto.checked = !!manifest.settings.globalAutoUpdate;
     }
+    const selectLanguage = getEl('select-language');
+    if (selectLanguage) {
+      selectLanguage.value = manifest.settings?.language || 'vi';
+    }
 
     // Detect updates
     const pendingUpdates = [];
@@ -115,7 +153,7 @@ export async function syncCatalogAndCheckUpdates() {
         }
         renderLibrary();
       } else {
-        promptUpdatesIfAvailable(pendingUpdates, () => renderLibrary());
+        promptUpdatesIfAvailable(pendingUpdates, () => renderLibrary(), {}, manifest.settings?.language || 'vi');
       }
     } else {
       renderLibrary();
@@ -130,10 +168,11 @@ export async function renderLibrary() {
   const gameList = getEl('game-list');
   if (!gameList) return;
   const manifest = await getManifest();
+  const lang = manifest.settings?.language || 'vi';
   gameList.innerHTML = '';
 
   if (catalog.length === 0) {
-    gameList.innerHTML = `<p class="empty-state">No games available in catalog.</p>`;
+    gameList.innerHTML = `<p class="empty-state">${t('no_games_catalog', lang)}</p>`;
     return;
   }
 
@@ -144,8 +183,8 @@ export async function renderLibrary() {
     const isZip = game.type === 'zip' || (game.url && game.url.endsWith('.zip'));
 
     let badgeClass = isUpdate ? 'badge-update' : isInstalled ? 'badge-ready' : 'badge-new';
-    let badgeText = isUpdate ? 'Update Available' : isInstalled ? 'Installed' : 'Not Installed';
-    let btnText = isUpdate ? 'Update & Play Game' : isInstalled ? 'Play Game' : 'Download & Play Game';
+    let badgeText = isUpdate ? t('badge_update', lang) : isInstalled ? t('badge_ready', lang) : t('badge_new', lang);
+    let btnText = isUpdate ? t('btn_update', lang) : isInstalled ? t('btn_play', lang) : t('btn_download', lang);
 
     const card = document.createElement('div');
     card.className = 'game-card';
@@ -159,7 +198,7 @@ export async function renderLibrary() {
         </div>
       </div>
       <div class="card-body">
-        <h3 class="game-title">${getGameName(game)}</h3>
+        <h3 class="game-title">${getGameName(game, lang)}</h3>
       </div>
       <div class="card-footer">
         <div class="progress-container hidden">
@@ -190,6 +229,9 @@ export async function launchOrInstall(game, card, isReadyToPlay) {
   const progressFill = card.querySelector('.progress-bar-fill');
   const progressText = card.querySelector('.progress-text');
 
+  const manifest = await getManifest();
+  const lang = manifest.settings?.language || 'vi';
+
   if (!isReadyToPlay) {
     actionBtn.disabled = true;
     actionBtn.classList.add('hidden');
@@ -199,14 +241,15 @@ export async function launchOrInstall(game, card, isReadyToPlay) {
       await installOrUpdateGame(game, (percent) => {
         if (percent >= 0) {
           progressFill.style.width = `${percent}%`;
-          progressText.textContent = `Downloading ${percent}%`;
+          progressText.textContent = t('downloading', lang, { percent });
         } else {
           progressFill.classList.add('indeterminate');
-          progressText.textContent = 'Processing...';
+          progressText.textContent = t('processing', lang);
         }
       });
+      await renderLibrary();
     } catch (err) {
-      alert(`Download failed: ${err.message}`);
+      alert(`${t('download_failed', lang)}${err.message}`);
       actionBtn.disabled = false;
       actionBtn.classList.remove('hidden');
       progressContainer.classList.add('hidden');
@@ -232,7 +275,7 @@ export async function launchOrInstall(game, card, isReadyToPlay) {
       gameFrame.focus();
     }
   } catch (err) {
-    alert(`Launch failed: ${err.message}`);
+    alert(`${t('launch_failed', lang)}${err.message}`);
     renderLibrary();
   }
 }
@@ -241,10 +284,20 @@ export async function renderSettings() {
   const settingsGameList = getEl('settings-game-list');
   if (!settingsGameList) return;
   const manifest = await getManifest();
+  const lang = manifest.settings?.language || 'vi';
+  const selectLanguage = getEl('select-language');
+  if (selectLanguage) {
+    selectLanguage.value = lang;
+  }
+  const btnRemoveAll = getEl('btn-remove-all');
+  if (btnRemoveAll) {
+    const hasInstalled = Object.values(manifest.games || {}).some(g => g?.installed);
+    btnRemoveAll.disabled = !hasInstalled;
+  }
   settingsGameList.innerHTML = '';
 
   if (catalog.length === 0) {
-    settingsGameList.innerHTML = `<p class="empty-state">No games found in catalog.</p>`;
+    settingsGameList.innerHTML = `<p class="empty-state">${t('no_games_settings', lang)}</p>`;
     return;
   }
 
@@ -255,20 +308,24 @@ export async function renderSettings() {
 
     const row = document.createElement('div');
     row.className = 'settings-row';
+    const statusText = isInstalled
+      ? t('installed_status', lang, { installed: meta.version, target: game.version })
+      : t('not_installed_status', lang, { version: game.version });
+
     row.innerHTML = `
       <div class="settings-game-info">
-        <strong class="settings-game-title">${getGameName(game)}</strong>
-        <span class="version-tag">${isInstalled ? `Installed: v${meta.version} | Target: v${game.version}` : `Not installed (Latest: v${game.version})`}</span>
+        <strong class="settings-game-title">${getGameName(game, lang)}</strong>
+        <span class="version-tag">${statusText}</span>
       </div>
       <div class="settings-actions">
         <label class="auto-update-toggle">
           <input type="checkbox" class="chk-game-autoupdate" ${meta.autoUpdate ? 'checked' : ''} />
-          <span>Auto-update</span>
+          <span>${t('auto_update', lang)}</span>
         </label>
-        ${!isInstalled ? `<button class="btn-sm btn-predownload" title="Pre-download Game">Pre-download Game</button>` : ''}
-        ${isInstalled && isUpdate ? `<button class="btn-sm btn-update" title="Update Game">Update Game</button>` : ''}
-        ${isInstalled ? `<button class="btn-sm btn-redownload" title="Redownload Game">Redownload Game</button>` : ''}
-        ${isInstalled ? `<button class="btn-sm btn-danger btn-remove" title="Remove Game">Remove Game</button>` : ''}
+        ${!isInstalled ? `<button class="btn-sm btn-predownload" title="${t('btn_predownload', lang)}">${t('btn_predownload', lang)}</button>` : ''}
+        ${isInstalled && isUpdate ? `<button class="btn-sm btn-update" title="${t('btn_update_action', lang)}">${t('btn_update_action', lang)}</button>` : ''}
+        ${isInstalled ? `<button class="btn-sm btn-redownload" title="${t('btn_redownload', lang)}">${t('btn_redownload', lang)}</button>` : ''}
+        ${isInstalled ? `<button class="btn-sm btn-danger btn-remove" title="${t('btn_remove', lang)}">${t('btn_remove', lang)}</button>` : ''}
       </div>
     `;
 
@@ -287,7 +344,7 @@ export async function renderSettings() {
     if (btnPredownload) {
       btnPredownload.onclick = async () => {
         btnPredownload.disabled = true;
-        btnPredownload.textContent = 'Downloading Game...';
+        btnPredownload.textContent = t('btn_predownloading', lang);
         await installOrUpdateGame(game);
         renderSettings();
       };
@@ -298,7 +355,7 @@ export async function renderSettings() {
     if (btnUpdate) {
       btnUpdate.onclick = async () => {
         btnUpdate.disabled = true;
-        btnUpdate.textContent = 'Updating Game...';
+        btnUpdate.textContent = t('btn_updating', lang);
         await installOrUpdateGame(game);
         renderSettings();
       };
@@ -309,7 +366,7 @@ export async function renderSettings() {
     if (btnRedownload) {
       btnRedownload.onclick = async () => {
         btnRedownload.disabled = true;
-        btnRedownload.textContent = 'Redownloading Game...';
+        btnRedownload.textContent = t('btn_redownloading', lang);
         await removeGame(game.id);
         await installOrUpdateGame(game);
         renderSettings();
@@ -320,7 +377,7 @@ export async function renderSettings() {
     const btnRemove = row.querySelector('.btn-remove');
     if (btnRemove) {
       btnRemove.onclick = async () => {
-        if (confirm(`Remove ${getGameName(game)} from local storage?`)) {
+        if (confirm(t('confirm_remove', lang, { name: getGameName(game, lang) }))) {
           await removeGame(game.id);
           renderSettings();
         }
@@ -344,6 +401,7 @@ export function exitGame() {
   if (playerView) playerView.classList.add('hidden');
   if (libraryView && settingsView && settingsView.classList.contains('hidden')) {
     libraryView.classList.remove('hidden');
+    renderLibrary();
   }
 }
 

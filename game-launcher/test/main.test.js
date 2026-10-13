@@ -53,6 +53,8 @@ describe('Main Application Navigation & Elder Accessibility', () => {
     gameFrame = createMockElement('game-frame', 'iframe');
     btnLibrary = createMockElement('btn-library', 'button');
     btnSettings = createMockElement('btn-settings', 'button');
+    const btnRemoveAll = createMockElement('btn-remove-all', 'button');
+    const selectLanguage = createMockElement('select-language', 'select');
 
     elementsMap = new Map([
       ['library-view', libraryView],
@@ -61,6 +63,8 @@ describe('Main Application Navigation & Elder Accessibility', () => {
       ['game-frame', gameFrame],
       ['btn-library', btnLibrary],
       ['btn-settings', btnSettings],
+      ['btn-remove-all', btnRemoveAll],
+      ['select-language', selectLanguage],
       ['game-list', createMockElement('game-list')],
       ['settings-game-list', createMockElement('settings-game-list')]
     ]);
@@ -93,17 +97,22 @@ describe('Main Application Navigation & Elder Accessibility', () => {
     assert.equal(settingsView.classList.contains('hidden'), false);
     assert.equal(btnSettings.classList.contains('active'), true);
     assert.equal(btnLibrary.classList.contains('active'), false);
+    assert.equal(elementsMap.get('select-language').value, 'vi');
+    assert.equal(elementsMap.get('btn-remove-all').disabled, true);
   });
 
-  test('exitGame clears iframe contents and hides player view', () => {
+  test('exitGame clears iframe contents, hides player view, and restores library view', () => {
     gameFrame.src = 'asset://localhost/game/index.html';
     gameFrame.srcdoc = '<script>...</script>';
     playerView.classList.remove('hidden');
+    libraryView.classList.add('hidden');
+    settingsView.classList.add('hidden');
 
     exitGame();
 
     assert.equal(gameFrame.srcdoc, '');
     assert.equal(gameFrame.attributes.has('src'), false);
     assert.equal(playerView.classList.contains('hidden'), true);
+    assert.equal(libraryView.classList.contains('hidden'), false);
   });
 });

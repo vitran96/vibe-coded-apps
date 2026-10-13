@@ -8,6 +8,7 @@ import {
   downloadWithProgress,
   installOrUpdateGame,
   removeGame,
+  removeAllGames,
   prepareGameForLaunch
 } from '../src/js/gameManager.js';
 
@@ -230,12 +231,34 @@ describe('Game Manager & Cache Operations', () => {
       /Game file missing/
     );
   });
+  test('removeAllGames uninstalls all installed games and updates manifest', async () => {
+    const { files, dirs, ops } = createMockOps();
+    const manifest = {
+      settings: { skipUpdatePrompt: false, globalAutoUpdate: false },
+      games: {
+        'flappy-test': { version: '1.0.0', type: 'html', installed: true },
+        'retro-bundle': { version: '1.0.0', type: 'zip', installed: true }
+      }
+    };
+    await saveManifest(manifest, ops);
+    files.set('/mock_appdata/games_cache/flappy-test.html', '<div>game</div>');
+    dirs.add('/mock_appdata/games_cache/retro-bundle');
+
+    await removeAllGames(ops);
+
+    assert.ok(!files.has('/mock_appdata/games_cache/flappy-test.html'));
+    assert.ok(!dirs.has('/mock_appdata/games_cache/retro-bundle'));
+    const updated = await getManifest(ops);
+    assert.equal(updated.games['flappy-test'].installed, false);
+    assert.equal(updated.games['retro-bundle'].installed, false);
+  });
 });
 
 import { getGameName } from '../src/js/gameManager.js';
 test('getGameName picks localized name, falls back to name', () => {
   const g = { name: 'Chess', names: { vi: 'Cờ vua' } };
+  assert.equal(getGameName(g), 'Cờ vua'); // default is vi
   assert.equal(getGameName(g, 'vi-VN'), 'Cờ vua');
   assert.equal(getGameName(g, 'en-US'), 'Chess');
-  assert.equal(getGameName({ name: 'X' }, 'vi'), 'X');
+  assert.equal(getGameName({ name: 'X' }), 'X');
 });

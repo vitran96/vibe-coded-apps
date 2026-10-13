@@ -1,6 +1,7 @@
 import { getManifest, saveManifest, installOrUpdateGame, getGameName } from './gameManager.js';
+import { applyI18n, t } from './i18n.js';
 
-export function promptUpdatesIfAvailable(pendingGames, onCompleted = () => {}, customOps = {}) {
+export function promptUpdatesIfAvailable(pendingGames, onCompleted = () => {}, customOps = {}, lang = 'vi') {
   const modal = document.getElementById('update-modal');
   const list = document.getElementById('update-modal-list');
   const chkDontAsk = document.getElementById('chk-dont-ask');
@@ -10,14 +11,16 @@ export function promptUpdatesIfAvailable(pendingGames, onCompleted = () => {}, c
 
   if (!modal || !list) return;
 
+  applyI18n(lang);
+
   list.innerHTML = '';
   pendingGames.forEach(game => {
     const row = document.createElement('label');
     row.className = 'update-item-row';
     row.innerHTML = `
       <input type="checkbox" class="update-select-item" value="${game.id}" checked />
-      <span class="game-name">${getGameName(game)}</span>
-      <span class="version-diff">${game.installedVersion || 'Installed'} ➔ v${game.version}</span>
+      <span class="game-name">${getGameName(game, lang)}</span>
+      <span class="version-diff">${game.installedVersion || t('installed_label', lang)} ➔ v${game.version}</span>
     `;
     list.appendChild(row);
   });
@@ -38,7 +41,7 @@ export function promptUpdatesIfAvailable(pendingGames, onCompleted = () => {}, c
       try {
         await installOrUpdateGame(game, () => {}, customOps);
       } catch (err) {
-        console.error(`Failed to update ${getGameName(game)}:`, err);
+        console.error(`Failed to update ${getGameName(game, lang)}:`, err);
       }
     }
     onCompleted();

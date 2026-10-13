@@ -12,8 +12,8 @@ export function setCatalogUrl(url) {
 }
 
 // Localized name from version.json `names`, falling back to `name`.
-export function getGameName(game, lang = globalThis.navigator?.language || 'en') {
-  return game.names?.[lang.slice(0, 2)] || game.name;
+export function getGameName(game, lang = 'vi') {
+  return game?.names?.[lang.slice(0, 2)] || game?.name;
 }
 
 export async function getGamesCacheDir(customOps = {}) {
@@ -190,6 +190,19 @@ export async function removeGame(gameId, customOps = {}) {
     await saveManifest(manifest, customOps);
   }
 }
+
+/**
+ * Removes all local game assets and resets installation status for all games
+ */
+export async function removeAllGames(customOps = {}) {
+  const manifest = await getManifest(customOps);
+  for (const gameId of Object.keys(manifest.games || {})) {
+    if (manifest.games[gameId]?.installed) {
+      await removeGame(gameId, customOps);
+    }
+  }
+}
+
 
 /**
  * Prepares launch configuration for iframe
