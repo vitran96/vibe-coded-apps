@@ -1,4 +1,4 @@
-import { getManifest, saveManifest, installOrUpdateGame } from './gameManager.js';
+import { getManifest, saveManifest, installOrUpdateGame, getGameName } from './gameManager.js';
 
 export function promptUpdatesIfAvailable(pendingGames, onCompleted = () => {}, customOps = {}) {
   const modal = document.getElementById('update-modal');
@@ -16,7 +16,7 @@ export function promptUpdatesIfAvailable(pendingGames, onCompleted = () => {}, c
     row.className = 'update-item-row';
     row.innerHTML = `
       <input type="checkbox" class="update-select-item" value="${game.id}" checked />
-      <span class="game-name">${game.name}</span>
+      <span class="game-name">${getGameName(game)}</span>
       <span class="version-diff">${game.installedVersion || 'Installed'} ➔ v${game.version}</span>
     `;
     list.appendChild(row);
@@ -38,7 +38,7 @@ export function promptUpdatesIfAvailable(pendingGames, onCompleted = () => {}, c
       try {
         await installOrUpdateGame(game, () => {}, customOps);
       } catch (err) {
-        console.error(`Failed to update ${game.name}:`, err);
+        console.error(`Failed to update ${getGameName(game)}:`, err);
       }
     }
     onCompleted();

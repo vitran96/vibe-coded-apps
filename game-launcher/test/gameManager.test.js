@@ -231,3 +231,11 @@ describe('Game Manager & Cache Operations', () => {
     );
   });
 });
+
+import { getGameName } from '../src/js/gameManager.js';
+test('getGameName picks localized name, falls back to name', () => {
+  const g = { name: 'Chess', names: { vi: 'Cờ vua' } };
+  assert.equal(getGameName(g, 'vi-VN'), 'Cờ vua');
+  assert.equal(getGameName(g, 'en-US'), 'Chess');
+  assert.equal(getGameName({ name: 'X' }, 'vi'), 'X');
+});

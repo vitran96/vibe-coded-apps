@@ -5,10 +5,15 @@ import { convertFileSrc as tauriConvertFileSrc } from '@tauri-apps/api/core';
 import { extractZipBundle } from './zipExtractor.js';
 import { generateStorageShim } from './storageShim.js';
 
-export let CATALOG_URL = 'https://raw.githubusercontent.com/username/games/main/catalog.json';
+export let CATALOG_URL = 'https://raw.githubusercontent.com/vitran96/vibe-coded-apps/main/version.json';
 
 export function setCatalogUrl(url) {
   CATALOG_URL = url;
+}
+
+// Localized name from version.json `names`, falling back to `name`.
+export function getGameName(game, lang = globalThis.navigator?.language || 'en') {
+  return game.names?.[lang.slice(0, 2)] || game.name;
 }
 
 export async function getGamesCacheDir(customOps = {}) {

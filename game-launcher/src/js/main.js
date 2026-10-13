@@ -4,7 +4,8 @@ import {
   saveManifest, 
   installOrUpdateGame, 
   removeGame, 
-  prepareGameForLaunch 
+  prepareGameForLaunch,
+  getGameName
 } from './gameManager.js';
 import { promptUpdatesIfAvailable } from './updateModal.js';
 
@@ -158,7 +159,7 @@ export async function renderLibrary() {
         </div>
       </div>
       <div class="card-body">
-        <h3 class="game-title">${game.name}</h3>
+        <h3 class="game-title">${getGameName(game)}</h3>
       </div>
       <div class="card-footer">
         <div class="progress-container hidden">
@@ -256,7 +257,7 @@ export async function renderSettings() {
     row.className = 'settings-row';
     row.innerHTML = `
       <div class="settings-game-info">
-        <strong class="settings-game-title">${game.name}</strong>
+        <strong class="settings-game-title">${getGameName(game)}</strong>
         <span class="version-tag">${isInstalled ? `Installed: v${meta.version} | Target: v${game.version}` : `Not installed (Latest: v${game.version})`}</span>
       </div>
       <div class="settings-actions">
@@ -319,7 +320,7 @@ export async function renderSettings() {
     const btnRemove = row.querySelector('.btn-remove');
     if (btnRemove) {
       btnRemove.onclick = async () => {
-        if (confirm(`Remove ${game.name} from local storage?`)) {
+        if (confirm(`Remove ${getGameName(game)} from local storage?`)) {
           await removeGame(game.id);
           renderSettings();
         }
