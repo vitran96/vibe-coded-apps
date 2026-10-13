@@ -6561,8 +6561,18 @@ import * as THREE from 'three';
       if (aiGroup) aiGroup.style.display = val === 'pve' ? 'flex' : 'none';
     });
     bindChipGroup('.chip-level', (val) => { selectedLevel = val; });
-    bindChipGroup('.chip-side', (val) => { selectedSide = val; });
-    bindChipGroup('.chip-undo', (val) => { selectedAllowUndo = (val === 'true'); });
+    bindChipGroup('.chip-undo', (val) => {
+      selectedAllowUndo = (val === 'true');
+      window.XQ.Storage.saveNewGame({ allowUndo: selectedAllowUndo });
+      window.XQ.Storage.saveSettings({ allowUndo: selectedAllowUndo });
+      const ut = document.getElementById('settings-undo-toggle');
+      if (ut) ut.checked = selectedAllowUndo;
+      const g = Controller.getGame();
+      if (g && g.rules) {
+        g.rules.allowUndo = selectedAllowUndo;
+      }
+      Controller.updateUndoButtonState();
+    });
     bindChipGroup('.chip-timer-mode', (val) => {
       selectedTimerMode = val;
       const moveOpts = document.getElementById('timer-opts-move');
@@ -6619,6 +6629,27 @@ import * as THREE from 'three';
       labelSelect.addEventListener('change', (e) => {
         window.XQ.Storage.saveSettings({ labels: e.target.value });
         window.XQ.Render.setLabelMode(e.target.value);
+      });
+    }
+
+    // Undo toggle in settings
+    const undoToggle = document.getElementById('settings-undo-toggle');
+    if (undoToggle) {
+      const s = window.XQ.Storage.loadSettings();
+      undoToggle.checked = (s.allowUndo !== false);
+      undoToggle.addEventListener('change', (e) => {
+        const val = e.target.checked;
+        window.XQ.Storage.saveSettings({ allowUndo: val });
+        window.XQ.Storage.saveNewGame({ allowUndo: val });
+        selectedAllowUndo = val;
+        document.querySelectorAll('.chip-undo').forEach(c => {
+          c.classList.toggle('selected', c.dataset.val === String(val));
+        });
+        const g = Controller.getGame();
+        if (g && g.rules) {
+          g.rules.allowUndo = val;
+        }
+        Controller.updateUndoButtonState();
       });
     }
 
