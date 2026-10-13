@@ -206,3 +206,14 @@ Before finalizing any changes or reviews, always execute this mandatory checklis
   1. Updated `Controller.undo()` to revert 2 plies in PvE mode (both player and bot moves), returning control to the human.
   2. Guarded `canUndo()` to disable undo during bot turn, during AI search, and during move animation. In PvE, require at least 1 player move.
   3. Cleared inline `style.opacity` and `style.cursor` in `updateUndoButtonState()`, delegating disabled styling to CSS `.btn-action[aria-disabled="true"], .btn-action.disabled` and restoring full 1.0 opacity and appearance matching sibling action buttons when enabled.
+
+### Issue #017: Move Highlight & Piece Starting Rectangle Offset Inward from Grid Crosses
+- **Symptom:** Last-move highlight squares, piece selection rings, and target dots appeared visibly offset towards the middle of the board instead of centering on the line intersections/crosses.
+- **Root Cause:**
+  1. The 3D world coordinates for pieces and highlights use integer unit spacing of 1.0 (`x = f - 4.0`, `z = 4.5 - r`), forming an 8.0 x 9.0 world unit grid.
+  2. The board mesh PlaneGeometry was hardcoded to `9.6 x 10.6` with canvas margins of 140px, giving a world grid size of `8.2875 x 9.296` units. This ~3.6% stretching placed the painted line crosses further outward from the center than the 3D unit coordinates.
+  3. Consequently, pieces and highlights at unit coordinates appeared offset inwards towards the board center.
+- **Fix:**
+  1. In [src/render.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/render.js), synchronized the board canvas grid (`CELL_SIZE = 220`, `MARGIN_X = MARGIN_Y = 144`, `CANVAS_W = 2048`, `CANVAS_H = 2268`) with the 3D plane dimensions (`BOARD_PLANE_W = CANVAS_W / CELL_SIZE`, `BOARD_PLANE_H = CANVAS_H / CELL_SIZE`).
+  2. Mathematically guarantees `cross_3d_x = f - 4.0` and `cross_3d_z = 4.5 - r` with zero error across all 90 grid intersections.
+  3. Updated `camera` viewport fitting in `resize()` to match the exact plane geometry dimensions.

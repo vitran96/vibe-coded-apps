@@ -40,10 +40,18 @@
     return z < 0 ? -Math.PI / 2 : Math.PI / 2;
   }
 
+  const CELL_SIZE = 220;
+  const MARGIN_X = 144;
+  const MARGIN_Y = 144;
+  const CANVAS_W = 8 * CELL_SIZE + 2 * MARGIN_X; // 2048
+  const CANVAS_H = 9 * CELL_SIZE + 2 * MARGIN_Y; // 2268
+  const BOARD_PLANE_W = CANVAS_W / CELL_SIZE;    // 9.309090909090909
+  const BOARD_PLANE_H = CANVAS_H / CELL_SIZE;    // 10.309090909090909
+
   function createBoardCanvas() {
     const canvas = document.createElement('canvas');
-    canvas.width = 2048;
-    canvas.height = 2276;
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
     const ctx = canvas.getContext('2d');
 
     const pal = window.House ? window.House.palette() : {};
@@ -54,12 +62,12 @@
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Margins and cell dimensions
-    const marginX = 140;
-    const marginY = 140;
-    const w = canvas.width - marginX * 2;
-    const h = canvas.height - marginY * 2;
-    const cellW = w / 8;
-    const cellH = h / 9;
+    const marginX = MARGIN_X;
+    const marginY = MARGIN_Y;
+    const cellW = CELL_SIZE;
+    const cellH = CELL_SIZE;
+    const w = 8 * cellW;
+    const h = 9 * cellH;
 
     ctx.strokeStyle = lineCol;
     ctx.lineWidth = 6;
@@ -335,8 +343,8 @@
       dirLight.position.set(-6, 18, 6);
       scene.add(dirLight);
 
-      // Board plane: 9 units wide, 10 units high (plus margins -> 9.4 x 10.4)
-      const boardGeo = new THREE.PlaneGeometry(9.6, 10.6);
+      // Board plane: matches unit grid coordinates exactly
+      const boardGeo = new THREE.PlaneGeometry(BOARD_PLANE_W, BOARD_PLANE_H);
       boardTexture = new THREE.CanvasTexture(createBoardCanvas());
       boardTexture.colorSpace = THREE.SRGBColorSpace;
       const boardMat = new THREE.MeshBasicMaterial({ map: boardTexture });
@@ -407,9 +415,9 @@
 
       renderer.setSize(w, h, false);
 
-      // Fit board (9.6 x 10.6) into viewport
-      const boardW = 9.8;
-      const boardH = 10.8;
+      // Fit board into viewport
+      const boardW = BOARD_PLANE_W + 0.2;
+      const boardH = BOARD_PLANE_H + 0.2;
       const aspect = w / h;
       const boardAspect = boardW / boardH;
 
