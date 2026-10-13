@@ -174,13 +174,13 @@ function stopBgm() {
 
 // Line icon glyphs rendering for 3D tokens and 2D mini boards
 const GLYPHS = {
-  // SVG paths for chess pieces (2px stroke, round caps, 32x32 viewbox)
-  pawn: '<circle cx="16" cy="11" r="5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M11 25c1-6 9-6 10 0M8 27h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
-  knight: '<path d="M12 26h10M11 22c2-8 0-11 5-14 3 2 4 4 3 7l4 2-5 3c-2 2-3 4-7 2z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
-  bishop: '<path d="M16 6v3M16 9c-4 3-5 9 0 14 5-5 4-11 0-14zM13 16h6M10 26h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
-  rook: '<path d="M9 25h14M11 25v-10h10v10M9 11h14v4H9zM10 11V8h3v2h2V8h2v2h3V8h2v3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
-  queen: '<path d="M7 14l3 9h12l3-9-4 3-5-7-5 7-4-3zM8 26h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="13" r="1.5" fill="currentColor"/><circle cx="16" cy="8" r="1.5" fill="currentColor"/><circle cx="25" cy="13" r="1.5" fill="currentColor"/>',
-  king: '<path d="M16 6v5M13.5 8.5h5M10 26h12M11 23c-3-6 2-10 5-10s8 4 5 10z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  // SVG paths for chess pieces (2.2px stroke, round caps, 32x32 viewbox)
+  pawn: '<circle cx="16" cy="10" r="4.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 15h8M11 23c1-5 9-5 10 0M8 26h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  knight: '<path d="M22 26c0-7-1-12-5-17l-1.5-3-3 2c-1.5 1-3 4-5 6.5l-2.5 3c0 1.5 1 2.5 2.5 2l2-1c2 0 3 2 2 4.5l-3.5 4h14z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="13" cy="11.5" r="1.3" fill="currentColor"/><path d="M17 11c1.8 2 2 5.5 1 9.5M8 17.5l1.5-.5M7 26h18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  bishop: '<circle cx="16" cy="6" r="1.5" fill="currentColor"/><path d="M16 8v3M12 11c-2 3-2 7 1 9.5l-2 3.5h10l-2-3.5c3-2.5 3-6.5 1-9.5-2-2.5-6-2.5-8 0z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M13 15h6M7 27h18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  rook: '<path d="M9 9h3v3h3V9h2v3h3V9h3v4H9z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 13l1 10h10l1-10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><line x1="16" y1="16" x2="16" y2="19" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M7 23h18M6 26h20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  queen: '<path d="M7 13l3 10h12l3-10-4.5 3.5L16 8l-4.5 8.5L7 13z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="7" cy="12" r="1.3" fill="currentColor"/><circle cx="11.5" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="7" r="1.3" fill="currentColor"/><circle cx="20.5" cy="15" r="1.3" fill="currentColor"/><circle cx="25" cy="12" r="1.3" fill="currentColor"/><path d="M7 26h18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  king: '<path d="M16 5v6M13 8h6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M10 23c-2-6 2-10 6-10s8 4 6 10H10z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 17h8M7 26h18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
 };
 
 const PIECE_TYPE_MAP = { 1: 'pawn', 2: 'knight', 3: 'bishop', 4: 'rook', 5: 'queen', 6: 'king' };
@@ -732,25 +732,75 @@ class ClockController {
 let aiWorker = null;
 let currentSearchId = 0;
 
+function ensureClockTicker() {
+  if (clockInterval) return;
+  lastTickTime = performance.now();
+  clockInterval = setInterval(() => {
+    const now = performance.now();
+    const delta = now - lastTickTime;
+    lastTickTime = now;
+    if (curGame && curGame.clock && curGame.clock.running) {
+      curGame.clock.tick(delta);
+    }
+  }, 100);
+}
+
 function initAIWorker() {
   if (aiWorker) return;
-  const workerSrc = `
-    const ChessRules = (${ChessRules.toString()})();
-    const ChessAI = (${ChessAI.toString()})(ChessRules);
-    self.onmessage = function(e) {
-      const { id, fen, level, timeBudgetMs, historyHashes } = e.data;
-      const res = ChessAI.search(fen, level, timeBudgetMs, historyHashes);
-      self.postMessage({ id, result: res });
+  try {
+    const rulesFactory = (ChessRules && ChessRules.factory) ? ChessRules.factory.toString() : ChessRules.toString();
+    const aiFactory = (ChessAI && ChessAI.factory) ? ChessAI.factory.toString() : ChessAI.toString();
+    const workerSrc = `
+      const ChessRules = (${rulesFactory})();
+      const ChessAI = (${aiFactory})(ChessRules);
+      self.onmessage = function(e) {
+        const { id, fen, level, timeBudgetMs, historyHashes } = e.data;
+        try {
+          const res = ChessAI.search(fen, level, timeBudgetMs, historyHashes);
+          self.postMessage({ id, result: res });
+        } catch (err) {
+          self.postMessage({ id, error: String(err) });
+        }
+      };
+    `;
+    const blob = new Blob([workerSrc], { type: 'application/javascript' });
+    aiWorker = new Worker(URL.createObjectURL(blob));
+    aiWorker.onmessage = (e) => {
+      const { id, result, error } = e.data;
+      if (id === currentSearchId && curGame && !curGame.isOver) {
+        if (error) {
+          console.warn('Worker search error:', error);
+          fallbackSyncAI();
+        } else {
+          handleAIMove(result);
+        }
+      }
     };
-  `;
-  const blob = new Blob([workerSrc], { type: 'application/javascript' });
-  aiWorker = new Worker(URL.createObjectURL(blob));
-  aiWorker.onmessage = (e) => {
-    const { id, result } = e.data;
-    if (id === currentSearchId && curGame && !curGame.isOver) {
-      handleAIMove(result);
+    aiWorker.onerror = (err) => {
+      console.warn('AI worker failed, using sync fallback:', err);
+      aiWorker = null;
+      fallbackSyncAI();
+    };
+  } catch (err) {
+    console.warn('Failed to spawn AI worker:', err);
+    aiWorker = null;
+  }
+}
+
+function fallbackSyncAI() {
+  if (!curGame || curGame.isOver) return;
+  const fen = ChessRules.toFEN(curGame.state);
+  const level = curGame.aiLevel;
+  const history = curGame.state.history;
+  setTimeout(() => {
+    try {
+      const res = ChessAI.search(fen, level, 400, history);
+      handleAIMove(res);
+    } catch (e) {
+      isAIThinking = false;
+      updateStatusLine();
     }
-  };
+  }, 20);
 }
 
 function startNewGame(options) {
@@ -787,6 +837,7 @@ function startNewGame(options) {
     onLowTime,
     onTimeout
   );
+  ensureClockTicker();
 
   showScreen('game-screen');
   buildBoard();
@@ -872,7 +923,6 @@ function triggerAIMove() {
 
   currentSearchId++;
   const searchId = currentSearchId;
-  const thinkStart = performance.now();
 
   // Cap AI time budget so it never flags (Section 15.4)
   const remaining = curGame.state.turn === 1 ? curGame.clock.wMs : curGame.clock.bMs;
@@ -880,23 +930,38 @@ function triggerAIMove() {
   if (curGame.timerConfig.kind !== 'off') {
     timeBudget = Math.min(800, remaining - 1500, Math.max(150, remaining * 0.1));
   }
+  const budget = Math.max(150, timeBudget);
 
-  aiWorker.postMessage({
-    id: searchId,
-    fen: ChessRules.toFEN(curGame.state),
-    level: curGame.aiLevel,
-    timeBudgetMs: Math.max(150, timeBudget),
-    historyHashes: curGame.state.history,
-  });
+  if (aiWorker) {
+    try {
+      aiWorker.postMessage({
+        id: searchId,
+        fen: ChessRules.toFEN(curGame.state),
+        level: curGame.aiLevel,
+        timeBudgetMs: budget,
+        historyHashes: curGame.state.history,
+      });
+    } catch (e) {
+      fallbackSyncAI();
+    }
+  } else {
+    fallbackSyncAI();
+  }
 }
 
 function handleAIMove(result) {
   isAIThinking = false;
-  if (!curGame || curGame.isOver || !result || !result.uci) return;
+  if (!curGame || curGame.isOver) return;
+  if (!result || !result.uci) {
+    updateStatusLine();
+    return;
+  }
 
   const move = ChessRules.fromUCI(curGame.state, result.uci);
   if (move) {
     executeMove(move);
+  } else {
+    updateStatusLine();
   }
 }
 
@@ -1216,6 +1281,7 @@ function saveRecord() {
     aiLevel: curGame.aiLevel,
     humanSide: curGame.humanSide,
     timer: curGame.timerConfig,
+    startFEN: curGame.startFEN || ChessRules.toFEN(ChessRules.initial()),
     moves: curGame.moves,
     status: curGame.result === '1/2-1/2' ? 'draw' : 'win',
     winner: curGame.result === '1-0' ? 'w' : curGame.result === '0-1' ? 'b' : null,
@@ -1456,6 +1522,115 @@ function handleRoute() {
   }
 }
 
+// Settings Dialog Controls
+function openSettingsDialog() {
+  syncSettingsUI();
+  document.getElementById('dialog-settings').showModal();
+}
+
+function syncSettingsUI() {
+  const setChk = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!val;
+  };
+  setChk('chk-countdown-fx', settings.countdownFx);
+  setChk('chk-vibrate', settings.vibrate);
+  setChk('chk-legal-dots', settings.legalDots);
+  setChk('chk-coords', settings.coords);
+  setChk('chk-auto-queen', settings.autoQueen);
+  setChk('chk-pvp-undo', settings.pvpUndo);
+  setChk('chk-rotate-pvp', settings.rotatePvp);
+  setChk('chk-rule-hints', settings.ruleHints);
+  setChk('chk-sfx', settings.sfx);
+  setChk('chk-music', settings.music);
+
+  const timerKind = settings.timer ? settings.timer.kind : 'off';
+  const segTimer = document.getElementById('seg-settings-timer');
+  if (segTimer) {
+    segTimer.querySelectorAll('button').forEach((b) => {
+      b.classList.toggle('active', b.dataset.val === timerKind);
+    });
+  }
+
+  const prefs = window.House ? window.House.prefs.load() : { theme: 'auto', lang: 'vi' };
+  const segTheme = document.getElementById('seg-theme');
+  if (segTheme) {
+    segTheme.querySelectorAll('button').forEach((b) => {
+      b.classList.toggle('active', b.dataset.val === prefs.theme);
+    });
+  }
+  const segLang = document.getElementById('seg-lang');
+  if (segLang) {
+    segLang.querySelectorAll('button').forEach((b) => {
+      b.classList.toggle('active', b.dataset.val === prefs.lang);
+    });
+  }
+}
+
+function bindSettingsEvents() {
+  const bindChk = (id, key, onToggle) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.onchange = () => {
+      settings[key] = el.checked;
+      store.set('settings', settings);
+      if (onToggle) onToggle(el.checked);
+    };
+  };
+
+  bindChk('chk-countdown-fx', 'countdownFx');
+  bindChk('chk-vibrate', 'vibrate');
+  bindChk('chk-legal-dots', 'legalDots', () => updateOverlays());
+  bindChk('chk-coords', 'coords', () => buildBoard());
+  bindChk('chk-auto-queen', 'autoQueen');
+  bindChk('chk-pvp-undo', 'pvpUndo');
+  bindChk('chk-rotate-pvp', 'rotatePvp');
+  bindChk('chk-rule-hints', 'ruleHints');
+  bindChk('chk-sfx', 'sfx', (v) => {
+    if (sfxGain) sfxGain.gain.value = v ? 0.7 : 0;
+  });
+  bindChk('chk-music', 'music', (v) => {
+    if (musicGain) musicGain.gain.value = v ? 0.5 : 0;
+    if (v) startBgm(); else stopBgm();
+  });
+
+  const segTimer = document.getElementById('seg-settings-timer');
+  if (segTimer) {
+    segTimer.onclick = (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      segTimer.querySelectorAll('button').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      const val = btn.dataset.val;
+      settings.timer = settings.timer || {};
+      settings.timer.kind = val;
+      if (val === 'move') settings.timer.perMoveMs = 30000;
+      else if (val === 'game') settings.timer.baseMs = 600000;
+      store.set('settings', settings);
+    };
+  }
+
+  const btnCopyPgn = document.getElementById('btn-copy-pgn');
+  if (btnCopyPgn) {
+    btnCopyPgn.onclick = () => {
+      if (!curGame) {
+        alert('Chưa có ván cờ nào!');
+        return;
+      }
+      const pgn = ChessRules.toPGN({ moves: curGame.moves.map((m) => m.san) });
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(pgn).then(() => {
+          alert('Đã sao chép PGN vào bộ nhớ tạm!');
+        }).catch(() => {
+          prompt('PGN:', pgn);
+        });
+      } else {
+        prompt('PGN:', pgn);
+      }
+    };
+  }
+}
+
 // App Initialization
 function initApp() {
   const prefs = window.House ? window.House.prefs.load() : { theme: 'auto', lang: 'vi' };
@@ -1506,44 +1681,100 @@ function initApp() {
     handleRoute();
   };
 
-  document.getElementById('btn-start-settings').onclick = () => {
-    document.getElementById('dialog-settings').showModal();
+  // Settings handlers
+  bindSettingsEvents();
+
+  const openSettings = () => {
+    const dMenu = document.getElementById('dialog-menu');
+    if (dMenu && dMenu.open) dMenu.close();
+    openSettingsDialog();
   };
-  document.getElementById('btn-desktop-settings').onclick = () => {
-    document.getElementById('dialog-settings').showModal();
-  };
+  ['btn-start-settings', 'btn-desktop-settings', 'btn-menu-settings'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.onclick = openSettings;
+  });
   document.getElementById('btn-close-settings').onclick = () => {
     document.getElementById('dialog-settings').close();
   };
 
-  document.getElementById('btn-history').onclick = () => {
+  // History handlers
+  const openHistory = () => {
+    const dMenu = document.getElementById('dialog-menu');
+    if (dMenu && dMenu.open) dMenu.close();
+    const dOver = document.getElementById('dialog-game-over');
+    if (dOver && dOver.open) dOver.close();
     showHistoryDialog();
   };
+  ['btn-history', 'btn-menu-history', 'btn-side-history', 'btn-over-history'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.onclick = openHistory;
+  });
   document.getElementById('btn-close-history').onclick = () => {
     document.getElementById('dialog-history').close();
   };
 
-  document.getElementById('btn-menu').onclick = () => {
+  const segHist = document.getElementById('seg-history-filter');
+  if (segHist) {
+    segHist.onclick = (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      segHist.querySelectorAll('button').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      showHistoryDialog(btn.dataset.filter || 'all');
+    };
+  }
+
+  // Menu handlers
+  const openMenu = () => {
     document.getElementById('dialog-menu').showModal();
   };
+  ['btn-menu', 'btn-side-menu'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.onclick = openMenu;
+  });
   document.getElementById('btn-menu-close').onclick = () => {
     document.getElementById('dialog-menu').close();
   };
-  document.getElementById('btn-menu-resign').onclick = () => {
-    document.getElementById('dialog-menu').close();
+
+  const handleResign = () => {
+    const dMenu = document.getElementById('dialog-menu');
+    if (dMenu && dMenu.open) dMenu.close();
+    if (!curGame || curGame.isOver) return;
     if (confirm('Bạn có chắc muốn đầu hàng?')) {
       endGame(curGame.humanSide === 'w' ? '0-1' : '1-0', 'resign');
     }
   };
+  ['btn-menu-resign', 'btn-side-resign'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.onclick = handleResign;
+  });
+
   document.getElementById('btn-menu-new').onclick = () => {
     document.getElementById('dialog-menu').close();
     document.getElementById('dialog-new-game').showModal();
   };
 
+  // Mobile side panel drawer toggle
+  const sidePanel = document.getElementById('side-panel');
+  const btnShowMoves = document.getElementById('btn-show-moves');
+  if (btnShowMoves && sidePanel) {
+    btnShowMoves.onclick = () => {
+      sidePanel.classList.toggle('open');
+    };
+  }
+  const btnCloseSide = document.getElementById('btn-close-side-panel');
+  if (btnCloseSide && sidePanel) {
+    btnCloseSide.onclick = () => {
+      sidePanel.classList.remove('open');
+    };
+  }
+
   function handleUndo() {
     if (!curGame || curGame.isOver || isAIThinking || curGame.moves.length === 0) return;
+    // Strictly undo only the last black/white move (1 ply), not both
     curGame.moves.pop();
-    // Replay from startFEN
+    selectedSq = -1;
+    legalMovesForSelected = [];
     curGame.state = ChessRules.fromFEN(curGame.startFEN);
     for (const m of curGame.moves) {
       const realM = ChessRules.fromUCI(curGame.state, m.uci);
@@ -1551,6 +1782,7 @@ function initApp() {
     }
     syncBoard3D();
     updateUI();
+    saveAutosave();
   }
 
   const btnUndo = document.getElementById('btn-undo');
@@ -1620,7 +1852,7 @@ function initApp() {
   };
   document.getElementById('btn-over-replay').onclick = () => {
     document.getElementById('dialog-game-over').close();
-    enterReplayMode(curGame.moves);
+    enterReplayMode(curGame.moves, curGame.startFEN);
   };
 
   window.addEventListener('hashchange', handleRoute);
@@ -1632,30 +1864,36 @@ function initApp() {
   }
 }
 
-function showHistoryDialog() {
+let currentHistoryFilter = 'all';
+
+function showHistoryDialog(filter = currentHistoryFilter) {
+  currentHistoryFilter = filter;
   const dialog = document.getElementById('dialog-history');
   const list = document.getElementById('history-list');
   list.innerHTML = '';
 
   const records = store.get('records', { v: 1, games: [] });
-  if (records.games.length === 0) {
+  const allGames = records.games || [];
+  const games = allGames.filter(g => filter === 'all' || g.mode === filter);
+
+  if (games.length === 0) {
     list.innerHTML = '<div style="text-align:center; color:var(--muted); padding:20px;">Chưa có ván đấu nào.</div>';
   } else {
-    records.games.forEach((g) => {
+    games.forEach((g) => {
       const row = document.createElement('div');
       row.className = 'panel';
       row.style.cssText = 'padding:10px 14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;';
       const outcome = g.status === 'draw' ? 'Hoà' : g.winner === g.humanSide ? 'Thắng' : 'Thua';
       row.innerHTML = `
         <div>
-          <div style="font-weight:700;">${g.mode === 'pve' ? 'Vs Máy (' + g.aiLevel + ')' : 'Hai người'}</div>
-          <div style="font-size:var(--fs-xs); color:var(--muted);">${g.reason || ''} • ${g.moves.length} nước</div>
+          <div style="font-weight:700;">${g.mode === 'pve' ? 'Vs Máy (' + (g.aiLevel || 'vừa') + ')' : 'Hai người'}</div>
+          <div style="font-size:var(--fs-xs); color:var(--muted);">${g.reason || ''} • ${(g.moves || []).length} nước</div>
         </div>
         <div class="chip" style="font-weight:700; ${outcome === 'Thắng' ? 'background:var(--ok); color:#fff;' : outcome === 'Thua' ? 'background:var(--danger); color:#fff;' : ''}">${outcome}</div>
       `;
       row.onclick = () => {
         dialog.close();
-        enterReplayMode(g.moves);
+        enterReplayMode(g.moves || [], g.startFEN);
       };
       list.appendChild(row);
     });
@@ -1663,22 +1901,59 @@ function showHistoryDialog() {
   dialog.showModal();
 }
 
-function enterReplayMode(moves) {
-  curGame.isReplay = true;
-  curGame.clock.pause();
-  curGame.state = ChessRules.fromFEN(curGame.startFEN);
-  let ply = 0;
+function enterReplayMode(moves, startFEN = null) {
+  const fen = startFEN || (curGame && curGame.startFEN) || ChessRules.toFEN(ChessRules.initial());
+  const wasOver = !curGame || curGame.isOver;
 
+  if (!curGame) {
+    curGame = {
+      id: Date.now().toString(),
+      mode: 'pvp',
+      aiLevel: 'medium',
+      humanSide: 'w',
+      timerConfig: { kind: 'off' },
+      state: ChessRules.fromFEN(fen),
+      startFEN: fen,
+      moves: moves || [],
+      isOver: true,
+      result: null,
+      reason: null,
+      isReplay: true,
+      clock: new ClockController({ kind: 'off' }, () => {}, () => {}, () => {}),
+    };
+  } else {
+    curGame.isReplay = true;
+    if (curGame.clock) curGame.clock.pause();
+  }
+
+  showScreen('game-screen');
+  buildBoard();
+
+  let ply = 0;
   const bar = document.getElementById('replay-bar');
   const slider = document.getElementById('replay-slider');
-  bar.style.display = 'flex';
-  slider.max = moves.length;
-  slider.value = 0;
+  const bPlay = document.getElementById('btn-replay-play');
+  let playTimer = null;
+
+  if (bar) bar.style.display = 'flex';
+  if (slider) {
+    slider.max = moves ? moves.length : 0;
+    slider.value = 0;
+  }
+
+  const stopPlay = () => {
+    if (playTimer) {
+      clearInterval(playTimer);
+      playTimer = null;
+    }
+    if (bPlay) bPlay.innerHTML = '<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  };
 
   const stepTo = (targetPly) => {
+    if (!moves) return;
     ply = Math.max(0, Math.min(moves.length, targetPly));
-    slider.value = ply;
-    curGame.state = ChessRules.fromFEN(curGame.startFEN);
+    if (slider) slider.value = ply;
+    curGame.state = ChessRules.fromFEN(fen);
     for (let i = 0; i < ply; i++) {
       const m = ChessRules.fromUCI(curGame.state, moves[i].uci);
       if (m) curGame.state = ChessRules.make(curGame.state, m);
@@ -1687,16 +1962,44 @@ function enterReplayMode(moves) {
     updateUI();
   };
 
-  document.getElementById('btn-replay-start').onclick = () => stepTo(0);
-  document.getElementById('btn-replay-prev').onclick = () => stepTo(ply - 1);
-  document.getElementById('btn-replay-next').onclick = () => stepTo(ply + 1);
-  document.getElementById('btn-replay-end').onclick = () => stepTo(moves.length);
-  slider.oninput = (e) => stepTo(parseInt(e.target.value, 10));
+  document.getElementById('btn-replay-start').onclick = () => { stopPlay(); stepTo(0); };
+  document.getElementById('btn-replay-prev').onclick = () => { stopPlay(); stepTo(ply - 1); };
+  document.getElementById('btn-replay-next').onclick = () => { stopPlay(); stepTo(ply + 1); };
+  document.getElementById('btn-replay-end').onclick = () => { stopPlay(); stepTo(moves ? moves.length : 0); };
+  if (slider) {
+    slider.oninput = (e) => {
+      stopPlay();
+      stepTo(parseInt(e.target.value, 10));
+    };
+  }
+
+  if (bPlay) {
+    bPlay.onclick = () => {
+      if (playTimer) {
+        stopPlay();
+      } else {
+        bPlay.innerHTML = '<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+        playTimer = setInterval(() => {
+          if (ply < (moves ? moves.length : 0)) {
+            stepTo(ply + 1);
+          } else {
+            stopPlay();
+          }
+        }, 750);
+      }
+    };
+  }
 
   document.getElementById('btn-replay-exit').onclick = () => {
-    bar.style.display = 'none';
+    stopPlay();
+    if (bar) bar.style.display = 'none';
     curGame.isReplay = false;
-    stepTo(moves.length);
+    if (wasOver) {
+      showScreen('start-screen');
+    } else {
+      stepTo(curGame.moves.length);
+      if (curGame.clock) curGame.clock.resume();
+    }
   };
 
   stepTo(0);

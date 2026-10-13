@@ -97,36 +97,53 @@
         </div>
 
         <!-- Bottom Toolbar (phone) -->
+        <!-- Bottom Toolbar (phone) -->
         <div class="game-toolbar">
           <button id="btn-undo" class="btn btn-icon" aria-label="Đi lại">
             <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
           </button>
-          <button id="btn-show-moves" class="btn btn-icon" aria-label="Nước đi">
+          <button id="btn-show-moves" class="btn btn-icon" aria-label="Nước đi & Menu">
             <svg viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
           </button>
           <button id="btn-game-rules" class="btn btn-icon" aria-label="Luật chơi">
             <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
           </button>
-          <button id="btn-menu" class="btn btn-icon" aria-label="Menu">
-            <svg viewBox="0 0 24 24"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-          </button>
         </div>
       </div>
 
-      <!-- Desktop Side Panel (hidden on phone, visible on >= 900px) -->
-      <aside class="side-panel" style="display:none;">
+      <!-- Right Side Panel -->
+      <aside class="side-panel" id="side-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-2);">
-          <h2 style="font-size:var(--fs-lg);" data-i18n="game.title">Cờ vua</h2>
-          <button id="btn-desktop-settings" class="btn btn-icon" aria-label="Cài đặt">
-            <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
-          </button>
+          <div>
+            <h2 style="font-size:var(--fs-lg); margin:0;" data-i18n="game.title">Cờ vua</h2>
+            <div id="side-status" style="font-weight:600; font-size:var(--fs-sm); color:var(--muted); margin-top:2px;">Lượt của Trắng</div>
+          </div>
+          <div style="display:flex; gap:var(--sp-1);">
+            <button id="btn-side-history" class="btn btn-icon" aria-label="Lịch sử" title="Lịch sử">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </button>
+            <button id="btn-desktop-settings" class="btn btn-icon" aria-label="Cài đặt" title="Cài đặt">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+            </button>
+            <button id="btn-close-side-panel" class="btn btn-icon mobile-only" aria-label="Đóng" title="Đóng">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
         </div>
-        <div id="side-status" style="font-weight:600; font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);">Lượt của Trắng</div>
+
+        <!-- Top part: List of move that has been played so far -->
         <div class="move-list-wrap" id="side-move-list"></div>
-        <div style="display:flex; gap:var(--sp-2); margin-top:auto;">
-          <button id="btn-side-undo" class="btn" style="flex:1;" data-i18n="common.undo">Đi lại</button>
-          <button id="btn-side-resign" class="btn" style="flex:1;" data-i18n="game.action.resign">Đầu hàng</button>
-          <button id="btn-side-draw" class="btn" style="flex:1;" data-i18n="game.action.offerDraw">Hoà</button>
+
+        <!-- Bottom part: Actions and Menu box button with label -->
+        <div class="side-panel-bottom" style="display:flex; flex-direction:column; gap:var(--sp-2); margin-top:auto;">
+          <div style="display:flex; gap:var(--sp-2);">
+            <button id="btn-side-undo" class="btn" style="flex:1;" data-i18n="common.undo">Đi lại</button>
+            <button id="btn-side-resign" class="btn" style="flex:1;" data-i18n="game.action.resign">Đầu hàng</button>
+          </div>
+          <button id="btn-side-menu" class="btn btn-menu-box" style="width:100%; justify-content:center; gap:var(--sp-2); font-weight:700; padding:10px 16px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            <span data-i18n="common.menu">Menu</span>
+          </button>
         </div>
       </aside>
 
@@ -221,6 +238,7 @@
       <div style="display:flex; flex-direction:column; gap:var(--sp-2);">
         <button id="btn-rematch" class="btn btn-primary" data-i18n="common.rematch">Đấu lại</button>
         <button id="btn-over-replay" class="btn" data-i18n="common.replay">Xem lại ván cờ</button>
+        <button id="btn-over-history" class="btn" data-i18n="common.history">Lịch sử ván đấu</button>
         <button id="btn-over-new" class="btn" data-i18n="common.newGame">Ván mới</button>
       </div>
     </dialog>
@@ -229,8 +247,8 @@
     <dialog id="dialog-menu">
       <h3 style="margin-bottom:var(--sp-4);">Menu</h3>
       <div style="display:flex; flex-direction:column; gap:var(--sp-3);">
+        <button id="btn-menu-history" class="btn" data-i18n="common.history">Lịch sử ván đấu</button>
         <button id="btn-menu-resign" class="btn" data-i18n="game.action.resign">Đầu hàng</button>
-        <button id="btn-menu-draw" class="btn" data-i18n="game.action.offerDraw">Đề nghị hoà</button>
         <button id="btn-menu-new" class="btn" data-i18n="common.newGame">Ván mới</button>
         <button id="btn-menu-settings" class="btn" data-i18n="common.settings">Cài đặt</button>
         <button id="btn-menu-close" class="btn" data-i18n="common.close">Đóng</button>

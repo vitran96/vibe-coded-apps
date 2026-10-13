@@ -311,6 +311,53 @@
   margin-bottom: env(safe-area-inset-bottom);
 }
 
+.mobile-only {
+  display: none !important;
+}
+
+.btn-menu-box {
+  background: var(--surface-2);
+  border: 1.5px solid var(--line);
+  color: var(--fg);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-menu-box:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+@media (max-width: 899px) {
+  .mobile-only {
+    display: inline-flex !important;
+  }
+  .side-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(340px, 88vw);
+    height: 100dvh;
+    background: var(--surface);
+    z-index: 999;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.25);
+    transform: translateX(100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    padding: var(--sp-4);
+  }
+  .side-panel.open {
+    transform: translateX(0);
+  }
+}
+
 /* Desktop layout (>= 900px) */
 @media (min-width: 900px) {
   #game-screen {

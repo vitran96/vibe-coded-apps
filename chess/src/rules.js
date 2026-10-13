@@ -4,9 +4,12 @@
 
 (function (root, factory) {
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = factory();
+    const inst = factory();
+    inst.factory = factory;
+    module.exports = inst;
   } else {
     root.ChessRules = factory();
+    root.ChessRules.factory = factory; // used to build the AI worker source
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';

@@ -1,9 +1,12 @@
 // Chess AI Engine: Evaluation, Minimax / Alpha-Beta search, Opening book, Worker dispatcher
 (function (root, factory) {
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = factory(require('./rules.js'));
+    const inst = factory(require('./rules.js'));
+    inst.factory = factory;
+    module.exports = inst;
   } else {
     root.ChessAI = factory(root.ChessRules);
+    root.ChessAI.factory = factory; // used to build the AI worker source
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (ChessRules) {
   'use strict';
