@@ -348,14 +348,21 @@
   transition: all var(--t-fast) var(--ease);
 }
 
-.btn-action:hover {
+.btn-action:hover:not([aria-disabled="true"]):not(.disabled) {
   background: var(--surface-2);
   border-color: var(--ink);
   transform: translateY(-1px);
 }
 
-.btn-action:active {
+.btn-action:active:not([aria-disabled="true"]):not(.disabled) {
   transform: translateY(0);
+}
+
+.btn-action[aria-disabled="true"],
+.btn-action.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .btn-action svg {

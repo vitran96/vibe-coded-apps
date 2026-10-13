@@ -125,11 +125,14 @@ import * as THREE from 'three';
     updateUndoButtonState() {
       const undoBtn = document.getElementById('btn-action-undo');
       if (!undoBtn) return;
-      const canUndo = (!game || (game.rules && game.rules.allowUndo !== false));
-      undoBtn.disabled = !canUndo;
-      undoBtn.style.opacity = canUndo ? '1' : '0.35';
+      const settings = window.XQ.Storage ? window.XQ.Storage.loadSettings() : {};
+      const canUndo = (game && game.rules) ? (game.rules.allowUndo !== false) : (settings.allowUndo !== false);
+      undoBtn.disabled = false;
+      undoBtn.setAttribute('aria-disabled', String(!canUndo));
+      undoBtn.classList.toggle('disabled', !canUndo);
+      undoBtn.style.opacity = canUndo ? (game && game.plies && game.plies.length > 0 ? '1' : '0.5') : '0.35';
       undoBtn.style.cursor = canUndo ? 'pointer' : 'not-allowed';
-      undoBtn.title = canUndo ? 'Đi lại' : (window.House && window.House.i18n.lang === 'en' ? 'Undo is disabled' : 'Đi lại đã tắt');
+      undoBtn.title = canUndo ? (window.House && window.House.i18n.lang === 'en' ? 'Undo' : 'Đi lại') : (window.House && window.House.i18n.lang === 'en' ? 'Undo is disabled' : 'Đi lại đã tắt');
     },
 
     resumeGame() {
@@ -522,19 +525,18 @@ import * as THREE from 'three';
     },
 
     undo() {
-      if (!game || game.status !== 'in_progress') return;
-      if (game.rules && game.rules.allowUndo === false) {
+      const settings = window.XQ.Storage ? window.XQ.Storage.loadSettings() : {};
+      const undoAllowed = (game && game.rules) ? (game.rules.allowUndo !== false) : (settings.allowUndo !== false);
+      if (!undoAllowed) {
         window.XQ.toast(window.House && window.House.i18n.lang === 'en' ? 'Undo is disabled in this match!' : 'Ván đấu không cho phép đi lại!');
         return;
       }
+      if (!game || game.status !== 'in_progress') return;
       if (game.plies.length === 0) return;
       window.XQ.AiClient.cancel();
 
-      const pliesToUndo = (game.mode === 'pve' && game.plies.length >= 2) ? 2 : 1;
-      for (let i = 0; i < pliesToUndo; i++) {
-        game.plies.pop();
-        game.history.pop();
-      }
+      game.plies.pop();
+      game.history.pop();
       game.undoCount++;
 
       // Rebuild position
@@ -561,11 +563,6 @@ import * as THREE from 'three';
       window.XQ.Input.setEnabled(true);
       this.autosave();
       this.autoRecordMatch();
-    },
-
-    flip() {
-      const isFlipped = !window.XQ.Render.isFlipped;
-      window.XQ.Render.setFlipped(isFlipped);
     },
 
     resign() {

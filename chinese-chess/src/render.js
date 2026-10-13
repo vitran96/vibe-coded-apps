@@ -444,6 +444,10 @@
       this.refreshTheme();
     },
 
+    getPieceMeshes() {
+      return pieceMeshes;
+    },
+
     refreshTheme() {
       if (!boardTexture) return;
       // Redraw board texture
@@ -461,7 +465,7 @@
       for (const p of pieceMeshes) {
         const mats = createPieceMaterial(Math.abs(p.piece), p.piece > 0 ? 1 : -1);
         p.mesh.material = mats;
-        p.mesh.rotation.y = p.piece > 0 ? Math.PI / 2 : -Math.PI / 2;
+        p.mesh.rotation.y = p.piece > 0 ? 0 : Math.PI;
       }
       this.requestRender();
     },
@@ -483,7 +487,7 @@
 
         const mesh = new THREE.Mesh(pieceGeometry, mats);
         mesh.position.set(coords.x, 0.08, coords.z);
-        mesh.rotation.y = piece > 0 ? Math.PI / 2 : -Math.PI / 2;
+        mesh.rotation.y = piece > 0 ? 0 : Math.PI;
 
         const shadowMesh = new THREE.Mesh(shadowGeometry, shadowMaterial);
         shadowMesh.rotation.x = -Math.PI / 2;

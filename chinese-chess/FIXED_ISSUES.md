@@ -9,33 +9,46 @@ This document tracks identified bugs, design corrections, and architectural rule
 
 ---
 
-## 1. Review Guidelines (Preventing Mistakes)
+## 1. Review & Verification Instructions (Preventing Mistakes)
 
-1. **3D Piece Glyph Orientation (Three.js Top-Cap UVs)**
-   - In Three.js `CylinderGeometry`, top-cap UV `v=1.0` (top of texture) lies along the local `+X` axis.
-   - When viewed from top-down (`y=20, lookAt(0,0,0)`), unrotated cylinders render glyphs horizontally (facing left).
-   - **Rule:** Always orient Red pieces with `mesh.rotation.y = Math.PI / 2` (top of glyph faces `-Z`, reading upright for Red at bottom) and Black pieces with `mesh.rotation.y = -Math.PI / 2` (top of glyph faces `+Z`, reading upright for Black at top).
-   - Never rely on 2D canvas texture mirroring or rotating when 3D mesh rotation can position the physical object directly.
+Before finalizing any changes or reviews, always execute this mandatory checklist:
 
-2. **Translation & Reason Key Completeness (i18n)**
-   - Every `reason` enum emitted by the controller (`checkmate`, `stalemate`, `perpetual_check`, `repetition`, `move_limit`, `no_material`, `agreement`, `resign`, `timeout`, `abandoned`) must have a corresponding `game.reason.<reason>` entry in both `vi` and `en` dictionaries.
-   - Game-over modal must handle all statuses (`win`, `draw`, `forfeit`, `timeout`) and format winner/loser side names using localized names, never leaving English fallback keys or empty captions.
+1. **Build Single HTML Standalone:**
+   - Run `node scripts/build-single-html.mjs src/index.html index.html`.
+   - Ensure the generated `index.html` builds without errors and remains fully self-contained.
 
-3. **Game Screen Layout & Side Panel (Responsive UX)**
-   - On desktop/tablet (width ≥ 768px), display a dedicated right-side panel next to the board (`.board-column` and `.game-side-panel`).
-   - The side panel must directly show:
-     - The real-time scrollable move list table (`#side-movelist-container`) showing notation for all plies taken so far.
-     - Horizontal action buttons with icons and explicit text (`.btn-action`), rather than floating round icon-only buttons.
-   - On mobile screens (< 768px), stack the panel below the board with horizontal scrolling for action buttons.
+2. **Run Engine & Rule Test Suite:**
+   - Run `node scripts/run-rules-tests.mjs`.
+   - All 25 rules, perft, notation, and perpetual check tests MUST pass (25 passed, 0 failed).
 
-4. **Board Orientation & Flipping Automation**
-   - Do NOT provide a manual flip button that can desynchronize perspective.
-   - The board orientation must automatically and strictly flip based on Player 1's chosen side:
-     - Player 1 = Red → Normal view (`setFlipped(false)`).
+3. **Verify 3D Piece Glyph Orientation Visually:**
+   - In Three.js `CylinderGeometry(0.44, 0.44, 0.16, 48)`:
+     - Top cap UVs with default texture mapping align upright when `rotation.y = 0`.
+     - **Red pieces (facing Red player at bottom):** MUST be set to `mesh.rotation.y = 0`. This ensures characters (both Hán and Việt) read right side up from the bottom of the screen.
+     - **Black pieces (facing Black player at top):** MUST be set to `mesh.rotation.y = Math.PI`. This ensures characters face the opponent on their side of the board.
+     - **NEVER** set `rotation.y` to `Math.PI / 2` or `-Math.PI / 2` — that rotates all piece characters 90° sideways facing left/right.
+
+4. **Verify Board Orientation & Automation (No Manual Flip Button):**
+   - There must **NOT** be any manual flip button (`Controller.flip` is disabled).
+   - The board orientation MUST automatically and strictly flip based on Player 1's chosen side:
+     - Player 1 = Red / White → Normal view (`setFlipped(false)`).
      - Player 1 = Black → 180° rotated view (`setFlipped(true)`).
+     - When flipped for Player 1 = Black, Black pieces at the bottom automatically read upright facing Player 1.
 
-5. **Clean Menu Options (YAGNI / Minimal Surface)**
-   - Do not include speculative options (e.g. Draw offer button) unless explicitly specified.
+5. **Verify Single-Ply Undo Integrity:**
+   - Each Undo click MUST undo strictly **1 single ply** (`game.plies.pop()`, `game.history.pop()`).
+   - It MUST undo only the last black or white move, **never both moves together**.
+   - If Undo is disabled via settings (`allowUndo: false`), clicking Undo must NOT revert moves and must display a toast warning.
+
+6. **Verify Translation & Reason Key Completeness (i18n):**
+   - Every `reason` enum emitted by the controller (`checkmate`, `stalemate`, `perpetual_check`, `repetition`, `move_limit`, `no_material`, `agreement`, `resign`, `timeout`, `abandoned`) must have a corresponding `game.reason.<reason>` entry in both `vi` and `en` dictionaries.
+   - Game-over modal must handle all statuses (`win`, `draw`, `forfeit`, `timeout`) and format winner/loser side names using localized names.
+
+7. **Game Screen Layout & Side Panel (Responsive UX):**
+   - Dedicated right-side panel (`#game-side-panel`) contains:
+     - The real-time scrollable move list table (`#side-movelist-container`) above the menu actions.
+     - 2-column grid of rectangular action box buttons (`.btn-action`) with icons and explicit text.
+
 
 ---
 
@@ -123,4 +136,32 @@ This document tracks identified bugs, design corrections, and architectural rule
   5. Defaulted default theme to light theme (`giay`) in [src/house-kit.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/house-kit.js), [src/index.html](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/index.html), and [src/main.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/main.js).
   6. Added `#btn-action-replay` ("Xem lại") to the side panel menu and made each move cell in the move list table clickable to instantly jump to and inspect that move in replay mode.
 
+### Issue #011: Undo Behavior (Single-Move / Single-Ply Undo)
+- **Symptom:** In PvE mode, clicking Undo took back 2 plies (both AI's move and player's move), preventing players from undoing only the most recent move or stepping back move by move.
+- **Root Cause:** `pliesToUndo = (game.mode === 'pve' && game.plies.length >= 2) ? 2 : 1;` in `Controller.undo()` forcibly popped 2 plies in PvE.
+- **Fix:** Changed `Controller.undo()` in [src/main.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/main.js) to pop strictly 1 ply per click (`game.plies.pop()`, `game.history.pop()`), undoing only the last Red or Black move.
 
+
+### Issue #012: Undo Toggle (Enable/Disable Undo in New Game & Settings)
+- **Symptom:** Players could not disable the Undo feature to play strict/competitive games without takebacks.
+- **Root Cause:** Undo was unconditionally available in all matches without a configuration setting.
+- **Fix:**
+  1. Added an undo toggle choice chip group (`.chip-undo`) in New Game dialog (`#dialog-newgame`) and a toggle switch (`#settings-undo-toggle`) in Settings dialog (`#dialog-settings`).
+  2. Persisted setting in `Storage.saveSettings({ allowUndo })` and `Storage.saveNewGame({ allowUndo })` with default `allowUndo: true`.
+  3. Added bilingual i18n strings (`game.set.allowUndoDesc`).
+  4. Synchronized changes bidirectionally between settings checkbox and new game chips in [src/main.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/main.js).
+  5. Updated `Controller.updateUndoButtonState()` to dim `#btn-action-undo` (`aria-disabled="true"`, `opacity: 0.35`, `cursor: not-allowed`).
+  6. Allowed click events on dimmed undo button so clicking it provides clear toast feedback (`"Ván đấu không cho phép đi lại!"` / `"Undo is disabled in this match!"`) without reverting plies.
+### Issue #013: 3D Piece Characters Facing Left & Board Flip / Single-Ply Undo Integrity
+- **Symptom:**
+  1. Characters/glyphs on chess pieces were rendered 90° sideways facing left instead of facing the player on their respective sides.
+  2. Manual flip board button or methods existed that could desynchronize board orientation.
+  3. Risk of Undo reverting both players' moves at once instead of strictly 1 ply.
+- **Root Cause:**
+  1. `mesh.rotation.y = piece > 0 ? Math.PI / 2 : -Math.PI / 2` rotated cylinder top caps by 90°, making glyphs point sideways/left.
+  2. `Controller.flip()` provided an ad-hoc flip mechanism that could conflict with Player 1's perspective.
+- **Fix:**
+  1. Updated `src/render.js` so that `mesh.rotation.y = piece > 0 ? 0 : Math.PI` in `syncBoard()` and `refreshPieces()`. Red pieces now face the Red player at bottom (`0`), Black pieces face the Black player at top (`Math.PI`).
+  2. Verified that when Player 1 plays Black (`humanSide === -1`), the board automatically flips 180° (`camera.rotation.z = Math.PI`), making Black pieces appear upright facing the player at the bottom.
+  3. Removed `Controller.flip()` to guarantee orientation only auto-flips based on Player 1's side.
+  4. Verified `Controller.undo()` strictly pops 1 ply per click (`game.plies.pop()`, `game.history.pop()`), undoing only the last Black or White move, never both together.
