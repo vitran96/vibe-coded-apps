@@ -9,6 +9,8 @@ import * as THREE from 'three';
   let timerInterval = null;
   let countdownSec = 0;
   let tabHidden = false;
+  let isAiThinking = false;
+  let isMoveAnimating = false;
 
   const prefs = window.House ? window.House.prefs.load() : { theme: 'giay', lang: 'vi' };
   const initialTheme = (prefs.theme && prefs.theme !== 'auto' && prefs.theme !== 'dem') ? prefs.theme : 'giay';
@@ -25,6 +27,8 @@ import * as THREE from 'three';
 
     startNewGame(options) {
       if (timerInterval) clearInterval(timerInterval);
+      isAiThinking = false;
+      isMoveAnimating = false;
 
       // Record old game as abandoned if in progress with >= 1 ply
       const savedCur = window.XQ.Storage.loadCurrent();
@@ -121,17 +125,30 @@ import * as THREE from 'three';
       }
     },
 
+    canUndo() {
+      if (!game || game.status !== 'in_progress') return false;
+      if (isAiThinking || isMoveAnimating) return false;
+      const settings = window.XQ.Storage ? window.XQ.Storage.loadSettings() : {};
+      const undoAllowed = (game && game.rules) ? (game.rules.allowUndo !== false) : (settings.allowUndo !== false);
+      if (!undoAllowed) return false;
+      if (game.mode === 'pve') {
+        if (game.pos.side !== game.humanSide) return false;
+        const minPlies = game.humanSide === 1 ? 2 : 3;
+        return !!(game.plies && game.plies.length >= minPlies);
+      }
+      return !!(game.plies && game.plies.length > 0);
+    },
+
     updateUndoButtonState() {
       const undoBtn = document.getElementById('btn-action-undo');
       if (!undoBtn) return;
-      const settings = window.XQ.Storage ? window.XQ.Storage.loadSettings() : {};
-      const canUndo = (game && game.rules) ? (game.rules.allowUndo !== false) : (settings.allowUndo !== false);
-      undoBtn.disabled = false;
+      const canUndo = this.canUndo();
       undoBtn.setAttribute('aria-disabled', String(!canUndo));
       undoBtn.classList.toggle('disabled', !canUndo);
-      undoBtn.style.opacity = canUndo ? (game && game.plies && game.plies.length > 0 ? '1' : '0.5') : '0.35';
-      undoBtn.style.cursor = canUndo ? 'pointer' : 'not-allowed';
-      undoBtn.title = canUndo ? (window.House && window.House.i18n.lang === 'en' ? 'Undo' : 'Đi lại') : (window.House && window.House.i18n.lang === 'en' ? 'Undo is disabled' : 'Đi lại đã tắt');
+      undoBtn.style.opacity = '';
+      undoBtn.style.cursor = '';
+      const isEn = window.House && window.House.i18n && window.House.i18n.lang === 'en';
+      undoBtn.title = canUndo ? (isEn ? 'Undo' : 'Đi lại') : (isEn ? 'Undo is disabled' : 'Đi lại đã tắt');
     },
 
     resumeGame() {
@@ -383,8 +400,11 @@ import * as THREE from 'three';
       }
 
       // Animate move on 3D board
+      isMoveAnimating = true;
+      this.updateUndoButtonState();
       window.XQ.Input.setEnabled(false);
       window.XQ.Render.animateMove(from, to, () => {
+        isMoveAnimating = false;
         window.XQ.Render.clearHighlights();
         window.XQ.Render.showLastMove(from, to);
         if (inChk) {
@@ -402,6 +422,7 @@ import * as THREE from 'three';
           window.XQ.Input.setEnabled(true);
           this.autosave();
           this.autoRecordMatch();
+          this.updateUndoButtonState();
 
           // AI reply in PvE mode
           if (game.mode === 'pve' && game.pos.side !== game.humanSide) {
@@ -413,6 +434,8 @@ import * as THREE from 'three';
 
     triggerAiMove() {
       if (!game || game.status !== 'in_progress') return;
+      isAiThinking = true;
+      this.updateUndoButtonState();
       window.XQ.Input.setEnabled(false);
 
       const fen = window.XQ.toFen(game.pos);
@@ -432,8 +455,10 @@ import * as THREE from 'three';
         movesHistory,
         rules: game.rules
       }, (reply) => {
+        isAiThinking = false;
         if (!game || game.status !== 'in_progress') {
           window.XQ.Input.setEnabled(true);
+          this.updateUndoButtonState();
           return;
         }
         if (reply && reply.moveInt) {
@@ -452,6 +477,8 @@ import * as THREE from 'three';
 
     finishGame(status) {
       if (!game) return;
+      isAiThinking = false;
+      isMoveAnimating = false;
       game.status = status.status;
       game.winner = status.winner;
       game.loser = status.loser;
@@ -474,6 +501,7 @@ import * as THREE from 'three';
       this.autoRecordMatch(status.status, status.winner, status.loser, status.reason);
       window.XQ.Storage.clearCurrent();
       window.XQ.ui.showGameOver(status);
+      this.updateUndoButtonState();
     },
 
     autoRecordMatch(statusOverride, winnerOverride, loserOverride, reasonOverride) {
@@ -530,12 +558,18 @@ import * as THREE from 'three';
         window.XQ.toast(window.House && window.House.i18n.lang === 'en' ? 'Undo is disabled in this match!' : 'Ván đấu không cho phép đi lại!');
         return;
       }
-      if (!game || game.status !== 'in_progress') return;
-      if (game.plies.length === 0) return;
+      if (!this.canUndo()) return;
       window.XQ.AiClient.cancel();
+      isAiThinking = false;
+      isMoveAnimating = false;
 
-      game.plies.pop();
-      game.history.pop();
+      const pliesToUndo = (game.mode === 'pve') ? 2 : 1;
+      for (let i = 0; i < pliesToUndo; i++) {
+        if (game.plies.length > 0) {
+          game.plies.pop();
+          game.history.pop();
+        }
+      }
       game.undoCount++;
 
       // Rebuild position
@@ -556,10 +590,14 @@ import * as THREE from 'three';
       window.XQ.Render.syncBoard(game.pos);
       window.XQ.Render.clearHighlights();
       this.refreshLastMoveHighlight();
+      if (window.XQ.inCheck(game.pos, game.pos.side)) {
+        window.XQ.Render.showCheck(game.pos.kingSq[game.pos.side]);
+      }
       window.XQ.ui.updatePlayerBars(game);
       window.XQ.ui.updateClocks(game, game.pos.side);
       window.XQ.ui.updateMoveListTable(game);
       window.XQ.Input.setEnabled(true);
+      this.updateUndoButtonState();
       this.autosave();
       this.autoRecordMatch();
     },

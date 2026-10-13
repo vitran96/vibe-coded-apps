@@ -41,9 +41,10 @@ Before finalizing any changes or reviews, always execute this mandatory checklis
      - Player 1 = Black → 180° rotated view (`setFlipped(true)`).
      - When flipped for Player 1 = Black, Black pieces at the bottom automatically read upright facing Player 1.
 
-5. **Verify Single-Ply Undo Integrity:**
-   - Each Undo click MUST undo strictly **1 single ply** (`game.plies.pop()`, `game.history.pop()`).
-   - It MUST undo only the last black or white move, **never both moves together**.
+5. **Verify Undo Integrity & Mode-Specific Rules:**
+   - In PvE (game with bot): Each Undo click MUST revert BOTH the bot's move and the player's move (2 plies) so the player gets their turn back. Undo MUST be disabled during the bot's turn (computing and animating). Undo requires at least 1 player move to have been played.
+   - In PvP (two human players): Each Undo click reverts strictly 1 ply.
+   - When enabled, the Undo button must match the appearance and full opacity (1.0) of the other action buttons (`.btn-action`). When disabled, it has reduced opacity (`0.35`).
    - If Undo is disabled via settings (`allowUndo: false`), clicking Undo must NOT revert moves and must display a toast warning.
 
 6. **Verify Translation & Reason Key Completeness (i18n):**
@@ -194,3 +195,14 @@ Before finalizing any changes or reviews, always execute this mandatory checklis
   1. In [src/main.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/main.js), added `bindChipGroup('.chip-side', ...)` to update `selectedSide` and persist in storage.
   2. Restored `savedNg.side` to `.chip-side` elements during initialization.
   3. Allowed `humanSide` to respect `options.side` in both PvE and PvP so choosing Black correctly sets `humanSide = -1` and auto-flips the board.
+ 
+### Issue #016: PvE Undo Single-Ply and Undo Button Low Opacity When Enabled
+- **Symptom:** In PvE against bot, Undo only popped 1 ply (leaving game on bot's turn to instantly replay). Undo remained enabled during bot turn. Additionally, Undo button had permanently low opacity (0.5) even when enabled.
+- **Root Cause:**
+  1. `Controller.undo()` popped only 1 ply unconditionally instead of reverting 2 plies in PvE mode.
+  2. `canUndo()` did not guard against bot turns (`isAiThinking`, `isMoveAnimating`, or `game.pos.side !== game.humanSide`).
+  3. `updateUndoButtonState()` assigned inline `style.opacity = '0.5'` on move 0 and was never invoked on subsequent moves, permanently locking low opacity on the button.
+- **Fix:**
+  1. Updated `Controller.undo()` to revert 2 plies in PvE mode (both player and bot moves), returning control to the human.
+  2. Guarded `canUndo()` to disable undo during bot turn, during AI search, and during move animation. In PvE, require at least 1 player move.
+  3. Cleared inline `style.opacity` and `style.cursor` in `updateUndoButtonState()`, delegating disabled styling to CSS `.btn-action[aria-disabled="true"], .btn-action.disabled` and restoring full 1.0 opacity and appearance matching sibling action buttons when enabled.
