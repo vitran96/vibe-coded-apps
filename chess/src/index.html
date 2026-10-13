@@ -171,7 +171,7 @@
     </div>
 
     <!-- Dialog: New Game Sheet -->
-    <dialog id="dialog-new-game">
+    <dialog id="dialog-new-game" style="max-height:85dvh; overflow-y:auto;">
       <h3 style="margin-bottom:var(--sp-4);" data-i18n="common.newGame">Ván mới</h3>
       <div style="display:flex; flex-direction:column; gap:var(--sp-4);">
         <!-- Mode -->
@@ -213,6 +213,15 @@
           </div>
           <div id="timer-presets-wrap" class="chip-wrap" style="display:none;"></div>
           <div id="timer-summary" style="font-size:var(--fs-xs); color:var(--muted); margin-top:var(--sp-1);"></div>
+        </div>
+
+        <!-- Undo Setting -->
+        <div>
+          <label style="font-weight:600; font-size:var(--fs-sm);" data-i18n="common.undo">Đi lại</label>
+          <div class="segmented" id="seg-new-undo" style="margin-top:var(--sp-1);">
+            <button data-val="on" class="active" data-i18n="common.on">Bật</button>
+            <button data-val="off" data-i18n="common.off">Tắt</button>
+          </div>
         </div>
       </div>
 
@@ -311,8 +320,8 @@
               <input type="checkbox" id="chk-auto-queen">
             </label>
             <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
-              <span data-i18n="game.settings.pvpUndo">Cho phép đi lại (PvP)</span>
-              <input type="checkbox" id="chk-pvp-undo" checked>
+              <span data-i18n="game.settings.allowUndo">Cho phép đi lại</span>
+              <input type="checkbox" id="chk-undo" checked>
             </label>
             <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
               <span data-i18n="game.settings.rotatePvp">Xoay bàn theo lượt (PvP)</span>

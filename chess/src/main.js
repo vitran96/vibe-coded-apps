@@ -47,6 +47,7 @@ const DEFAULT_SETTINGS = {
   legalDots: true,
   coords: true,
   autoQueen: false,
+  allowUndo: true,
   pvpUndo: true,
   rotatePvp: false,
   ruleHints: true,
@@ -56,6 +57,9 @@ const DEFAULT_SETTINGS = {
 };
 
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.get('settings', {}));
+if (settings.allowUndo === undefined) {
+  settings.allowUndo = settings.pvpUndo !== undefined ? settings.pvpUndo : true;
+}
 
 // Audio Engine setup
 let audioCtx = null;
@@ -810,6 +814,7 @@ function startNewGame(options) {
   if (humanSide === 'random') humanSide = Math.random() < 0.5 ? 'w' : 'b';
 
   const timerConfig = options.timer || settings.timer;
+  const allowUndo = options.allowUndo !== undefined ? options.allowUndo : (settings.allowUndo !== false);
   const startState = ChessRules.initial();
 
   curGame = {
@@ -818,6 +823,7 @@ function startNewGame(options) {
     aiLevel,
     humanSide,
     timerConfig,
+    allowUndo,
     state: startState,
     startFEN: ChessRules.toFEN(startState),
     moves: [],
@@ -919,6 +925,7 @@ function triggerAIMove() {
   if (!curGame || curGame.isOver) return;
   isAIThinking = true;
   updateStatusLine();
+  updateUndoButtons();
   initAIWorker();
 
   currentSearchId++;
@@ -1073,6 +1080,34 @@ function formatClock(ms) {
 }
 
 // UI Updating & DOM Helpers
+function canUndoGame() {
+  if (!curGame || curGame.isReplay || !curGame.allowUndo) return false;
+  if (curGame.mode === 'pvp') {
+    return curGame.moves.length > 0;
+  }
+  // PvE:
+  if (isAIThinking) {
+    return curGame.humanSide === 'b' ? curGame.moves.length >= 2 : curGame.moves.length >= 1;
+  }
+  return curGame.moves.length >= 2;
+}
+
+function updateUndoButtons() {
+  const canUndo = canUndoGame();
+  const btnUndo = document.getElementById('btn-undo');
+  if (btnUndo) {
+    btnUndo.disabled = !canUndo;
+    btnUndo.style.opacity = canUndo ? '1' : '0.4';
+    btnUndo.style.pointerEvents = canUndo ? 'auto' : 'none';
+  }
+  const btnSideUndo = document.getElementById('btn-side-undo');
+  if (btnSideUndo) {
+    btnSideUndo.disabled = !canUndo;
+    btnSideUndo.style.opacity = canUndo ? '1' : '0.4';
+    btnSideUndo.style.pointerEvents = canUndo ? 'auto' : 'none';
+  }
+}
+
 function updateUI() {
   if (!curGame) return;
   updateStatusLine();
@@ -1080,6 +1115,7 @@ function updateUI() {
   updateCapturedTrays();
   updatePlayerBars();
   updateOverlays();
+  updateUndoButtons();
 }
 
 function updateStatusLine() {
@@ -1263,6 +1299,7 @@ function saveAutosave() {
       aiLevel: curGame.aiLevel,
       humanSide: curGame.humanSide,
       timerConfig: curGame.timerConfig,
+      allowUndo: curGame.allowUndo,
       startFEN: curGame.startFEN,
       moves: curGame.moves,
     },
@@ -1538,7 +1575,9 @@ function syncSettingsUI() {
   setChk('chk-legal-dots', settings.legalDots);
   setChk('chk-coords', settings.coords);
   setChk('chk-auto-queen', settings.autoQueen);
-  setChk('chk-pvp-undo', settings.pvpUndo);
+  const undoVal = curGame ? (curGame.allowUndo !== false) : (settings.allowUndo !== false);
+  setChk('chk-undo', undoVal);
+  setChk('chk-pvp-undo', undoVal);
   setChk('chk-rotate-pvp', settings.rotatePvp);
   setChk('chk-rule-hints', settings.ruleHints);
   setChk('chk-sfx', settings.sfx);
@@ -1583,7 +1622,17 @@ function bindSettingsEvents() {
   bindChk('chk-legal-dots', 'legalDots', () => updateOverlays());
   bindChk('chk-coords', 'coords', () => buildBoard());
   bindChk('chk-auto-queen', 'autoQueen');
-  bindChk('chk-pvp-undo', 'pvpUndo');
+  const onUndoToggle = (v) => {
+    settings.allowUndo = v;
+    settings.pvpUndo = v;
+    store.set('settings', settings);
+    if (curGame) {
+      curGame.allowUndo = v;
+      updateUI();
+    }
+  };
+  bindChk('chk-undo', 'allowUndo', onUndoToggle);
+  bindChk('chk-pvp-undo', 'pvpUndo', onUndoToggle);
   bindChk('chk-rotate-pvp', 'rotatePvp');
   bindChk('chk-rule-hints', 'ruleHints');
   bindChk('chk-sfx', 'sfx', (v) => {
@@ -1649,10 +1698,18 @@ function initApp() {
   }
 
   // Event Listeners
-  document.getElementById('btn-play').onclick = () => {
+  const openNewGame = () => {
     initAudio();
+    const segUndo = document.getElementById('seg-new-undo');
+    if (segUndo) {
+      const isUndoOn = curGame ? (curGame.allowUndo !== false) : (settings.allowUndo !== false);
+      segUndo.querySelectorAll('button').forEach((b) => {
+        b.classList.toggle('active', (b.dataset.val === 'on') === isUndoOn);
+      });
+    }
     document.getElementById('dialog-new-game').showModal();
   };
+  document.getElementById('btn-play').onclick = openNewGame;
 
   resumeBtn.onclick = () => {
     initAudio();
@@ -1751,7 +1808,7 @@ function initApp() {
 
   document.getElementById('btn-menu-new').onclick = () => {
     document.getElementById('dialog-menu').close();
-    document.getElementById('dialog-new-game').showModal();
+    openNewGame();
   };
 
   // Mobile side panel drawer toggle
@@ -1770,9 +1827,31 @@ function initApp() {
   }
 
   function handleUndo() {
-    if (!curGame || curGame.isOver || isAIThinking || curGame.moves.length === 0) return;
-    // Strictly undo only the last black/white move (1 ply), not both
-    curGame.moves.pop();
+    if (!canUndoGame()) return;
+    if (curGame.isOver) {
+      const dOver = document.getElementById('dialog-game-over');
+      if (dOver && dOver.open) dOver.close();
+      curGame.isOver = false;
+      curGame.result = null;
+      curGame.reason = null;
+    }
+
+    animList = [];
+    if (curGame.mode === 'pve') {
+      if (isAIThinking) {
+        currentSearchId++;
+        isAIThinking = false;
+        curGame.moves.pop();
+      } else {
+        curGame.moves.pop(); // bot move
+        if (curGame.moves.length > 0) {
+          curGame.moves.pop(); // my move
+        }
+      }
+    } else {
+      curGame.moves.pop();
+    }
+
     selectedSq = -1;
     legalMovesForSelected = [];
     curGame.state = ChessRules.fromFEN(curGame.startFEN);
@@ -1780,6 +1859,26 @@ function initApp() {
       const realM = ChessRules.fromUCI(curGame.state, m.uci);
       if (realM) curGame.state = ChessRules.make(curGame.state, realM);
     }
+
+    if (curGame.clock) {
+      if (curGame.moves.length > 0) {
+        const lastM = curGame.moves[curGame.moves.length - 1];
+        if (lastM && lastM.clock) {
+          curGame.clock.wMs = lastM.clock[0];
+          curGame.clock.bMs = lastM.clock[1];
+        }
+      } else {
+        curGame.clock.wMs = curGame.timerConfig.kind === 'move' ? curGame.timerConfig.perMoveMs : curGame.timerConfig.baseMs;
+        curGame.clock.bMs = curGame.timerConfig.kind === 'move' ? curGame.timerConfig.perMoveMs : curGame.timerConfig.baseMs;
+        curGame.clock.started = false;
+      }
+      curGame.clock.activeSide = curGame.state.turn;
+      if (curGame.timerConfig.kind !== 'off' && curGame.clock.started) {
+        curGame.clock.resume();
+      }
+    }
+
+    playSound('place', 1);
     syncBoard3D();
     updateUI();
     saveAutosave();
@@ -1799,13 +1898,15 @@ function initApp() {
     const aiLevel = document.querySelector('#seg-ai button.active').dataset.val;
     const humanSide = document.querySelector('#seg-side button.active').dataset.val;
     const timerKind = document.querySelector('#seg-timer-kind button.active').dataset.val;
+    const undoBtn = document.querySelector('#seg-new-undo button.active');
+    const allowUndo = undoBtn ? (undoBtn.dataset.val === 'on') : (settings.allowUndo !== false);
 
     let timer = { kind: timerKind, perMoveMs: 30000, baseMs: 600000, incMs: 0 };
     if (timerKind === 'move') timer.perMoveMs = 30000;
     else if (timerKind === 'game') timer.baseMs = 600000;
 
     document.getElementById('dialog-new-game').close();
-    startNewGame({ mode, aiLevel, humanSide, timer });
+    startNewGame({ mode, aiLevel, humanSide, timer, allowUndo });
   };
 
   // Segmented controls handler
@@ -1848,7 +1949,7 @@ function initApp() {
   };
   document.getElementById('btn-over-new').onclick = () => {
     document.getElementById('dialog-game-over').close();
-    document.getElementById('dialog-new-game').showModal();
+    openNewGame();
   };
   document.getElementById('btn-over-replay').onclick = () => {
     document.getElementById('dialog-game-over').close();
