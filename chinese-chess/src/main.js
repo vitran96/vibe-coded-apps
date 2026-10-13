@@ -57,7 +57,6 @@ import * as THREE from 'three';
       const mode = options.mode || 'pve';
       const level = options.level || 'medium';
       let humanSide = options.side === 'random' ? (Math.random() < 0.5 ? 1 : -1) : (options.side === 'black' ? -1 : 1);
-      if (mode === 'pvp') humanSide = 1;
 
       const timerMode = (options.timer && options.timer.mode) || settings.timer.mode || 'off';
       const moveSec = (options.timer && options.timer.moveSec) || settings.timer.moveSec || 60;
@@ -717,11 +716,19 @@ import * as THREE from 'three';
     let selectedAllowUndo = true;
 
     const savedNg = window.XQ.Storage.loadNewGame();
-    if (savedNg && savedNg.allowUndo !== undefined) {
-      selectedAllowUndo = (savedNg.allowUndo !== false);
-      document.querySelectorAll('.chip-undo').forEach(c => {
-        c.classList.toggle('selected', c.dataset.val === String(selectedAllowUndo));
-      });
+    if (savedNg) {
+      if (savedNg.side) {
+        selectedSide = savedNg.side;
+        document.querySelectorAll('.chip-side').forEach(c => {
+          c.classList.toggle('selected', c.dataset.val === selectedSide);
+        });
+      }
+      if (savedNg.allowUndo !== undefined) {
+        selectedAllowUndo = (savedNg.allowUndo !== false);
+        document.querySelectorAll('.chip-undo').forEach(c => {
+          c.classList.toggle('selected', c.dataset.val === String(selectedAllowUndo));
+        });
+      }
     }
 
     function bindChipGroup(selector, onSelect) {
@@ -740,6 +747,10 @@ import * as THREE from 'three';
       if (aiGroup) aiGroup.style.display = val === 'pve' ? 'flex' : 'none';
     });
     bindChipGroup('.chip-level', (val) => { selectedLevel = val; });
+    bindChipGroup('.chip-side', (val) => {
+      selectedSide = val;
+      window.XQ.Storage.saveNewGame({ side: val });
+    });
     bindChipGroup('.chip-undo', (val) => {
       selectedAllowUndo = (val === 'true');
       window.XQ.Storage.saveNewGame({ allowUndo: selectedAllowUndo });

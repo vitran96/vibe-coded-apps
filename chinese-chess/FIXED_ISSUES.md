@@ -183,3 +183,14 @@ Before finalizing any changes or reviews, always execute this mandatory checklis
   1. In [src/render.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/render.js), added `getPieceRotation(z)` where top board (`z < 0`) is strictly `-Math.PI / 2` and bottom board (`z >= 0`) is strictly `Math.PI / 2`, regardless of color.
   2. Applied `getPieceRotation(coords.z)` in `syncBoard()`, `refreshPieces()`, and on move completion in `animateMove()`.
   3. Updated piece orientation unit tests in [src/tests.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/tests.js) to assert position-based orientation (`z < 0` -> `-Math.PI / 2`, `z >= 0` -> `Math.PI / 2`).
+
+### Issue #015: Cannot Switch to Play as Black on New Match
+- **Symptom:** In the New Game dialog (`#dialog-newgame`), clicking the "Đen" (Black) side chip did not switch sides or select the chip; games always started with player 1 playing Red.
+- **Root Cause:**
+  1. The `.chip-side` chip group lacked an event listener (`bindChipGroup('.chip-side')` was missing in `src/main.js`).
+  2. `savedNg.side` was not loaded into `.chip-side` elements on boot.
+  3. In `startNewGame`, `if (mode === 'pvp') humanSide = 1` forcibly overrode player 1 to Red regardless of option.
+- **Fix:**
+  1. In [src/main.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/main.js), added `bindChipGroup('.chip-side', ...)` to update `selectedSide` and persist in storage.
+  2. Restored `savedNg.side` to `.chip-side` elements during initialization.
+  3. Allowed `humanSide` to respect `options.side` in both PvE and PvP so choosing Black correctly sets `humanSide = -1` and auto-flips the board.
