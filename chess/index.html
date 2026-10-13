@@ -866,9 +866,6 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
           <button id="btn-undo" class="btn btn-icon" aria-label="Đi lại">
             <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
           </button>
-          <button id="btn-flip" class="btn btn-icon" aria-label="Xoay bàn">
-            <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
-          </button>
           <button id="btn-show-moves" class="btn btn-icon" aria-label="Nước đi">
             <svg viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
           </button>
@@ -3680,6 +3677,11 @@ function createTokenMesh(val) {
 }
 
 // Sync 3D Pieces with current game state
+function getPieceRotation(z) {
+  // Top board (z < 0): -PI/2 (upright for top player); Bottom board (z >= 0): +PI/2 (upright for bottom player)
+  return z < 0 ? -Math.PI / 2 : Math.PI / 2;
+}
+
 function syncBoard3D(prevBoard = null) {
   while (piecesGroup.children.length) piecesGroup.remove(piecesGroup.children[0]);
   pieceMeshes = [];
@@ -3691,6 +3693,7 @@ function syncBoard3D(prevBoard = null) {
       const mesh = createTokenMesh(val);
       const pos = sqToPos(sq);
       mesh.position.set(pos.x, 0.06, pos.z);
+      mesh.rotation.y = getPieceRotation(pos.z);
       mesh.userData.sq = sq;
       piecesGroup.add(mesh);
       pieceMeshes[sq] = mesh;
@@ -3724,6 +3727,7 @@ function animateMove(move, onDone) {
   }
 
   mesh.position.set(fromPos.x, 0.06, fromPos.z);
+  mesh.rotation.y = getPieceRotation(toPos.z);
   animList.push({
     mesh,
     fromPos: mesh.position.clone(),
@@ -4034,7 +4038,7 @@ function startNewGame(options) {
     isReplay: false,
   };
 
-  isFlipped = (curGame.mode === 'pve' && curGame.humanSide === 'b');
+  isFlipped = (curGame.humanSide === 'b');
 
   // Clock
   if (curGame.clock) curGame.clock.pause();
@@ -4797,19 +4801,9 @@ function initApp() {
     document.getElementById('dialog-new-game').showModal();
   };
 
-  document.getElementById('btn-flip').onclick = () => {
-    isFlipped = !isFlipped;
-    buildBoard();
-    syncBoard3D();
-    updateUI();
-  };
-
-  document.getElementById('btn-undo').onclick = () => {
+  function handleUndo() {
     if (!curGame || curGame.isOver || isAIThinking || curGame.moves.length === 0) return;
-    const pliesToUndo = curGame.mode === 'pve' ? 2 : 1;
-    for (let k = 0; k < pliesToUndo && curGame.moves.length > 0; k++) {
-      curGame.moves.pop();
-    }
+    curGame.moves.pop();
     // Replay from startFEN
     curGame.state = ChessRules.fromFEN(curGame.startFEN);
     for (const m of curGame.moves) {
@@ -4818,7 +4812,12 @@ function initApp() {
     }
     syncBoard3D();
     updateUI();
-  };
+  }
+
+  const btnUndo = document.getElementById('btn-undo');
+  if (btnUndo) btnUndo.onclick = handleUndo;
+  const btnSideUndo = document.getElementById('btn-side-undo');
+  if (btnSideUndo) btnSideUndo.onclick = handleUndo;
 
   // Start Game button inside Dialog New Game
   document.getElementById('btn-cancel-new-game').onclick = () => {

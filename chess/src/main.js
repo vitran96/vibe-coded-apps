@@ -416,6 +416,11 @@ function createTokenMesh(val) {
 }
 
 // Sync 3D Pieces with current game state
+function getPieceRotation(z) {
+  // Top board (z < 0): -PI/2 (upright for top player); Bottom board (z >= 0): +PI/2 (upright for bottom player)
+  return z < 0 ? -Math.PI / 2 : Math.PI / 2;
+}
+
 function syncBoard3D(prevBoard = null) {
   while (piecesGroup.children.length) piecesGroup.remove(piecesGroup.children[0]);
   pieceMeshes = [];
@@ -427,6 +432,7 @@ function syncBoard3D(prevBoard = null) {
       const mesh = createTokenMesh(val);
       const pos = sqToPos(sq);
       mesh.position.set(pos.x, 0.06, pos.z);
+      mesh.rotation.y = getPieceRotation(pos.z);
       mesh.userData.sq = sq;
       piecesGroup.add(mesh);
       pieceMeshes[sq] = mesh;
@@ -460,6 +466,7 @@ function animateMove(move, onDone) {
   }
 
   mesh.position.set(fromPos.x, 0.06, fromPos.z);
+  mesh.rotation.y = getPieceRotation(toPos.z);
   animList.push({
     mesh,
     fromPos: mesh.position.clone(),
@@ -770,7 +777,7 @@ function startNewGame(options) {
     isReplay: false,
   };
 
-  isFlipped = (curGame.mode === 'pve' && curGame.humanSide === 'b');
+  isFlipped = (curGame.humanSide === 'b');
 
   // Clock
   if (curGame.clock) curGame.clock.pause();
@@ -1533,19 +1540,9 @@ function initApp() {
     document.getElementById('dialog-new-game').showModal();
   };
 
-  document.getElementById('btn-flip').onclick = () => {
-    isFlipped = !isFlipped;
-    buildBoard();
-    syncBoard3D();
-    updateUI();
-  };
-
-  document.getElementById('btn-undo').onclick = () => {
+  function handleUndo() {
     if (!curGame || curGame.isOver || isAIThinking || curGame.moves.length === 0) return;
-    const pliesToUndo = curGame.mode === 'pve' ? 2 : 1;
-    for (let k = 0; k < pliesToUndo && curGame.moves.length > 0; k++) {
-      curGame.moves.pop();
-    }
+    curGame.moves.pop();
     // Replay from startFEN
     curGame.state = ChessRules.fromFEN(curGame.startFEN);
     for (const m of curGame.moves) {
@@ -1554,7 +1551,12 @@ function initApp() {
     }
     syncBoard3D();
     updateUI();
-  };
+  }
+
+  const btnUndo = document.getElementById('btn-undo');
+  if (btnUndo) btnUndo.onclick = handleUndo;
+  const btnSideUndo = document.getElementById('btn-side-undo');
+  if (btnSideUndo) btnSideUndo.onclick = handleUndo;
 
   // Start Game button inside Dialog New Game
   document.getElementById('btn-cancel-new-game').onclick = () => {
