@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 
 (() => {
-  const APP_VERSION = '1.1.0';
+  const APP_VERSION = '1.2.0';
   const MAKER = '';
 
   let game = null;
@@ -12,12 +12,24 @@ import * as THREE from 'three';
   let isAiThinking = false;
   let isMoveAnimating = false;
 
-  const prefs = window.House ? window.House.prefs.load() : { theme: 'giay', lang: 'vi' };
-  const initialTheme = (prefs.theme && prefs.theme !== 'auto' && prefs.theme !== 'dem') ? prefs.theme : 'giay';
-  if (window.House) {
-    window.House.prefs.save({ theme: initialTheme });
-    window.House.applyTheme(initialTheme);
-    window.House.i18n.setLang(prefs.lang);
+  // Theme and language are shared by every game (house:prefs). The default is always light; a saved dark theme is kept.
+  const prefs = window.House.prefs.load();
+  window.House.applyTheme(prefs.theme);
+  window.House.i18n.setLang(prefs.lang);
+
+  // Attribute text (aria-label, title) follows the language, like textContent does for data-i18n.
+  function applyAttrs() {
+    document.querySelectorAll('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', window.House.i18n.t(el.dataset.i18nAria)));
+    document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = window.House.i18n.t(el.dataset.i18nTitle); });
+  }
+
+  // Sound on/off, used by the M shortcut; the settings checkbox follows.
+  function toggleSound() {
+    const on = !window.XQ.Storage.loadSettings().sfx.on;
+    window.XQ.Storage.saveSettings({ sfx: { on } });
+    const cb = document.getElementById('settings-sfx-toggle');
+    if (cb) cb.checked = on;
+    window.House.announce(window.House.i18n.t(on ? 'sound.on' : 'sound.off'));
   }
 
   // Controller
@@ -114,6 +126,7 @@ import * as THREE from 'three';
       window.XQ.ui.updateClocks(game, game.pos.side);
       window.XQ.ui.updateMoveListTable(game);
       window.XQ.Input.setEnabled(true);
+      window.XQ.Input.centerOnKing(game.pos.kingSq[humanSide]);
 
       this.updateUndoButtonState();
       this.startTimerLoop();
@@ -147,8 +160,7 @@ import * as THREE from 'three';
       undoBtn.classList.toggle('disabled', !canUndo);
       undoBtn.style.opacity = '';
       undoBtn.style.cursor = '';
-      const isEn = window.House && window.House.i18n && window.House.i18n.lang === 'en';
-      undoBtn.title = canUndo ? (isEn ? 'Undo' : 'Đi lại') : (isEn ? 'Undo is disabled' : 'Đi lại đã tắt');
+      undoBtn.title = window.House.i18n.t(canUndo ? 'common.undo' : 'undo.disabled');
     },
 
     resumeGame() {
@@ -173,6 +185,7 @@ import * as THREE from 'three';
       window.XQ.ui.updateClocks(game, game.pos.side);
       window.XQ.ui.updateMoveListTable(game);
       window.XQ.Input.setEnabled(true);
+      window.XQ.Input.centerOnKing(game.pos.kingSq[game.humanSide]);
 
       this.updateUndoButtonState();
       this.startTimerLoop();
@@ -209,8 +222,7 @@ import * as THREE from 'three';
       // Check if position is already checkmated / drawn at targetPly
       const checkOver = window.XQ.gameStatus(pos, history, curRules);
       if (checkOver.over && checkOver.status === 'win') {
-        const msg = window.House ? window.House.i18n.t('game.replay.endedCheckmate') : 'Ván cờ đã kết thúc. Hãy lùi lại 1-2 nước trong Xem lại để chơi tiếp!';
-        if (window.House) window.House.toast(msg);
+        window.XQ.toast(window.House.i18n.t('game.replay.endedCheckmate'));
         return false;
       }
 
@@ -277,6 +289,7 @@ import * as THREE from 'three';
       window.XQ.ui.updateClocks(game, game.pos.side);
       window.XQ.ui.updateMoveListTable(game);
       window.XQ.Input.setEnabled(true);
+      window.XQ.Input.centerOnKing(game.pos.kingSq[humanSide]);
 
       this.updateUndoButtonState();
       this.startTimerLoop();
@@ -288,9 +301,7 @@ import * as THREE from 'three';
         this.triggerAiMove();
       }
 
-      if (window.House) {
-        window.House.toast(window.House.i18n.lang === 'vi' ? 'Đã nạp ván cờ — Tiếp tục thi đấu!' : 'Game loaded — Ready to play!');
-      }
+      window.XQ.toast(window.House.i18n.t('game.loaded'));
 
       return true;
     },
@@ -320,7 +331,7 @@ import * as THREE from 'three';
           window.XQ.Audio.play('countdown', secLeft);
           if (navigator.vibrate) navigator.vibrate(30);
           if (secLeft === 5) {
-            window.XQ.ui.announceLive(window.House.i18n.t('game.timer.secondsLeft', { n: 5 }));
+            window.House.announce(window.House.i18n.t('game.timer.secondsLeft', { n: 5 }));
           }
         }
 
@@ -372,7 +383,8 @@ import * as THREE from 'three';
         }
       }
 
-      // Execute move
+      // Notation needs the position before the move
+      const note = window.XQ.notation(game.pos, m, window.House.i18n.lang);
       const undo = window.XQ.makeMove(game.pos, m);
       game.lastMoveFrom = from;
       game.lastMoveTo = to;
@@ -398,6 +410,7 @@ import * as THREE from 'three';
         window.XQ.Audio.play('check');
         window.XQ.toast(window.House.i18n.t('game.check'));
       }
+      window.House.announce(window.House.i18n.t('move.announce', { side: window.House.i18n.t(moverSide === 1 ? 'game.side.red' : 'game.side.black'), note }));
 
       // Animate move on 3D board
       isMoveAnimating = true;
@@ -435,6 +448,7 @@ import * as THREE from 'three';
     triggerAiMove() {
       if (!game || game.status !== 'in_progress') return;
       isAiThinking = true;
+      window.House.announce(window.House.i18n.t('ai.thinking'));
       this.updateUndoButtonState();
       window.XQ.Input.setEnabled(false);
 
@@ -555,7 +569,7 @@ import * as THREE from 'three';
       const settings = window.XQ.Storage ? window.XQ.Storage.loadSettings() : {};
       const undoAllowed = (game && game.rules) ? (game.rules.allowUndo !== false) : (settings.allowUndo !== false);
       if (!undoAllowed) {
-        window.XQ.toast(window.House && window.House.i18n.lang === 'en' ? 'Undo is disabled in this match!' : 'Ván đấu không cho phép đi lại!');
+        window.XQ.toast(window.House.i18n.t('undo.notAllowed'));
         return;
       }
       if (!this.canUndo()) return;
@@ -636,7 +650,7 @@ import * as THREE from 'three';
         if (records && records.length > 0) {
           window.XQ.Replay.start(records[0], 0);
         } else {
-          window.XQ.toast('Chưa có nước đi nào để xem lại');
+          window.XQ.toast(window.House.i18n.t('replay.none'));
         }
         return;
       }
@@ -665,6 +679,13 @@ import * as THREE from 'three';
 
   // DOM Event Bindings
   function boot() {
+    applyAttrs();
+    window.addEventListener('houselangchange', applyAttrs);
+    window.addEventListener('housestoragefail', () => window.XQ.toast(window.House.i18n.t('storage.failed')));
+    // The first tap or key unlocks sound (house-audio); hide the hint then
+    const unlockChip = document.getElementById('audio-unlock-chip');
+    ['pointerdown', 'keydown'].forEach(ev => window.addEventListener(ev, () => { if (unlockChip) unlockChip.style.display = 'none'; }, { once: true, passive: true }));
+
     const canvas3d = document.getElementById('canvas-3d');
     const container3d = document.querySelector('.board-container');
 
@@ -777,24 +798,34 @@ import * as THREE from 'three';
     if (savedNg) {
       if (savedNg.side) {
         selectedSide = savedNg.side;
-        document.querySelectorAll('.chip-side').forEach(c => {
-          c.classList.toggle('selected', c.dataset.val === selectedSide);
-        });
+        pickChip('.chip-side', selectedSide);
       }
       if (savedNg.allowUndo !== undefined) {
         selectedAllowUndo = (savedNg.allowUndo !== false);
-        document.querySelectorAll('.chip-undo').forEach(c => {
-          c.classList.toggle('selected', c.dataset.val === String(selectedAllowUndo));
-        });
+        pickChip('.chip-undo', selectedAllowUndo);
       }
     }
 
+    // Chip groups act like radio buttons: reachable with Tab, Enter or Space picks one.
+    function selectChip(chip) {
+      chip.parentElement.querySelectorAll('.choice-chip').forEach(c => {
+        const on = c === chip;
+        c.classList.toggle('selected', on);
+        c.setAttribute('aria-checked', String(on));
+      });
+    }
+    function pickChip(selector, val) {
+      document.querySelectorAll(selector).forEach(c => { if (c.dataset.val === String(val)) selectChip(c); });
+    }
     function bindChipGroup(selector, onSelect) {
       document.querySelectorAll(selector).forEach(chip => {
-        chip.addEventListener('click', () => {
-          document.querySelectorAll(selector).forEach(c => c.classList.remove('selected'));
-          chip.classList.add('selected');
-          onSelect(chip.dataset.val);
+        chip.tabIndex = 0;
+        chip.setAttribute('role', 'radio');
+        chip.setAttribute('aria-checked', String(chip.classList.contains('selected')));
+        const pick = () => { selectChip(chip); onSelect(chip.dataset.val); };
+        chip.addEventListener('click', pick);
+        chip.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }
         });
       });
     }
@@ -854,7 +885,7 @@ import * as THREE from 'three';
     // Settings sheet
     const themeSelect = document.getElementById('settings-theme-select');
     if (themeSelect) {
-      themeSelect.value = initialTheme;
+      themeSelect.value = prefs.theme;
       themeSelect.addEventListener('change', (e) => {
         window.House.prefs.save({ theme: e.target.value });
         window.House.applyTheme(e.target.value);
@@ -890,9 +921,7 @@ import * as THREE from 'three';
         window.XQ.Storage.saveSettings({ allowUndo: val });
         window.XQ.Storage.saveNewGame({ allowUndo: val });
         selectedAllowUndo = val;
-        document.querySelectorAll('.chip-undo').forEach(c => {
-          c.classList.toggle('selected', c.dataset.val === String(val));
-        });
+        pickChip('.chip-undo', val);
         const g = Controller.getGame();
         if (g && g.rules) {
           g.rules.allowUndo = val;
@@ -923,13 +952,13 @@ import * as THREE from 'three';
       if (confirm(window.House.i18n.t('game.history.clearConfirm'))) {
         window.XQ.Storage.clearRecords();
         window.XQ.ui.updateHistoryList();
-        window.XQ.toast('Đã xoá lịch sử đấu');
+        window.XQ.toast(window.House.i18n.t('settings.historyCleared'));
       }
     });
 
     document.getElementById('btn-reset-defaults')?.addEventListener('click', () => {
       window.XQ.Storage.resetDefaults();
-      window.XQ.toast('Đã khôi phục cài đặt mặc định');
+      window.XQ.toast(window.House.i18n.t('settings.resetDone'));
     });
 
     // Version label
@@ -982,6 +1011,27 @@ import * as THREE from 'three';
     document.getElementById('btn-gameover-newgame')?.addEventListener('click', () => {
       window.XQ.ui.closeDialog('dialog-gameover');
       window.XQ.ui.openDialog('dialog-newgame');
+    });
+
+    // Shortcuts (same in every game): N new game, U undo, H history, S settings, ? rules, M sound on/off.
+    // Ignored while a dialog is open or while typing in a form field.
+    window.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.target.closest && e.target.closest('input, select, textarea')) return;
+      if (document.querySelector('dialog[open]')) return;
+      switch (e.key.toLowerCase()) {
+        case 'n': window.XQ.ui.openDialog('dialog-newgame'); break;
+        case 'u': Controller.undo(); break;
+        case 'h': window.XQ.ui.updateHistoryList(); window.XQ.ui.openDialog('dialog-history'); break;
+        case 's': window.XQ.ui.openDialog('dialog-settings'); break;
+        case '?':
+          if (document.getElementById('screen-rules')?.classList.contains('active')) window.XQ.RulesPage.close();
+          else window.XQ.ui.showRulesPage();
+          break;
+        case 'm': toggleSound(); break;
+        default: return;
+      }
+      e.preventDefault();
     });
 
     // Auto-record active match before unload

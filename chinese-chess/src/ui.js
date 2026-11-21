@@ -1,48 +1,33 @@
-// ui.js — Dialogs, sheets, player bars, toasts, timer UI, and countdown effects
+// ui.js — dialogs, screens, player bars, toasts, clocks, move list, history and game over.
 (() => {
+  const H = window.House;
+  const t = (key, params) => H.i18n.t(key, params);
+  const sideName = (s) => t(s === 'red' ? 'game.side.red' : 'game.side.black'); // s: 'red' | 'black'
+  const PIECE = ['game.piece.k', 'game.piece.a', 'game.piece.e', 'game.piece.h', 'game.piece.r', 'game.piece.c', 'game.piece.p'];
+  const SHORT = ['short.k', 'short.a', 'short.e', 'short.h', 'short.r', 'short.c', 'short.p'];
   let toastTimer = null;
 
+  // Uses the static #app-toast (aria-live polite), so every toast is also read aloud.
   function toast(message, duration = 2400) {
-    let el = document.getElementById('app-toast');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'app-toast';
-      el.className = 'toast';
-      document.body.appendChild(el);
-    }
+    const el = document.getElementById('app-toast');
+    if (!el) return;
     el.textContent = message;
     el.style.display = 'block';
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      el.style.display = 'none';
-    }, duration);
-  }
-
-  function announceLive(message) {
-    const el = document.getElementById('app-live-region');
-    if (el) el.textContent = message;
+    toastTimer = setTimeout(() => { el.style.display = 'none'; }, duration);
   }
 
   const Ui = {
     toast,
-    announceLive,
 
     openDialog(id) {
       const dlg = document.getElementById(id);
-      if (dlg && !dlg.open) {
-        if (typeof dlg.showModal === 'function') dlg.showModal();
-        else dlg.setAttribute('open', '');
-        window.XQ.Audio.play('open');
-      }
+      if (dlg) H.dialogs.open(dlg); // remembers the opener, returns focus on close, plays the open sound
     },
 
     closeDialog(id) {
       const dlg = document.getElementById(id);
-      if (dlg && dlg.open) {
-        if (typeof dlg.close === 'function') dlg.close();
-        else dlg.removeAttribute('open');
-        window.XQ.Audio.play('close');
-      }
+      if (dlg) H.dialogs.close(dlg);
     },
 
     showScreen(id) {
@@ -65,7 +50,9 @@
       const topBadgeEl = document.getElementById('side-badge-top');
       const topSide = humanSide === 1 ? -1 : 1;
       if (topNameEl) {
-        topNameEl.textContent = isPve ? `Máy (${window.House.i18n.t(`ai.${game.ai?.level || 'medium'}`)})` : (topSide === 1 ? 'Người chơi 1 (Đỏ)' : 'Người chơi 2 (Đen)');
+        const level = t(`ai.${game.ai?.level || 'medium'}`);
+        topNameEl.textContent = isPve ? t('player.computer', { level })
+          : t(topSide === 1 ? 'player.one' : 'player.two', { side: sideName(topSide === 1 ? 'red' : 'black') });
       }
       if (topBadgeEl) {
         topBadgeEl.className = `side-badge ${topSide === 1 ? 'red' : 'black'}`;
@@ -75,7 +62,8 @@
       const botNameEl = document.getElementById('player-name-bottom');
       const botBadgeEl = document.getElementById('side-badge-bottom');
       if (botNameEl) {
-        botNameEl.textContent = isPve ? 'Bạn' : (humanSide === 1 ? 'Người chơi 1 (Đỏ)' : 'Người chơi 2 (Đen)');
+        botNameEl.textContent = isPve ? t('player.you')
+          : t(humanSide === 1 ? 'player.one' : 'player.two', { side: sideName(humanSide === 1 ? 'red' : 'black') });
       }
       if (botBadgeEl) {
         botBadgeEl.className = `side-badge ${humanSide === 1 ? 'red' : 'black'}`;
@@ -98,22 +86,17 @@
         else if (p < 0) counts.black[-p]++;
       }
 
-      const GLYPHS = { 1: 'Tg', 2: 'S', 3: 'T', 4: 'M', 5: 'X', 6: 'P', 7: 'B' };
       const startTotal = { 1: 1, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 5 };
-
-      // Red lost pieces (captured by Black)
-      const redLost = [];
-      for (let t = 1; t <= 7; t++) {
-        const lost = startTotal[t] - counts.red[t];
-        if (lost > 0) redLost.push(`${GLYPHS[t]}${lost > 1 ? lost : ''}`);
-      }
-
-      // Black lost pieces (captured by Red)
-      const blackLost = [];
-      for (let t = 1; t <= 7; t++) {
-        const lost = startTotal[t] - counts.black[t];
-        if (lost > 0) blackLost.push(`${GLYPHS[t]}${lost > 1 ? lost : ''}`);
-      }
+      const lostList = (side) => {
+        const out = [];
+        for (let k = 1; k <= 7; k++) {
+          const lost = startTotal[k] - counts[side][k];
+          if (lost > 0) out.push(`${t(SHORT[k - 1])}${lost > 1 ? lost : ''}`);
+        }
+        return out;
+      };
+      const redLost = lostList('red');     // captured by Black
+      const blackLost = lostList('black'); // captured by Red
 
       const trayTop = document.getElementById('captured-tray-top');
       const trayBot = document.getElementById('captured-tray-bottom');
@@ -199,9 +182,9 @@
       if (!container && !sideContainer) return;
 
       const plies = game.plies || [];
-      const lang = window.House ? window.House.i18n.lang : 'vi';
+      const lang = H.i18n.lang;
 
-      let html = '<table class="movelist-table"><thead><tr><th>#</th><th>Đỏ</th><th>Đen</th></tr></thead><tbody>';
+      let html = `<table class="movelist-table"><thead><tr><th>#</th><th>${sideName('red')}</th><th>${sideName('black')}</th></tr></thead><tbody>`;
       let startPos = window.XQ.parseFen((game.rules && game.rules.startFen) || window.XQ.START_FEN);
       let curPos = window.XQ.clonePos(startPos);
 
@@ -219,7 +202,7 @@
           curPos = window.XQ.applyMove(curPos, blackM);
         }
 
-        html += `<tr><td>${moveNum}</td><td class="move-cell" data-ply="${i}" title="Nước ${i + 1}">${redNot}</td><td class="move-cell" data-ply="${hasBlack ? i + 1 : -1}" title="${hasBlack ? 'Nước ' + (i + 2) : ''}">${blackNot}</td></tr>`;
+        html += `<tr><td>${moveNum}</td><td class="move-cell" data-ply="${i}" title="${t('move.n', { n: i + 1 })}">${redNot}</td><td class="move-cell" data-ply="${hasBlack ? i + 1 : -1}" title="${hasBlack ? t('move.n', { n: i + 2 }) : ''}">${blackNot}</td></tr>`;
       }
       html += '</tbody></table>';
 
@@ -253,54 +236,53 @@
 
       const records = window.XQ.Storage.loadRecords();
       if (!records || records.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:32px; color:var(--muted);">${window.House.i18n.t('game.history.empty')}</div>`;
+        container.innerHTML = `<div style="text-align:center; padding:32px; color:var(--muted);">${t('game.history.empty')}</div>`;
         return;
       }
 
-      const lang = window.House ? window.House.i18n.lang : 'vi';
+      const lang = H.i18n.lang;
       const dtf = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
-      const playLabel = window.House ? window.House.i18n.t('game.replay.play') : 'Chơi tiếp';
-      const reviewLabel = window.House ? window.House.i18n.t('game.replay.review') : 'Xem lại';
+      const playLabel = t('game.replay.play');
+      const reviewLabel = t('common.replay');
 
       let html = '';
       records.forEach((rec, idx) => {
         const dateStr = dtf.format(new Date(rec.endedAt || rec.startedAt || Date.now()));
-        const modeLabel = rec.mode === 'pve' ? `Máy (${rec.ai?.level || 'medium'})` : 'Hai người';
+        const modeLabel = rec.mode === 'pve' ? t('player.computer', { level: t(`ai.${rec.ai?.level || 'medium'}`) }) : t('mode.pvp');
         const pliesCount = rec.moveCount || (rec.moves ? rec.moves.trim().split(/\s+/).length : 0);
 
         let badgeClass = 'draw';
-        let badgeText = 'Hoà';
+        let badgeText = t('history.draw');
         if (rec.status === 'win') {
           badgeClass = 'win';
-          badgeText = rec.winner === 'red' ? 'Đỏ thắng' : 'Đen thắng';
+          badgeText = t('history.win', { name: sideName(rec.winner) });
         } else if (rec.status === 'forfeit') {
           badgeClass = 'loss';
-          const loserName = rec.loser === 'red' ? 'Đỏ' : 'Đen';
-          badgeText = `${loserName} xin thua`;
+          badgeText = t('history.forfeit', { name: sideName(rec.loser) });
         } else if (rec.status === 'in_progress') {
           badgeClass = 'active';
-          badgeText = window.House ? window.House.i18n.t('game.status.inProgress') : 'Đang chơi';
+          badgeText = t('game.status.inProgress');
         } else if (rec.status === 'abandoned') {
           badgeClass = 'abandoned';
-          badgeText = 'Bỏ dở';
+          badgeText = t('history.abandoned');
         }
 
         html += `
           <div class="history-item" data-index="${idx}" style="display:flex; justify-content:space-between; align-items:center; gap:var(--sp-2);">
             <div class="history-item-info" data-index="${idx}" style="flex:1; cursor:pointer;" title="${reviewLabel}">
               <div style="display:flex; align-items:center; gap:var(--sp-2); flex-wrap:wrap;">
-                <span style="font-weight:700;">${modeLabel} · ${pliesCount} nước</span>
+                <span style="font-weight:700;">${modeLabel} · ${t('history.pliesCount', { n: pliesCount })}</span>
                 <span class="status-badge ${badgeClass}">${badgeText}</span>
               </div>
               <div style="font-size:var(--fs-xs); color:var(--muted); margin-top:2px;">${dateStr}</div>
             </div>
             <div style="display:flex; gap:var(--sp-1); align-items:center; flex-shrink:0;">
-              <button class="btn btn-sm btn-primary btn-history-review" data-index="${idx}" title="${reviewLabel}">
-                👁 ${reviewLabel}
+              <button class="btn btn-sm btn-primary btn-history-review" data-index="${idx}">
+                <span aria-hidden="true">👁</span> ${reviewLabel}
               </button>
-              <button class="btn btn-sm btn-history-play" data-index="${idx}" title="${playLabel}">
-                ▶ ${playLabel}
+              <button class="btn btn-sm btn-history-play" data-index="${idx}">
+                <span aria-hidden="true">▶</span> ${playLabel}
               </button>
             </div>
           </div>
@@ -336,6 +318,21 @@
       this.updateHistoryList();
     },
 
+    // Text alternative for the 3D board: every piece by square, plus whose turn it is.
+    describeBoard(pos) {
+      const el = document.getElementById('board-text');
+      if (!el || !pos) return;
+      const lists = { red: [], black: [] };
+      for (let sq = 0; sq < 90; sq++) {
+        const p = pos.board[sq];
+        if (!p) continue;
+        const side = p > 0 ? 'red' : 'black';
+        lists[side].push(`${t(PIECE[Math.abs(p) - 1])} ${window.XQ.sqName(sq)}`);
+      }
+      const turn = t('turn.of', { name: sideName(pos.side === 1 ? 'red' : 'black') });
+      el.textContent = `${turn}. ${sideName('red')}: ${lists.red.join(', ')}. ${sideName('black')}: ${lists.black.join(', ')}.`;
+    },
+
     showGameOver(result) {
       const dlg = document.getElementById('dialog-gameover');
       if (!dlg) return;
@@ -346,27 +343,22 @@
       const isPve = window.XQ.controller.getGame()?.mode === 'pve';
       const humanSide = window.XQ.controller.getGame()?.humanSide || 1;
 
-      if (titleEl) {
-        if (result.status === 'win' || result.status === 'forfeit') {
-          if (isPve) {
-            const humanWon = (result.winner === 'red' && humanSide === 1) || (result.winner === 'black' && humanSide === -1);
-            titleEl.textContent = humanWon ? window.House.i18n.t('result.youWin') : window.House.i18n.t('result.youLose');
-          } else {
-            const name = result.winner === 'red' ? 'Đỏ' : 'Đen';
-            titleEl.textContent = window.House.i18n.t('result.win', { name });
-          }
-        } else if (result.status === 'draw') {
-          titleEl.textContent = window.House.i18n.t('result.draw');
+      let title = t('gameover.title');
+      if (result.status === 'win' || result.status === 'forfeit') {
+        if (isPve) {
+          const humanWon = (result.winner === 'red' && humanSide === 1) || (result.winner === 'black' && humanSide === -1);
+          title = humanWon ? t('result.youWin') : t('result.youLose');
         } else {
-          titleEl.textContent = 'Kết thúc ván cờ';
+          title = t('result.win', { name: sideName(result.winner) });
         }
+      } else if (result.status === 'draw') {
+        title = t('result.draw');
       }
+      if (titleEl) titleEl.textContent = title;
 
-      if (reasonEl) {
-        const reasonKey = `game.reason.${result.reason || 'checkmate'}`;
-        const name = result.loser === 'red' ? 'Đỏ' : 'Đen';
-        reasonEl.textContent = window.House.i18n.t(reasonKey, { name });
-      }
+      const reason = t(`game.reason.${result.reason || 'checkmate'}`, { name: sideName(result.loser) });
+      if (reasonEl) reasonEl.textContent = reason;
+      H.announce(`${title}. ${reason}`);
 
       this.openDialog('dialog-gameover');
     }

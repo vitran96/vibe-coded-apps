@@ -9,27 +9,22 @@
   <meta name="apple-mobile-web-app-title" content="Cờ Tướng">
   <title>Cờ Tướng.</title>
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700&text=帥將仕士相象俥車傌馬炮砲兵卒楚河漢界&display=swap" rel="stylesheet">
-
-  <!-- Import map for Three.js CDN -->
+  <!-- Three.js is vendored; the build turns this import map entry into a data: URL -->
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+      "three": "../../shared/vendor/three@0.170.0/three.module.min.js"
     }
   }
   </script>
 
-  <link rel="stylesheet" href="./house-theme.css">
+  <link rel="stylesheet" href="../../shared/house/house-theme.css">
   <link rel="stylesheet" href="./game.css">
 </head>
 <body>
   <div id="audio-unlock-chip" class="chip" data-i18n="audio.tapToEnable">Chạm để bật âm thanh</div>
-  <div id="app-live-region" aria-live="polite" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);"></div>
+  <div id="app-toast" class="toast" aria-live="polite" style="display:none;"></div>
+  <p id="board-text" class="sr-only"></p>
 
   <div id="app">
     <!-- Screen 1: Start Screen -->
@@ -71,7 +66,7 @@
 
           <!-- 3D Board Area -->
           <div class="board-container">
-            <canvas id="canvas-3d"></canvas>
+            <canvas id="canvas-3d" data-i18n-aria="board.label" aria-describedby="board-text"></canvas>
             <div id="countdown-overlay" class="countdown-overlay" style="display:none;">
               <div id="countdown-numeral" class="countdown-numeral">5</div>
             </div>
@@ -92,17 +87,17 @@
           <div id="replay-toolbar" class="replay-bar" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <span id="replay-ply-label" style="font-weight:700; font-size:var(--fs-sm);">0 / 0</span>
-              <input id="replay-scrubber" type="range" class="scrubber-slider" min="0" max="0" value="0">
-              <button id="btn-replay-exit" class="btn" style="padding:2px 10px; min-height:32px;">Thoát</button>
+              <input id="replay-scrubber" type="range" class="scrubber-slider" min="0" max="0" value="0" data-i18n-aria="replay.scrubber">
+              <button id="btn-replay-exit" class="btn" style="padding:2px 10px; min-height:44px;" data-i18n="replay.exit">Thoát</button>
             </div>
             <div class="replay-controls">
-              <button id="btn-replay-start" class="btn btn-icon" title="Về đầu">⏮</button>
-              <button id="btn-replay-prev" class="btn btn-icon" title="Lùi 1 nước">◀</button>
-              <button id="btn-replay-play" class="btn btn-icon" title="Phát tự động">▶</button>
-              <button id="btn-replay-next" class="btn btn-icon" title="Tiến 1 nước">▷</button>
-              <button id="btn-replay-end" class="btn btn-icon" title="Đến cuối">⏭</button>
-              <button id="btn-replay-play-from-here" class="btn btn-primary" style="padding:4px 14px; min-height:36px; font-weight:700; display:inline-flex; align-items:center; gap:4px;" title="Chơi tiếp từ thế cờ này">
-                <span>▶</span>
+              <button id="btn-replay-start" class="btn btn-icon" data-i18n-aria="replay.first" data-i18n-title="replay.first">⏮</button>
+              <button id="btn-replay-prev" class="btn btn-icon" data-i18n-aria="replay.back" data-i18n-title="replay.back">◀</button>
+              <button id="btn-replay-play" class="btn btn-icon" data-i18n-aria="replay.autoPlay" data-i18n-title="replay.autoPlay">▶</button>
+              <button id="btn-replay-next" class="btn btn-icon" data-i18n-aria="replay.forward" data-i18n-title="replay.forward">▷</button>
+              <button id="btn-replay-end" class="btn btn-icon" data-i18n-aria="replay.last" data-i18n-title="replay.last">⏭</button>
+              <button id="btn-replay-play-from-here" class="btn btn-primary" style="padding:4px 14px; min-height:44px; font-weight:700; display:inline-flex; align-items:center; gap:4px;" data-i18n-title="game.replay.playFromHere">
+                <span aria-hidden="true">▶</span>
                 <span data-i18n="game.replay.playFromHere">Chơi từ đây</span>
               </button>
             </div>
@@ -120,32 +115,32 @@
 
           <!-- Box menu buttons with text -->
           <div class="panel-menu-actions">
-            <button id="btn-action-undo" class="btn btn-action" title="Đi lại">
-              <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            <button id="btn-action-undo" class="btn btn-action" data-i18n-title="common.undo">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
               <span data-i18n="common.undo">Đi lại</span>
             </button>
-            <button id="btn-action-resign" class="btn btn-action" title="Xin thua">
-              <svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            <button id="btn-action-resign" class="btn btn-action" data-i18n-title="game.resign">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
               <span data-i18n="game.resign">Xin thua</span>
             </button>
-            <button id="btn-action-replay" class="btn btn-action" title="Xem lại">
-              <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <button id="btn-action-replay" class="btn btn-action" data-i18n-title="common.replay">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               <span data-i18n="common.replay">Xem lại</span>
             </button>
-            <button id="btn-action-newgame" class="btn btn-action" title="Ván mới">
-              <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            <button id="btn-action-newgame" class="btn btn-action" data-i18n-title="common.newGame">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
               <span data-i18n="common.newGame">Ván mới</span>
             </button>
-            <button id="btn-action-history" class="btn btn-action" title="Lịch sử">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+            <button id="btn-action-history" class="btn btn-action" data-i18n-title="common.history">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
               <span data-i18n="common.history">Lịch sử</span>
             </button>
-            <button id="btn-action-rules" class="btn btn-action" title="Luật chơi">
-              <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <button id="btn-action-rules" class="btn btn-action" data-i18n-title="game.rules.title">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
               <span data-i18n="game.rules.title">Luật chơi</span>
             </button>
-            <button id="btn-action-settings" class="btn btn-action" title="Cài đặt" style="grid-column: span 2;">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <button id="btn-action-settings" class="btn btn-action" data-i18n-title="common.settings" style="grid-column: span 2;">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               <span data-i18n="common.settings">Cài đặt</span>
             </button>
           </div>
@@ -156,8 +151,8 @@
     <!-- Screen 3: Full-screen Rules Page -->
     <div id="screen-rules" class="screen">
       <div class="rules-nav">
-        <button id="btn-rules-back" class="btn btn-icon" title="Quay lại">
-          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+        <button id="btn-rules-back" class="btn btn-icon" data-i18n-aria="common.back" data-i18n-title="common.back">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <div class="rules-toc">
           <a href="#rule-sec-1" class="chip" data-i18n="game.rules.sec1">Mục tiêu</a>
@@ -169,6 +164,7 @@
           <a href="#rule-sec-7" class="chip" data-i18n="game.rules.sec7">Hoà & kết quả</a>
           <a href="#rule-sec-8" class="chip" data-i18n="game.rules.sec8">Ghi biên bản</a>
           <a href="#rule-sec-9" class="chip" data-i18n="game.rules.sec9">Mẹo nhỏ</a>
+          <a href="#rule-sec-10" class="chip" data-i18n="game.rules.sec10">Phím tắt</a>
         </div>
       </div>
 
@@ -293,6 +289,22 @@
             <button id="btn-rules-try" class="btn btn-primary" data-i18n="game.rules.tryNow">Thử ngay (Chơi với máy)</button>
           </div>
         </section>
+
+        <!-- 10. Phím tắt -->
+        <section id="rule-sec-10" class="rule-card panel">
+          <h2 data-i18n="shortcut.title">Phím tắt (Keyboard shortcuts)</h2>
+          <ul class="shortcut-list">
+            <li><kbd>N</kbd> <span data-i18n="shortcut.n">Mở Ván mới</span></li>
+            <li><kbd>U</kbd> <span data-i18n="shortcut.u">Đi lại</span></li>
+            <li><kbd>H</kbd> <span data-i18n="shortcut.h">Mở Lịch sử</span></li>
+            <li><kbd>S</kbd> <span data-i18n="shortcut.s">Mở Cài đặt</span></li>
+            <li><kbd>?</kbd> <span data-i18n="shortcut.q">Mở trang Luật chơi này</span></li>
+            <li><kbd>M</kbd> <span data-i18n="shortcut.m">Bật hoặc tắt âm thanh</span></li>
+            <li><kbd>Tab</kbd> <span data-i18n="shortcut.tab">Chuyển đến bàn cờ, rồi dùng phím mũi tên để di chuyển con trỏ</span></li>
+            <li><kbd>Enter</kbd> <span data-i18n="shortcut.enter">Chọn quân hoặc đặt quân tại ô con trỏ</span></li>
+            <li><kbd>Esc</kbd> <span data-i18n="shortcut.esc">Bỏ chọn quân, đóng hộp thoại</span></li>
+          </ul>
+        </section>
       </div>
     </div>
   </div>
@@ -302,20 +314,20 @@
   <dialog id="dialog-newgame">
     <div class="sheet-header">
       <h2 data-i18n="common.newGame">Ván mới</h2>
-      <button class="btn btn-icon" onclick="window.XQ.ui.closeDialog('dialog-newgame')">✕</button>
+      <button class="btn btn-icon" data-i18n-aria="common.close" onclick="window.XQ.ui.closeDialog('dialog-newgame')">✕</button>
     </div>
     <div class="sheet-content">
       <div class="form-group">
-        <label class="form-label">Chế độ chơi</label>
-        <div class="chip-group">
+        <span class="form-label" id="lbl-mode" data-i18n="newgame.mode">Chế độ chơi</span>
+        <div class="chip-group" role="radiogroup" aria-labelledby="lbl-mode">
           <div class="choice-chip chip-mode selected" data-val="pve" data-i18n="mode.pve">Chơi với máy</div>
           <div class="choice-chip chip-mode" data-val="pvp" data-i18n="mode.pvp">Hai người</div>
         </div>
       </div>
 
       <div id="newgame-ai-group" class="form-group">
-        <label class="form-label">Độ khó AI</label>
-        <div class="chip-group">
+        <span class="form-label" id="lbl-level" data-i18n="newgame.level">Độ khó AI</span>
+        <div class="chip-group" role="radiogroup" aria-labelledby="lbl-level">
           <div class="choice-chip chip-level" data-val="easy" data-i18n="ai.easy">Dễ</div>
           <div class="choice-chip chip-level selected" data-val="medium" data-i18n="ai.medium">Vừa</div>
           <div class="choice-chip chip-level" data-val="hard" data-i18n="ai.hard">Khó</div>
@@ -323,8 +335,8 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label" data-i18n="game.yourSide">Bạn cầm quân</label>
-        <div class="chip-group">
+        <span class="form-label" id="lbl-side" data-i18n="game.yourSide">Bạn cầm quân</span>
+        <div class="chip-group" role="radiogroup" aria-labelledby="lbl-side">
           <div class="choice-chip chip-side selected" data-val="red" data-i18n="game.side.red">Đỏ</div>
           <div class="choice-chip chip-side" data-val="black" data-i18n="game.side.black">Đen</div>
           <div class="choice-chip chip-side" data-val="random" data-i18n="game.random">Ngẫu nhiên</div>
@@ -332,8 +344,8 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label" data-i18n="game.timer">Hẹn giờ</label>
-        <div class="chip-group">
+        <span class="form-label" id="lbl-timer" data-i18n="game.timer">Hẹn giờ</span>
+        <div class="chip-group" role="radiogroup" aria-labelledby="lbl-timer">
           <div class="choice-chip chip-timer-mode selected" data-val="off" data-i18n="game.timer.off">Tắt</div>
           <div class="choice-chip chip-timer-mode" data-val="move" data-i18n="game.timer.move">Mỗi nước</div>
           <div class="choice-chip chip-timer-mode" data-val="game" data-i18n="game.timer.game">Cả ván</div>
@@ -342,19 +354,19 @@
 
       <!-- Timer duration chips -->
       <div id="timer-opts-move" class="form-group" style="display:none;">
-        <label class="form-label" data-i18n="game.timer.duration">Thời gian mỗi nước</label>
-        <div class="chip-group">
-          <div class="choice-chip chip-timer-move" data-val="15">15 giây</div>
-          <div class="choice-chip chip-timer-move" data-val="30">30 giây</div>
-          <div class="choice-chip chip-timer-move selected" data-val="60">60 giây</div>
-          <div class="choice-chip chip-timer-move" data-val="120">2 phút</div>
-          <div class="choice-chip chip-timer-move" data-val="300">5 phút</div>
+        <span class="form-label" id="lbl-timer-move" data-i18n="game.timer.duration">Thời gian mỗi nước</span>
+        <div class="chip-group" role="radiogroup" aria-labelledby="lbl-timer-move">
+          <div class="choice-chip chip-timer-move" data-val="15" data-i18n="timer.s15">15 giây</div>
+          <div class="choice-chip chip-timer-move" data-val="30" data-i18n="timer.s30">30 giây</div>
+          <div class="choice-chip chip-timer-move selected" data-val="60" data-i18n="timer.s60">60 giây</div>
+          <div class="choice-chip chip-timer-move" data-val="120" data-i18n="timer.m2">2 phút</div>
+          <div class="choice-chip chip-timer-move" data-val="300" data-i18n="timer.m5">5 phút</div>
         </div>
       </div>
 
       <div id="timer-opts-game" class="form-group" style="display:none;">
-        <label class="form-label" data-i18n="game.timer.duration">Thời gian cả ván</label>
-        <div class="chip-group">
+        <span class="form-label" id="lbl-timer-game" data-i18n="game.timer.duration">Thời gian cả ván</span>
+        <div class="chip-group" role="radiogroup" aria-labelledby="lbl-timer-game">
           <div class="choice-chip chip-timer-game" data-val="5+3">5+3</div>
           <div class="choice-chip chip-timer-game selected" data-val="10+5">10+5</div>
           <div class="choice-chip chip-timer-game" data-val="15+10">15+10</div>
@@ -363,91 +375,88 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label" data-i18n="game.allowUndo">Đi lại (Undo)</label>
-        <div class="chip-group">
+        <span class="form-label" id="lbl-undo-new" data-i18n="game.allowUndo">Đi lại (Undo)</span>
+        <div class="chip-group" role="radiogroup" aria-labelledby="lbl-undo-new">
           <div class="choice-chip chip-undo selected" data-val="true" data-i18n="common.enabled">Bật</div>
           <div class="choice-chip chip-undo" data-val="false" data-i18n="common.disabled">Tắt</div>
         </div>
       </div>
 
-      <button id="btn-newgame-start" class="btn btn-primary" style="margin-top:var(--sp-2);" data-i18n="common.play">Bắt đầu</button>
+      <button id="btn-newgame-start" class="btn btn-primary" style="margin-top:var(--sp-2);" data-i18n="common.start">Bắt đầu</button>
     </div>
   </dialog>
 
-  <!-- Settings Sheet -->
+  <!-- Settings Sheet: Trò chơi → Âm thanh → Giao diện → Dữ liệu → Thông tin (house order) -->
   <dialog id="dialog-settings">
     <div class="sheet-header">
       <h2 data-i18n="common.settings">Cài đặt</h2>
-      <button class="btn btn-icon" onclick="window.XQ.ui.closeDialog('dialog-settings')">✕</button>
+      <button class="btn btn-icon" data-i18n-aria="common.close" onclick="window.XQ.ui.closeDialog('dialog-settings')">✕</button>
     </div>
     <div class="sheet-content">
-      <div class="form-group">
-        <label class="form-label" data-i18n="settings.theme">Chủ đề</label>
-        <select id="settings-theme-select" class="btn" style="width:100%;">
-          <option value="auto">Tự động</option>
-          <option value="giay">Giấy (Paper)</option>
-          <option value="dem">Đêm (Night)</option>
-          <option value="sonmai">Sơn mài (Lacquer)</option>
-          <option value="bien">Biển (Sea)</option>
-        </select>
-      </div>
+      <section class="form-group">
+        <h3 class="form-label" data-i18n="settings.game">Trò chơi</h3>
+        <label class="switch-row">
+          <span><span data-i18n="game.allowUndo">Đi lại (Undo)</span><br><small data-i18n="game.set.allowUndoDesc">Cho phép đi lại nước cờ</small></span>
+          <input type="checkbox" id="settings-undo-toggle" checked>
+        </label>
+      </section>
 
-      <div class="form-group">
-        <label class="form-label" data-i18n="settings.language">Ngôn ngữ</label>
+      <section class="form-group">
+        <h3 class="form-label" data-i18n="settings.audio">Âm thanh</h3>
+        <label class="switch-row">
+          <span data-i18n="settings.sfx">Hiệu ứng âm thanh</span>
+          <input type="checkbox" id="settings-sfx-toggle" checked>
+        </label>
+        <label class="switch-row">
+          <span data-i18n="settings.music">Nhạc nền</span>
+          <input type="checkbox" id="settings-music-toggle">
+        </label>
+      </section>
+
+      <section class="form-group">
+        <h3 class="form-label" data-i18n="settings.look">Giao diện</h3>
+        <label class="form-label" for="settings-theme-select" data-i18n="settings.theme">Chủ đề</label>
+        <select id="settings-theme-select" class="btn" style="width:100%;">
+          <option value="giay" data-i18n="theme.giay">Giấy</option>
+          <option value="dem" data-i18n="theme.dem">Đêm</option>
+          <option value="sonmai" data-i18n="theme.sonmai">Sơn mài</option>
+          <option value="bien" data-i18n="theme.bien">Biển</option>
+        </select>
+
+        <label class="form-label" for="settings-lang-select" data-i18n="settings.language">Ngôn ngữ</label>
         <select id="settings-lang-select" class="btn" style="width:100%;">
           <option value="vi">Tiếng Việt</option>
           <option value="en">English</option>
         </select>
-      </div>
 
-      <div class="form-group">
-        <label class="form-label" data-i18n="game.set.labels">Chữ trên quân cờ</label>
+        <label class="form-label" for="settings-label-select" data-i18n="game.set.labels">Chữ trên quân</label>
         <select id="settings-label-select" class="btn" style="width:100%;">
-          <option value="han">Chữ Hán (帥, 將, ...)</option>
-          <option value="viet">Chữ Việt (Tg, S, T, ...)</option>
+          <option value="han" data-i18n="game.set.han">Chữ Hán</option>
+          <option value="viet" data-i18n="game.set.viet">Chữ Việt</option>
         </select>
-      </div>
+      </section>
 
-      <div class="form-group">
-        <label class="form-label" data-i18n="game.allowUndo">Đi lại (Undo)</label>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span data-i18n="game.set.allowUndoDesc">Cho phép đi lại nước cờ</span>
-          <input type="checkbox" id="settings-undo-toggle" checked style="transform:scale(1.3);">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" data-i18n="settings.audio">Âm thanh</label>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span data-i18n="settings.sfx">Hiệu ứng âm thanh</span>
-          <input type="checkbox" id="settings-sfx-toggle" checked style="transform:scale(1.3);">
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-          <span data-i18n="settings.music">Nhạc nền Lofi</span>
-          <input type="checkbox" id="settings-music-toggle" style="transform:scale(1.3);">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" data-i18n="settings.data">Dữ liệu</label>
+      <section class="form-group">
+        <h3 class="form-label" data-i18n="settings.data">Dữ liệu</h3>
         <button id="btn-clear-history" class="btn" data-i18n="settings.clearHistory">Xoá lịch sử</button>
         <button id="btn-reset-defaults" class="btn" style="margin-top:8px;" data-i18n="settings.reset">Khôi phục mặc định</button>
-      </div>
+      </section>
 
-      <div class="form-group" style="text-align:center; padding-top:var(--sp-2);">
+      <section class="form-group" style="text-align:center; padding-top:var(--sp-2);">
+        <h3 class="form-label" data-i18n="settings.about">Thông tin</h3>
         <div style="color:var(--muted); font-size:var(--fs-xs);">
-          Phiên bản <span id="app-version-label">1.1.0</span>
+          <span data-i18n="settings.versionLabel">Phiên bản</span> <span id="app-version-label"></span>
         </div>
         <button id="btn-install-app" class="btn" style="display:none; margin-top:8px;" data-i18n="common.install">Cài ứng dụng</button>
-      </div>
+      </section>
     </div>
   </dialog>
 
   <!-- Move List Dialog -->
   <dialog id="dialog-movelist">
     <div class="sheet-header">
-      <h2 data-i18n="game.moves">Biên bản nước đi</h2>
-      <button class="btn btn-icon" onclick="window.XQ.ui.closeDialog('dialog-movelist')">✕</button>
+      <h2 data-i18n="game.moves">Biên bản</h2>
+      <button class="btn btn-icon" data-i18n-aria="common.close" onclick="window.XQ.ui.closeDialog('dialog-movelist')">✕</button>
     </div>
     <div class="sheet-content" id="movelist-container"></div>
   </dialog>
@@ -456,7 +465,7 @@
   <dialog id="dialog-history">
     <div class="sheet-header">
       <h2 data-i18n="game.matchList.title">Chọn ván đấu để xem lại</h2>
-      <button class="btn btn-icon" onclick="window.XQ.ui.closeDialog('dialog-history')">✕</button>
+      <button class="btn btn-icon" data-i18n-aria="common.close" onclick="window.XQ.ui.closeDialog('dialog-history')">✕</button>
     </div>
     <div style="padding: 0 var(--sp-4) var(--sp-2) var(--sp-4); font-size:var(--fs-xs); color:var(--muted);" data-i18n="game.matchList.desc">
       Các ván cờ được tự động ghi lại. Chọn một ván để xem lại toàn bộ nước đi hoặc chơi tiếp.
@@ -467,8 +476,8 @@
   <!-- In-game Menu Dialog -->
   <dialog id="dialog-game-menu">
     <div class="sheet-header">
-      <h2>Tuỳ chọn ván đấu</h2>
-      <button class="btn btn-icon" onclick="window.XQ.ui.closeDialog('dialog-game-menu')">✕</button>
+      <h2 data-i18n="game.menu.title">Tuỳ chọn ván đấu</h2>
+      <button class="btn btn-icon" data-i18n-aria="common.close" onclick="window.XQ.ui.closeDialog('dialog-game-menu')">✕</button>
     </div>
     <div class="sheet-content">
       <button id="menu-item-newgame" class="btn" data-i18n="common.newGame">Ván mới</button>
@@ -481,7 +490,7 @@
   <dialog id="dialog-resign-confirm">
     <div class="sheet-header">
       <h2 data-i18n="game.resignConfirmTitle">Xác nhận xin thua</h2>
-      <button class="btn btn-icon" onclick="window.XQ.ui.closeDialog('dialog-resign-confirm')">✕</button>
+      <button class="btn btn-icon" data-i18n-aria="common.close" onclick="window.XQ.ui.closeDialog('dialog-resign-confirm')">✕</button>
     </div>
     <div class="sheet-content" style="text-align:center;">
       <p style="font-size:var(--fs-md); margin:var(--sp-4) 0;" data-i18n="game.resignConfirmPrompt">Bạn có chắc chắn muốn xin thua ván cờ này không?</p>
@@ -495,7 +504,7 @@
   <!-- Game Over Dialog -->
   <dialog id="dialog-gameover">
     <div class="sheet-header">
-      <h2 id="gameover-title">Kết thúc ván cờ</h2>
+      <h2 id="gameover-title" data-i18n="gameover.title">Kết thúc ván cờ</h2>
     </div>
     <div class="sheet-content" style="text-align:center;">
       <div id="gameover-reason" style="font-size:var(--fs-lg); font-weight:700; color:var(--accent);"></div>
@@ -507,8 +516,14 @@
     </div>
   </dialog>
 
+  <!-- Shared house kit (one copy for every game), then the vendored Tone.js for the music -->
+  <script src="../../shared/house/house-kit.js"></script>
+  <script src="../../shared/house/house-store.js"></script>
+  <script src="../../shared/house/house-a11y.js"></script>
+  <script src="../../shared/house/house-audio.js"></script>
+  <script src="../../shared/vendor/tone@15.0.4/Tone.js"></script>
+
   <!-- Plain scripts loaded in order before main.js -->
-  <script src="./house-kit.js"></script>
   <script src="./i18n.js"></script>
   <script src="./rules.js"></script>
   <script src="./notation.js"></script>

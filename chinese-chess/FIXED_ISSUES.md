@@ -14,12 +14,13 @@ This document tracks identified bugs, design corrections, and architectural rule
 Before finalizing any changes or reviews, always execute this mandatory checklist:
 
 1. **Build Single HTML Standalone:**
-   - Run `node scripts/build-single-html.mjs src/index.html index.html`.
+   - Run `node shared/scripts/build.mjs chinese-chess` (from the repo root). Source is `src/index.html`; it links the shared kit in `../../shared/`.
    - Ensure the generated `index.html` builds without errors and remains fully self-contained.
 
 2. **Run Engine & Rule Test Suite:**
    - Run `node scripts/run-rules-tests.mjs`.
    - All 25 rules, perft, notation, and perpetual check tests MUST pass (25 passed, 0 failed).
+   - Then `node shared/scripts/check.mjs chinese-chess` (no network, i18n parity, storage prefix, version, a11y smoke).
 
 3. **Verify 3D Piece Glyph Orientation Visually:**
    - In Three.js `CylinderGeometry(0.44, 0.44, 0.16, 48)`:
@@ -217,3 +218,15 @@ Before finalizing any changes or reviews, always execute this mandatory checklis
   1. In [src/render.js](file:///home/vi-tran/repos/vibe-coded-apps/chinese-chess/src/render.js), synchronized the board canvas grid (`CELL_SIZE = 220`, `MARGIN_X = MARGIN_Y = 144`, `CANVAS_W = 2048`, `CANVAS_H = 2268`) with the 3D plane dimensions (`BOARD_PLANE_W = CANVAS_W / CELL_SIZE`, `BOARD_PLANE_H = CANVAS_H / CELL_SIZE`).
   2. Mathematically guarantees `cross_3d_x = f - 4.0` and `cross_3d_z = 4.5 - r` with zero error across all 90 grid intersections.
   3. Updated `camera` viewport fitting in `resize()` to match the exact plane geometry dimensions.
+
+### Issue #018: Play From Record Called a Missing House Toast; Forked Kit Discarded Dark Theme
+- **Symptom:**
+  1. "Chơi tiếp" from History (or "Chơi từ đây" in replay) could throw: `window.House.toast` does not exist.
+  2. A saved dark theme (`dem`) was silently replaced by light on every start.
+- **Root Cause:**
+  1. `playFromRecord()` in `src/main.js` called `window.House.toast`; the toast lives in `window.XQ.toast`.
+  2. The forked `house-kit.js` mapped `dem` and `auto` to `giay` on load.
+- **Fix:**
+  1. Use `window.XQ.toast` in `src/main.js`.
+  2. The kit is now the shared `shared/house/house-kit.js` (dark theme honoured). `cotuong_prefs` is migrated once into `house:prefs` on load and then removed (`src/storage.js`). Default is still light (`giay`), never OS detection.
+- **Invariant:** storage goes through `House.store('cotuong_', { legacy: ['co-tuong:'] })`; never add a second prefs key.

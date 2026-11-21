@@ -102,7 +102,7 @@
         });
       } else {
         // iOS or already installed hint
-        window.XQ.toast('Chia sẻ → Thêm vào Màn hình chính');
+        window.XQ.toast(window.House.i18n.t('pwa.iosHint'));
       }
     }
   };

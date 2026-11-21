@@ -1,3 +1,22 @@
+/* Vendored fonts (inlined by the build). Be Vietnam Pro for UI; Noto Serif TC subset for the 18 xiangqi glyphs. */
+@font-face { font-family: "Be Vietnam Pro"; font-style: normal; font-weight: 400; font-display: swap; src: url("../../shared/vendor/fonts/be-vietnam-pro-400.woff2") format("woff2"); }
+@font-face { font-family: "Be Vietnam Pro"; font-style: normal; font-weight: 600; font-display: swap; src: url("../../shared/vendor/fonts/be-vietnam-pro-600.woff2") format("woff2"); }
+@font-face { font-family: "Be Vietnam Pro"; font-style: normal; font-weight: 800; font-display: swap; src: url("../../shared/vendor/fonts/be-vietnam-pro-800.woff2") format("woff2"); }
+@font-face { font-family: "Noto Serif TC"; font-style: normal; font-weight: 700; font-display: block; src: url("../../shared/vendor/fonts/noto-serif-tc-xiangqi-subset.woff2") format("woff2"); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Settings rows: the whole row is one label, so the switch is big and named */
+.switch-row { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3); min-height: 44px; padding: var(--sp-1) 0; cursor: pointer; }
+.switch-row input { width: 24px; height: 24px; flex-shrink: 0; accent-color: var(--accent); }
+.switch-row small { color: var(--muted); font-size: var(--fs-xs); }
+.form-group h3.form-label { margin: 0 0 var(--sp-2); font-size: var(--fs-md); }
+
+/* Shortcut list on the rules page */
+.shortcut-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--sp-2); }
+.shortcut-list li { display: flex; gap: var(--sp-3); align-items: baseline; }
+.shortcut-list kbd { min-width: 44px; text-align: center; padding: 2px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); font: 700 var(--fs-sm) var(--font); color: var(--ink); }
+
 /* game.css — game-specific tokens, layout, and UI */
 :root {
   --xq-red: var(--p2);

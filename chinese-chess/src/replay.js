@@ -74,7 +74,10 @@
   function play() {
     isPlaying = true;
     const playBtn = document.getElementById('btn-replay-play');
-    if (playBtn) playBtn.textContent = '⏸';
+    if (playBtn) {
+      playBtn.textContent = '⏸';
+      playBtn.setAttribute('aria-label', window.House.i18n.t('replay.pause'));
+    }
 
     clearInterval(playTimer);
     playTimer = setInterval(() => {
@@ -90,7 +93,10 @@
     isPlaying = false;
     clearInterval(playTimer);
     const playBtn = document.getElementById('btn-replay-play');
-    if (playBtn) playBtn.textContent = '▶';
+    if (playBtn) {
+      playBtn.textContent = '▶';
+      playBtn.setAttribute('aria-label', window.House.i18n.t('replay.autoPlay'));
+    }
   }
 
   const Replay = {

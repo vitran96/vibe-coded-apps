@@ -16,6 +16,7 @@
   let isFlipped = false;
   let faceToFace = false;
   let labelMode = 'han'; // 'han' | 'viet'
+  let cursorMesh = null; // keyboard cursor ring, moved by setCursor
 
   // Board dimensions in 3D world units:
   // 9 files: x from -4.0 to +4.0 (step 1.0)
@@ -452,6 +453,31 @@
       this.refreshPieces();
     },
 
+    getFlipped() {
+      return isFlipped;
+    },
+
+    // Keyboard cursor: one accent ring that moves square to square; sq < 0 hides it.
+    setCursor(sq) {
+      if (!cursorMesh) {
+        const pal = window.House ? window.House.palette() : {};
+        cursorMesh = new THREE.Mesh(
+          new THREE.RingGeometry(0.36, 0.42, 32),
+          new THREE.MeshBasicMaterial({ color: pal['accent-2'] || 0x2E7566, side: THREE.DoubleSide })
+        );
+        cursorMesh.rotation.x = -Math.PI / 2;
+        cursorMesh.position.y = 0.02;
+        scene.add(cursorMesh);
+      }
+      cursorMesh.visible = sq >= 0;
+      if (sq >= 0) {
+        const c = sqToCoords(sq);
+        cursorMesh.position.x = c.x;
+        cursorMesh.position.z = c.z;
+      }
+      this.requestRender();
+    },
+
     setLabelMode(mode) {
       labelMode = mode;
       this.refreshTheme();
@@ -512,6 +538,7 @@
         pieceMeshes.push({ mesh, shadowMesh, sq, piece });
       }
 
+      if (window.XQ.ui) window.XQ.ui.describeBoard(pos);
       this.requestRender();
     },
 

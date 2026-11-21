@@ -1,7 +1,14 @@
-// storage.js — localStorage manager namespaced with cotuong_*
+// storage.js — saved settings, new-game choices, the live game and match records (keys cotuong_*).
 (() => {
   const PREFIX = 'cotuong_';
-  const LEGACY_PREFIX = 'co-tuong:';
+  const store = window.House.store('cotuong_', { legacy: ['co-tuong:'] });
+
+  // One-time migration: the old forked kit kept its prefs under cotuong_prefs. Move them into house:prefs, then drop the key.
+  const oldPrefs = store.get('prefs');
+  if (oldPrefs) {
+    window.House.prefs.save({ theme: window.House.resolve(oldPrefs.theme), lang: oldPrefs.lang === 'en' ? 'en' : 'vi' });
+    store.remove('prefs');
+  }
 
   const DEFAULT_SETTINGS = {
     v: 1,
@@ -32,63 +39,21 @@
     allowUndo: true
   };
 
-  function getRaw(key, fallback = null) {
-    try {
-      const data = localStorage.getItem(PREFIX + key) ?? localStorage.getItem(LEGACY_PREFIX + key);
-      if (!data) return fallback;
-      return JSON.parse(data);
-    } catch {
-      return fallback;
+  // Save; if the browser refuses (full), drop the 20 oldest records and retry once.
+  function save(key, val) {
+    if (store.set(key, val)) return true;
+    const recs = store.get('records', null);
+    if (key !== 'records' && recs && Array.isArray(recs.items) && recs.items.length > 20) {
+      store.set('records', { v: 1, items: recs.items.slice(0, recs.items.length - 20) });
+      return store.set(key, val);
     }
-  }
-
-  function setRaw(key, val) {
-    try {
-      localStorage.setItem(PREFIX + key, JSON.stringify(val));
-      return true;
-    } catch (e) {
-      if (e && (e.name === 'QuotaExceededError' || e.code === 22)) {
-        // Prune oldest 20 records and retry once
-        try {
-          const recs = getRaw('records', { v: 1, items: [] });
-          if (recs && recs.items && recs.items.length > 20) {
-            recs.items = recs.items.slice(0, recs.items.length - 20);
-            localStorage.setItem(PREFIX + 'records', JSON.stringify(recs));
-            localStorage.setItem(PREFIX + key, JSON.stringify(val));
-            return true;
-          }
-        } catch {}
-      }
-      if (typeof window !== 'undefined' && window.XQ && window.XQ.toast) {
-        window.XQ.toast(window.House.i18n.t('storage.failed'));
-      }
-      return false;
-    }
-  }
-
-  function removeRaw(key) {
-    try {
-      localStorage.removeItem(PREFIX + key);
-      localStorage.removeItem(LEGACY_PREFIX + key);
-    } catch {}
-  }
-
-  function clearOwn() {
-    try {
-      const keys = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && (k.startsWith(PREFIX) || k.startsWith(LEGACY_PREFIX))) keys.push(k);
-      }
-      keys.forEach(k => localStorage.removeItem(k));
-    } catch {}
+    return false;
   }
 
   const Storage = {
     loadSettings() {
-      const s = getRaw('settings');
+      const s = store.get('settings');
       if (!s) return { ...DEFAULT_SETTINGS };
-      // Migration from v:0 or missing fields
       return {
         ...DEFAULT_SETTINGS,
         ...s,
@@ -108,71 +73,67 @@
         sfx: { ...current.sfx, ...(patch.sfx || {}) },
         music: { ...current.music, ...(patch.music || {}) }
       };
-      setRaw('settings', updated);
+      save('settings', updated);
       return updated;
     },
 
     loadNewGame() {
-      const ng = getRaw('newgame');
-      return { ...DEFAULT_NEWGAME, ...(ng || {}), v: 1 };
+      return { ...DEFAULT_NEWGAME, ...(store.get('newgame') || {}), v: 1 };
     },
 
     saveNewGame(patch) {
-      const current = this.loadNewGame();
-      const updated = { ...current, ...patch, v: 1 };
-      setRaw('newgame', updated);
+      const updated = { ...this.loadNewGame(), ...patch, v: 1 };
+      save('newgame', updated);
       return updated;
     },
 
     loadCurrent() {
-      const cur = getRaw('current');
+      const cur = store.get('current');
       if (cur && cur.status === 'in_progress') return cur;
       return null;
     },
 
     saveCurrent(gameRecord) {
-      if (!gameRecord) {
-        removeRaw('current');
-      } else {
-        setRaw('current', gameRecord);
-      }
+      if (!gameRecord) store.remove('current');
+      else save('current', gameRecord);
     },
 
     clearCurrent() {
-      removeRaw('current');
+      store.remove('current');
     },
 
     loadRecords() {
-      const recs = getRaw('records', { v: 1, items: [] });
+      const recs = store.get('records', { v: 1, items: [] });
       if (!recs || !Array.isArray(recs.items)) return [];
       return recs.items;
     },
 
     saveRecord(record) {
-      const recs = getRaw('records', { v: 1, items: [] });
+      const recs = store.get('records', { v: 1, items: [] });
       const items = Array.isArray(recs.items) ? recs.items : [];
       const existingIdx = items.findIndex(r => r.id === record.id);
       if (existingIdx >= 0) {
         items[existingIdx] = record;
       } else {
-        // Prepend newest record
-        items.unshift(record);
+        items.unshift(record); // newest first
       }
-      // Cap at 200 records
       if (items.length > 200) items.length = 200;
-      setRaw('records', { v: 1, items });
+      save('records', { v: 1, items });
     },
 
     clearRecords() {
-      removeRaw('records');
+      store.remove('records');
     },
 
     resetDefaults() {
-      removeRaw('settings');
-      removeRaw('newgame');
+      store.remove('settings');
+      store.remove('newgame');
     },
 
-    clearOwn
+    // Removes only this app's keys (cotuong_* and the old co-tuong:*), never other games or house:prefs.
+    clearOwn() {
+      store.clearOwn();
+    }
   };
 
   window.XQ = window.XQ || {};
