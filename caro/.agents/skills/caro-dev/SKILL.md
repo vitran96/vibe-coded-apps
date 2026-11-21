@@ -7,19 +7,19 @@ description: >-
 
 # Caro & Gomoku Single-File Development Skill
 
-This repository is built entirely inside a single file: [index.html](file:///home/vi-tran/repos/vibe-coded-apps/caro/index.html) (~4,200 lines).
-Because standard full-file rewrites are error-prone on large single files, all development operations must be executed through the zero-dependency Node.js CLI tool: [scripts/caro.js](file:///home/vi-tran/repos/vibe-coded-apps/caro/scripts/caro.js).
+This repository is built entirely inside a single file: [index.html](index.html) (~4,200 lines).
+Because standard full-file rewrites are error-prone on large single files, all development operations must be executed through the zero-dependency Node.js CLI tool: [scripts/caro.js](scripts/caro.js).
 
 ## Core Rules & Invariants
 
 1. **Strict i18n Scope:** ONLY Vietnamese (`vn`) and English (`eng`) are supported. **Vietnamese is always default.**
-2. **Single-File Runtime:** Everything (CSS, HTML, Three.js, Tone.js, AI worker, PWA manifest) resides strictly in [index.html](file:///home/vi-tran/repos/vibe-coded-apps/caro/index.html). Never create external `.css` or `.js` bundle files.
+2. **Single-File Runtime:** Everything (CSS, HTML, Three.js, Tone.js, AI worker, PWA manifest) resides strictly in [index.html](index.html). Never create external `.css` or `.js` bundle files.
 3. **No Python:** All tooling, testing, and scripting must use Node.js with standard JavaScript (`node scripts/caro.js`).
 4. **Relaxing Spa Music:** Background music is disabled by default (`musicOn: false`) and uses peaceful ambient soundscapes (no drum machines or vinyl noise).
 
 ---
 
-## Command Reference ([scripts/caro.js](file:///home/vi-tran/repos/vibe-coded-apps/caro/scripts/caro.js))
+## Command Reference ([scripts/caro.js](scripts/caro.js))
 
 ### 1. View & Explore Code Sections
 Instead of scrolling through 4,200 lines, target specific sections by ID:
