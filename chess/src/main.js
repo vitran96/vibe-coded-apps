@@ -1,45 +1,14 @@
 import * as THREE from 'three';
 
 const APP_ID = 'chess';
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 const MAKER = '';
 
 const STORAGE_PREFIX = 'covua_';
 
-// Storage helper with strict namespacing
-const store = {
-  get(key, fallback = null) {
-    try {
-      const v = localStorage.getItem(STORAGE_PREFIX + key) ?? localStorage.getItem('chess:' + key);
-      return v ? JSON.parse(v) : fallback;
-    } catch {
-      return fallback;
-    }
-  },
-  set(key, val) {
-    try {
-      localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(val));
-    } catch {
-      console.warn('Storage failed');
-    }
-  },
-  remove(key) {
-    try {
-      localStorage.removeItem(STORAGE_PREFIX + key);
-      localStorage.removeItem('chess:' + key);
-    } catch {}
-  },
-  removeAll() {
-    try {
-      const keys = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && (k.startsWith(STORAGE_PREFIX) || k.startsWith('chess:'))) keys.push(k);
-      }
-      keys.forEach((k) => localStorage.removeItem(k));
-    } catch {}
-  },
-};
+// Namespaced storage shared with the house kit; reads version 1.0.0 saves under the old 'chess:' prefix.
+const store = House.store('covua_', { legacy: ['chess:'] });
+window.addEventListener('housestoragefail', () => House.announce(House.i18n.t('storage.failed')));
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -64,95 +33,17 @@ if (settings.allowUndo === undefined) {
   settings.allowUndo = settings.pvpUndo !== undefined ? settings.pvpUndo : true;
 }
 
-// Audio Engine setup
-let audioCtx = null;
-let sfxGain = null;
-let musicGain = null;
+// Audio: SFX and BGM run on the house audio engine (shared/house/house-audio.js); chess only adds its own sounds.
 let isAudioUnlocked = false;
-let bgmSynth = null;
-let bgmLoop = null;
 
-function initAudio() {
-  if (isAudioUnlocked) return;
-  try {
-    if (typeof Tone !== 'undefined') {
-      Tone.start();
-      audioCtx = Tone.context.rawContext || Tone.context;
-    } else {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    sfxGain = audioCtx.createGain();
-    sfxGain.gain.value = settings.sfx ? 0.7 : 0;
-    sfxGain.connect(audioCtx.destination);
-
-    musicGain = audioCtx.createGain();
-    musicGain.gain.value = settings.music ? 0.5 : 0;
-    musicGain.connect(audioCtx.destination);
-
-    // Register chess specific SFX on House.SFX
-    if (window.House && window.House.SFX) {
-      window.House.SFX.capture = (c, o, t) => {
-        window.House.play(c, o, 'place', 2);
-        setTimeout(() => window.House.play(c, o, 'place', 1), 60);
-      };
-      window.House.SFX.check = (c, o, t) => {
-        window.House.play(c, o, 'place', 2);
-        setTimeout(() => window.House.play(c, o, 'tap'), 80);
-      };
-      window.House.SFX.castle = (c, o, t) => {
-        window.House.play(c, o, 'place', 1);
-        setTimeout(() => window.House.play(c, o, 'place', 1), 120);
-      };
-      window.House.SFX.promote = (c, o, t) => {
-        window.House.play(c, o, 'win');
-      };
-      window.House.SFX.countdown = (c, o, t, n = 5) => {
-        const freqs = { 5: 523.25, 4: 587.33, 3: 659.25, 2: 783.99, 1: 880 };
-        const g = c.createGain();
-        g.connect(o);
-        const gainVal = 0.3 + (5 - n) * 0.08;
-        g.gain.setValueAtTime(0, t);
-        g.gain.linearRampToValueAtTime(gainVal, t + 0.005);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
-        const osc = c.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = freqs[n] || 523.25;
-        osc.connect(g);
-        osc.start(t);
-        osc.stop(t + 0.22);
-      };
-      window.House.SFX.timeUp = (c, o, t) => {
-        window.House.play(c, o, 'invalid');
-        setTimeout(() => window.House.play(c, o, 'lose'), 120);
-      };
-    }
-
-    isAudioUnlocked = true;
-    document.getElementById('audio-unlock-chip').style.display = 'none';
-    if (settings.music) startBgm();
-  } catch (e) {
-    console.warn('Audio unlock failed', e);
-  }
-}
-
-function playSound(name, ...args) {
-  if (!settings.sfx || !audioCtx || !isAudioUnlocked) return;
-  if (window.House && window.House.SFX[name]) {
-    window.House.SFX[name](audioCtx, sfxGain, audioCtx.currentTime + 0.01, ...args);
-  }
-}
-
-function startBgm() {
-  if (!settings.music || !isAudioUnlocked || typeof Tone === 'undefined') return;
-  try {
-    if (!bgmSynth) {
-      bgmSynth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'sine' },
-        envelope: { attack: 0.2, decay: 0.8, sustain: 0.5, release: 1.2 },
-      }).toDestination();
-      bgmSynth.volume.value = -12;
-    }
-    Tone.Transport.bpm.value = 76;
+const bgm = House.bgm({
+  bpm: 76,
+  build(T, bus) {
+    const synth = new T.PolySynth(T.Synth, {
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.2, decay: 0.8, sustain: 0.5, release: 1.2 },
+    }).connect(bus);
+    synth.volume.value = -12;
     const chords = [
       ['A3', 'C4', 'E4', 'G4', 'B4'], // Am9
       ['D3', 'F#4', 'A4', 'C5', 'E5'], // D9
@@ -160,23 +51,70 @@ function startBgm() {
       ['C3', 'E4', 'G4', 'B4', 'D5'],  // Cmaj7
     ];
     let step = 0;
-    if (bgmLoop) bgmLoop.dispose();
-    bgmLoop = new Tone.Loop((time) => {
-      bgmSynth.triggerAttackRelease(chords[step % chords.length], '2m', time);
+    new T.Loop((time) => {
+      synth.triggerAttackRelease(chords[step % chords.length], '2m', time);
       step++;
     }, '2m').start(0);
-    Tone.Transport.start();
-  } catch (e) {
-    console.warn('BGM error', e);
-  }
+  },
+});
+bgm.volume(0.5);
+House.audio.sfx.on = settings.sfx;
+
+function initAudio() {
+  if (isAudioUnlocked) return;
+  isAudioUnlocked = true;
+  House.audio.unlock();
+
+  // Chess-specific sounds, built from the shared SFX names.
+  House.SFX.capture = (c, o, t) => {
+    House.play(c, o, 'place', 2);
+    setTimeout(() => House.play(c, o, 'place', 1), 60);
+  };
+  House.SFX.check = (c, o, t) => {
+    House.play(c, o, 'place', 2);
+    setTimeout(() => House.play(c, o, 'tap'), 80);
+  };
+  House.SFX.castle = (c, o, t) => {
+    House.play(c, o, 'place', 1);
+    setTimeout(() => House.play(c, o, 'place', 1), 120);
+  };
+  House.SFX.promote = (c, o, t) => {
+    House.play(c, o, 'win');
+  };
+  House.SFX.countdown = (c, o, t, n = 5) => {
+    const freqs = { 5: 523.25, 4: 587.33, 3: 659.25, 2: 783.99, 1: 880 };
+    const g = c.createGain();
+    g.connect(o);
+    const gainVal = 0.3 + (5 - n) * 0.08;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gainVal, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    const osc = c.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freqs[n] || 523.25;
+    osc.connect(g);
+    osc.start(t);
+    osc.stop(t + 0.22);
+  };
+  House.SFX.timeUp = (c, o, t) => {
+    House.play(c, o, 'invalid');
+    setTimeout(() => House.play(c, o, 'lose'), 120);
+  };
+
+  document.getElementById('audio-unlock-chip').style.display = 'none';
+  if (settings.music) startBgm();
+}
+
+function playSound(name, ...args) {
+  if (isAudioUnlocked) House.audio.play(name, ...args);
+}
+
+function startBgm() {
+  if (settings.music && isAudioUnlocked) bgm.set(true);
 }
 
 function stopBgm() {
-  if (typeof Tone !== 'undefined' && Tone.Transport) {
-    Tone.Transport.stop();
-    if (bgmLoop) bgmLoop.dispose();
-    bgmLoop = null;
-  }
+  bgm.set(false);
 }
 
 // Line icon glyphs rendering for 3D tokens and 2D mini boards
@@ -542,6 +480,16 @@ function updateOverlays() {
     }
   }
 
+  // Keyboard cursor: outline of the square
+  if (cursorOn && cursorSq >= 0 && curGame) {
+    const accentHex = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#B8432E';
+    const edges = new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.9, 0.9).rotateX(-Math.PI / 2));
+    const outline = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: accentHex }));
+    const cPos = sqToPos(cursorSq);
+    outline.position.set(cPos.x, 0.02, cPos.z);
+    overlayGroup.add(outline);
+  }
+
   requestRender();
 }
 
@@ -564,39 +512,30 @@ function setupInput() {
 
     dragStartPointer = { x: e.clientX, y: e.clientY };
     isDragging = false;
+    cursorOn = false;
+    if (!tapSquare(sq)) return;
 
-    // Tap-tap handling
-    if (selectedSq >= 0) {
-      const chosenMove = legalMovesForSelected.find((m) => m.to === sq);
-      if (chosenMove) {
-        applyHumanMove(chosenMove);
-        selectedSq = -1;
-        legalMovesForSelected = [];
-        updateOverlays();
-        return;
-      }
-    }
+    draggedMesh = pieceMeshes[sq];
+    if (draggedMesh) originalMeshPos = draggedMesh.position.clone();
+    canvas.setPointerCapture(e.pointerId);
+  });
 
-    // Select piece
-    const piece = curGame.state.board[sq];
-    if (piece !== 0 && (piece * curGame.state.turn > 0)) {
-      if (curGame.mode === 'pve' && curGame.humanSide !== (curGame.state.turn === 1 ? 'w' : 'b')) {
-        return;
-      }
-      selectedSq = sq;
-      legalMovesForSelected = ChessRules.legalMovesFrom(curGame.state, sq);
+  // Keyboard: arrows move the cursor (announced), Enter/Space select or move. The board is drawn flipped for Black.
+  House.boardCursor({
+    el: canvas,
+    cols: 8,
+    rows: 8,
+    describe: (x, y) => describeSq(visToSq(x, y)),
+    onMove: (x, y) => {
+      cursorSq = visToSq(x, y);
+      cursorOn = true;
       updateOverlays();
-      draggedMesh = pieceMeshes[sq];
-      if (draggedMesh) originalMeshPos = draggedMesh.position.clone();
-      canvas.setPointerCapture(e.pointerId);
-    } else {
-      if (selectedSq >= 0) {
-        playSound('invalid');
-      }
-      selectedSq = -1;
-      legalMovesForSelected = [];
-      updateOverlays();
-    }
+    },
+    onActivate: (x, y) => {
+      if (!curGame || curGame.isOver || isAIThinking || curGame.isReplay) return;
+      cursorOn = true;
+      tapSquare(visToSq(x, y));
+    },
   });
 
   canvas.addEventListener('pointermove', (e) => {
@@ -654,8 +593,63 @@ function getRaycastGroundPos(e) {
   return new THREE.Vector3(x * d, 0, -y * d);
 }
 
+// Tap or Enter on a square: move the selected piece there, or select one of ours.
+// Returns true only when a piece was picked up (pointer drag may start from it).
+function tapSquare(sq) {
+  if (selectedSq >= 0) {
+    const chosenMove = legalMovesForSelected.find((m) => m.to === sq);
+    if (chosenMove) {
+      applyHumanMove(chosenMove);
+      selectedSq = -1;
+      legalMovesForSelected = [];
+      updateOverlays();
+      return false;
+    }
+  }
+
+  const piece = curGame.state.board[sq];
+  if (piece !== 0 && (piece * curGame.state.turn > 0)) {
+    if (curGame.mode === 'pve' && curGame.humanSide !== (curGame.state.turn === 1 ? 'w' : 'b')) return false;
+    selectedSq = sq;
+    legalMovesForSelected = ChessRules.legalMovesFrom(curGame.state, sq);
+    updateOverlays();
+    return true;
+  }
+  if (selectedSq >= 0) playSound('invalid');
+  selectedSq = -1;
+  legalMovesForSelected = [];
+  updateOverlays();
+  return false;
+}
+
+// Keyboard cursor cell (screen column x, row y, top-left = 0,0) to square index; mirrors posToSq.
+function visToSq(x, y) {
+  return isFlipped ? (y << 3) | (7 - x) : ((7 - y) << 3) | x;
+}
+
+const PIECE_NAME_KEY = { 1: 'game.piece.pawn', 2: 'game.piece.knight', 3: 'game.piece.bishop', 4: 'game.piece.rook', 5: 'game.piece.queen', 6: 'game.piece.king' };
+// Text the cursor announces, e.g. "e4, Mã Trắng" or "e4, trống".
+function describeSq(sq) {
+  const p = curGame ? curGame.state.board[sq] : 0;
+  const coord = ChessRules.toCoord(sq);
+  if (!p) return `${coord}, ${House.i18n.t('board.empty')}`;
+  const side = House.i18n.t(p > 0 ? 'game.side.white' : 'game.side.black');
+  return `${coord}, ${House.i18n.t(PIECE_NAME_KEY[Math.abs(p)])} ${side}`;
+}
+
+// "White wins!", "Draw!" and so on, in the current language.
+function resultText() {
+  if (curGame.result === '1-0' || curGame.result === '0-1') {
+    const side = curGame.result === '1-0' ? 'game.side.white' : 'game.side.black';
+    return House.i18n.t('result.win', { name: House.i18n.t(side) });
+  }
+  return House.i18n.t('result.draw');
+}
+
 // Game Session & Controller
 let curGame = null;
+let cursorSq = -1; // keyboard cursor square; drawn only after the first key press
+let cursorOn = false;
 let isAIThinking = false;
 let clockInterval = null;
 let lastTickTime = performance.now();
@@ -1126,15 +1120,18 @@ function updateStatusLine() {
   const sideLine = document.getElementById('side-status');
   if (!line) return;
 
+  // The status line is aria-live, so screen readers hear each turn and result once when the text changes.
+  const t = (k, p) => House.i18n.t(k, p);
+  const sideName = (s) => t(s === 1 ? 'game.side.white' : 'game.side.black');
   let txt = '';
   if (curGame.isOver) {
-    txt = curGame.result === '1-0' ? 'Trắng thắng!' : curGame.result === '0-1' ? 'Đen thắng!' : 'Hoà!';
+    txt = resultText();
   } else if (isAIThinking) {
-    txt = 'Máy đang nghĩ…';
+    txt = t('ai.thinking');
   } else if (ChessRules.inCheck(curGame.state, curGame.state.turn)) {
-    txt = 'Chiếu!';
+    txt = t('game.status.check');
   } else {
-    txt = curGame.state.turn === 1 ? 'Lượt của Trắng' : 'Lượt của Đen';
+    txt = t('turn.of', { name: sideName(curGame.state.turn) });
   }
 
   line.textContent = txt;
@@ -1254,23 +1251,20 @@ function showPromoDialog(move, onPick) {
   dialog.showModal();
 }
 
+const REASON_KEY = {
+  checkmate: 'game.reason.checkmate', stalemate: 'game.reason.stalemate', threefold: 'game.reason.threefold',
+  fifty: 'game.reason.fifty', insufficient: 'game.reason.insufficient', agreement: 'game.reason.agreement',
+  timeout: 'game.reason.timeout', resign: 'game.reason.resign',
+};
+
 function showGameOverDialog(result, reason) {
   const dialog = document.getElementById('dialog-game-over');
   const title = document.getElementById('game-over-title');
   const desc = document.getElementById('game-over-desc');
   const link = document.getElementById('link-game-over-rule');
 
-  title.textContent = result === '1-0' ? 'Trắng thắng!' : result === '0-1' ? 'Đen thắng!' : 'Hoà cờ!';
-  const reasonMap = {
-    checkmate: 'Chiếu hết',
-    stalemate: 'Hết nước đi hợp lệ (Pat)',
-    threefold: 'Lặp lại thế cờ 3 lần',
-    fifty: 'Luật 50 nước',
-    insufficient: 'Không đủ quân chiếu hết',
-    timeout: 'Hết thời gian',
-    resign: 'Đối phương đầu hàng',
-  };
-  desc.textContent = `Lý do: ${reasonMap[reason] || reason}`;
+  title.textContent = resultText();
+  desc.textContent = REASON_KEY[reason] ? House.i18n.t(REASON_KEY[reason]) : reason;
 
   // Link to relevant rule section
   const ruleSectionMap = {
@@ -1638,11 +1632,8 @@ function bindSettingsEvents() {
   bindChk('chk-pvp-undo', 'pvpUndo', onUndoToggle);
   bindChk('chk-rotate-pvp', 'rotatePvp');
   bindChk('chk-rule-hints', 'ruleHints');
-  bindChk('chk-sfx', 'sfx', (v) => {
-    if (sfxGain) sfxGain.gain.value = v ? 0.7 : 0;
-  });
+  bindChk('chk-sfx', 'sfx', (v) => { House.audio.sfx.on = v; });
   bindChk('chk-music', 'music', (v) => {
-    if (musicGain) musicGain.gain.value = v ? 0.5 : 0;
     if (v) startBgm(); else stopBgm();
   });
 
@@ -1934,7 +1925,7 @@ function initApp() {
   // Settings resets
   document.getElementById('btn-reset-data').onclick = () => {
     if (confirm('Khôi phục toàn bộ cài đặt cờ vua về mặc định?')) {
-      store.removeAll();
+      store.clearOwn();
       location.reload();
     }
   };
@@ -1958,6 +1949,38 @@ function initApp() {
     document.getElementById('dialog-game-over').close();
     enterReplayMode(curGame.moves, curGame.startFEN);
   };
+
+  // Labels that depend on the language: aria-labels, version line, status line.
+  const refreshLabels = () => {
+    document.querySelectorAll('[data-i18n-aria]').forEach((el) => el.setAttribute('aria-label', House.i18n.t(el.dataset.i18nAria)));
+    document.getElementById('app-version').textContent = House.i18n.t('settings.version', { v: APP_VERSION });
+    if (curGame) updateStatusLine();
+  };
+  window.addEventListener('houselangchange', refreshLabels);
+  refreshLabels();
+
+  // Keyboard shortcuts: ignored while a dialog is open or a field has focus.
+  const openHelp = () => House.dialogs.open(document.getElementById('dialog-help'));
+  document.getElementById('btn-close-help').onclick = () => House.dialogs.close(document.getElementById('dialog-help'));
+  const toggleMute = () => {
+    const mute = settings.sfx || settings.music;
+    settings.sfx = !mute;
+    if (mute) settings.music = false;
+    store.set('settings', settings);
+    House.audio.sfx.on = settings.sfx;
+    if (mute) stopBgm();
+    syncSettingsUI();
+    House.announce(House.i18n.t(mute ? 'sound.off' : 'sound.on'));
+  };
+  const keyActions = { n: openNewGame, u: handleUndo, h: openHistory, s: openSettings, m: toggleMute, '?': openHelp };
+  window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey || document.querySelector('dialog[open]')) return;
+    if (e.target.closest?.('input, textarea, select')) return;
+    const act = keyActions[e.key.toLowerCase()];
+    if (!act) return;
+    e.preventDefault();
+    act();
+  });
 
   window.addEventListener('hashchange', handleRoute);
   handleRoute();

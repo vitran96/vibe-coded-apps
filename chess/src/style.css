@@ -1,3 +1,6 @@
+@font-face { font-family: "Be Vietnam Pro"; font-style: normal; font-weight: 400; font-display: swap; src: url("../../shared/vendor/fonts/be-vietnam-pro-400.woff2") format("woff2"); }
+@font-face { font-family: "Be Vietnam Pro"; font-style: normal; font-weight: 600; font-display: swap; src: url("../../shared/vendor/fonts/be-vietnam-pro-600.woff2") format("woff2"); }
+@font-face { font-family: "Be Vietnam Pro"; font-style: normal; font-weight: 800; font-display: swap; src: url("../../shared/vendor/fonts/be-vietnam-pro-800.woff2") format("woff2"); }
 /* Chess specific tokens and layouts */
 
 :root, [data-theme="giay"] {
@@ -697,3 +700,8 @@
   width: 44px;
   height: 44px;
 }
+
+/* Shortcut list in the help dialog */
+.help-keys { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.help-keys li { display: flex; gap: var(--sp-3); align-items: center; }
+.help-keys kbd { min-width: 44px; text-align: center; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); font-weight: 700; }

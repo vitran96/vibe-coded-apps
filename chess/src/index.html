@@ -9,22 +9,17 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Cờ vua">
 
-  <!-- Pinned CDN Fonts & Libraries -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap" rel="stylesheet">
-
+  <!-- Vendored libraries: the build inlines them, so the shipped file works offline -->
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+      "three": "../../shared/vendor/three@0.170.0/three.module.min.js"
     }
   }
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/tone@15.0.4/build/Tone.js"></script>
+  <script src="../../shared/vendor/tone@15.0.4/Tone.js"></script>
 
-  <!-- Split Stylesheets for Development -->
-  <link rel="stylesheet" href="./house-theme.css">
+  <link rel="stylesheet" href="../../shared/house/house-theme.css">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -49,7 +44,7 @@
       </div>
 
       <div class="start-footer">
-        <button id="btn-start-settings" class="btn btn-icon" aria-label="Cài đặt">
+        <button id="btn-start-settings" class="btn btn-icon" data-i18n-aria="common.settings">
           <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
         </button>
       </div>
@@ -72,7 +67,7 @@
 
         <!-- 3D Board Canvas wrapper -->
         <div class="board-wrapper">
-          <canvas id="chess-canvas"></canvas>
+          <canvas id="chess-canvas" data-i18n-aria="board.label"></canvas>
           <div id="board-glow" class="board-glow" style="display:none;"></div>
           <div id="countdown-overlay" style="display:none;">
             <div id="countdown-num" class="countdown-num">5</div>
@@ -92,20 +87,20 @@
         </div>
 
         <!-- Status & Hint Line -->
-        <div id="game-status-line" style="font-size:var(--fs-sm); font-weight:600; color:var(--muted); min-height:24px; text-align:center;">
+        <div id="game-status-line" aria-live="polite" style="font-size:var(--fs-sm); font-weight:600; color:var(--muted); min-height:24px; text-align:center;">
           Lượt của Trắng
         </div>
 
         <!-- Bottom Toolbar (phone) -->
         <!-- Bottom Toolbar (phone) -->
         <div class="game-toolbar">
-          <button id="btn-undo" class="btn btn-icon" aria-label="Đi lại">
+          <button id="btn-undo" class="btn btn-icon" data-i18n-aria="common.undo">
             <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
           </button>
-          <button id="btn-show-moves" class="btn btn-icon" aria-label="Nước đi & Menu">
+          <button id="btn-show-moves" class="btn btn-icon" data-i18n-aria="aria.moves">
             <svg viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
           </button>
-          <button id="btn-game-rules" class="btn btn-icon" aria-label="Luật chơi">
+          <button id="btn-game-rules" class="btn btn-icon" data-i18n-aria="game.rules.title">
             <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
           </button>
         </div>
@@ -119,13 +114,13 @@
             <div id="side-status" style="font-weight:600; font-size:var(--fs-sm); color:var(--muted); margin-top:2px;">Lượt của Trắng</div>
           </div>
           <div style="display:flex; gap:var(--sp-1);">
-            <button id="btn-side-history" class="btn btn-icon" aria-label="Lịch sử" title="Lịch sử">
+            <button id="btn-side-history" class="btn btn-icon" data-i18n-aria="common.history" title="Lịch sử">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </button>
-            <button id="btn-desktop-settings" class="btn btn-icon" aria-label="Cài đặt" title="Cài đặt">
+            <button id="btn-desktop-settings" class="btn btn-icon" data-i18n-aria="common.settings" title="Cài đặt">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
             </button>
-            <button id="btn-close-side-panel" class="btn btn-icon mobile-only" aria-label="Đóng" title="Đóng">
+            <button id="btn-close-side-panel" class="btn btn-icon mobile-only" data-i18n-aria="common.close" title="Đóng">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
@@ -149,11 +144,11 @@
 
       <!-- Replay Controller Bar (shown during replay mode) -->
       <div id="replay-bar" class="replay-bar" style="display:none;">
-        <button id="btn-replay-start" class="btn btn-icon" aria-label="Bắt đầu"><svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" x2="5" y1="19" y2="5"/></svg></button>
-        <button id="btn-replay-prev" class="btn btn-icon" aria-label="Nước trước"><svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/></svg></button>
-        <button id="btn-replay-play" class="btn btn-icon" aria-label="Phát / Dừng"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
-        <button id="btn-replay-next" class="btn btn-icon" aria-label="Nước sau"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20"/></svg></button>
-        <button id="btn-replay-end" class="btn btn-icon" aria-label="Kết thúc"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20"/><line x1="19" x2="19" y1="5" y2="19"/></svg></button>
+        <button id="btn-replay-start" class="btn btn-icon" data-i18n-aria="replay.first"><svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" x2="5" y1="19" y2="5"/></svg></button>
+        <button id="btn-replay-prev" class="btn btn-icon" data-i18n-aria="replay.prev"><svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/></svg></button>
+        <button id="btn-replay-play" class="btn btn-icon" data-i18n-aria="replay.playPause"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+        <button id="btn-replay-next" class="btn btn-icon" data-i18n-aria="replay.next"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20"/></svg></button>
+        <button id="btn-replay-end" class="btn btn-icon" data-i18n-aria="replay.last"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20"/><line x1="19" x2="19" y1="5" y2="19"/></svg></button>
         <input type="range" id="replay-slider" class="replay-scrubber" min="0" max="0" value="0">
         <button id="btn-replay-exit" class="btn" data-i18n="common.close">Đóng</button>
       </div>
@@ -231,6 +226,25 @@
       </div>
     </dialog>
 
+    <!-- Dialog: Keyboard shortcuts (opened with ?) -->
+    <dialog id="dialog-help">
+      <h3 style="margin-bottom:var(--sp-4);" data-i18n="help.title">Phím tắt</h3>
+      <ul class="help-keys">
+        <li><kbd>N</kbd><span data-i18n="help.new">Ván mới</span></li>
+        <li><kbd>U</kbd><span data-i18n="help.undo">Đi lại</span></li>
+        <li><kbd>H</kbd><span data-i18n="help.history">Lịch sử</span></li>
+        <li><kbd>S</kbd><span data-i18n="help.settings">Cài đặt</span></li>
+        <li><kbd>M</kbd><span data-i18n="help.mute">Tắt / bật âm thanh</span></li>
+        <li><kbd>?</kbd><span data-i18n="help.help">Xem phím tắt này</span></li>
+        <li><kbd>←↑→↓</kbd><span data-i18n="help.board">Di chuyển ô trên bàn cờ</span></li>
+        <li><kbd>Enter</kbd><span data-i18n="help.select">Chọn quân hoặc đi quân</span></li>
+        <li><kbd>Esc</kbd><span data-i18n="help.esc">Đóng hộp thoại</span></li>
+      </ul>
+      <div style="display:flex; justify-content:flex-end; margin-top:var(--sp-4);">
+        <button id="btn-close-help" class="btn" data-i18n="common.close">Đóng</button>
+      </div>
+    </dialog>
+
     <!-- Dialog: Promotion Picker -->
     <dialog id="dialog-promo">
       <h3 style="text-align:center;" data-i18n="game.action.promoteTo">Phong cấp thành</h3>
@@ -268,7 +282,7 @@
     <dialog id="dialog-history" style="max-height:85dvh;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-3);">
         <h3 data-i18n="common.history">Lịch sử ván đấu</h3>
-        <button id="btn-close-history" class="btn btn-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button id="btn-close-history" class="btn btn-icon" data-i18n-aria="common.close"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div class="segmented" id="seg-history-filter" style="margin-bottom:var(--sp-3);">
         <button data-filter="all" class="active">Tất cả</button>
@@ -282,7 +296,7 @@
     <dialog id="dialog-settings" style="max-height:85dvh; overflow-y:auto;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-4);">
         <h3 data-i18n="common.settings">Cài đặt</h3>
-        <button id="btn-close-settings" class="btn btn-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button id="btn-close-settings" class="btn btn-icon" data-i18n-aria="common.close"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
 
       <div style="display:flex; flex-direction:column; gap:var(--sp-5);">
@@ -386,7 +400,7 @@
         <div>
           <h4 style="font-size:var(--fs-sm); color:var(--muted); margin-bottom:var(--sp-2);" data-i18n="settings.about">Thông tin</h4>
           <div style="font-size:var(--fs-sm); color:var(--muted);">
-            <div>Phiên bản 1.0.0</div>
+            <div id="app-version"></div>
             <div id="settings-maker-line" style="display:none; margin-top:4px;"></div>
           </div>
         </div>
@@ -395,7 +409,10 @@
   </div>
 
   <!-- Scripts in order per Section 3 -->
-  <script src="./house-kit.js"></script>
+  <script src="../../shared/house/house-kit.js"></script>
+  <script src="../../shared/house/house-store.js"></script>
+  <script src="../../shared/house/house-a11y.js"></script>
+  <script src="../../shared/house/house-audio.js"></script>
   <script src="./i18n.js"></script>
   <script src="./rules.js"></script>
   <script src="./ai.js"></script>
