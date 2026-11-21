@@ -16,6 +16,8 @@ const TARGETS = [
   { app: 'caro', ver: '1.1.0-eng', commit: '68768b0', run: (p) => caroRun(p, 'eng') },
   { app: 'caro', ver: '1.0.0', commit: '13470d5', run: (p) => caroRun(p, null) }, // last build with caro. keys (no APP_VERSION constant)
   // Versions by storage prefix: chess 1.0.0 wrote chess: keys until d53f8fb; chinese-chess 1.0.0 wrote co-tuong: until a7f311e.
+  // Not reproducible in 2026-11 runs (no move without the 1.1.0 cursor; no start screen at a7f311e): saves/chess-1.0.0.json and chinese-chess-1.1.0.json are hand-built from the legacy code.
+  // Not reproducible in 2026-11 runs (no move without the 1.1.0 cursor; no start screen at a7f311e): saves/chess-1.0.0.json and chinese-chess-1.1.0.json are hand-built from the legacy code.
   { app: 'chess', ver: '1.0.0', commit: 'd53f8fb', run: chessRun },
   { app: 'chinese-chess', ver: '1.0.0', commit: 'a7f311e', run: chineseRun },
   { app: 'chinese-chess', ver: '1.1.0', commit: '3b353a6', run: chineseRun },

@@ -4,6 +4,7 @@ import { allApps, MODES, newVsAi } from '../lib/apps.mjs';
 import { test, expect } from '../lib/fixtures.mjs';
 import { canvasColours } from '../lib/canvas.mjs';
 import { houseOf } from '../lib/house-adapters.mjs';
+import { expectAnnounced } from '../lib/board.mjs';
 
 // A5: one human move by keyboard, then the computer's reply changes the board. Only chess has a recipe yet.
 const AI_REPLY = {
@@ -20,13 +21,16 @@ const AI_REPLY = {
     await expect.poll(boardText, { timeout: 15_000 }).not.toBe(afterHuman);
   },
 };
+// Caro: the centre stone by keyboard, then the saved game shows the computer's stone too.
+AI_REPLY.caro = async (page) => {
+  await page.locator('#canvas-host').focus();
+  await page.keyboard.press('Enter');
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('caro_current') || 'null')?.moves?.length), { timeout: 15_000 }).toBe(2);
+};
+// The computer's reply is announced in the live region as "Đen: ..." (Black); board-text does not change per ply.
 AI_REPLY['chinese-chess'] = async (page) => {
-  const text = () => page.locator('#board-text').innerText();
-  const before = await text();
   await houseOf('chinese-chess').keyMove(page);
-  await expect.poll(text, { timeout: 15_000 }).not.toBe(before);
-  const afterHuman = await text();
-  await expect.poll(text, { timeout: 15_000 }).not.toBe(afterHuman);
+  await expectAnnounced(page, /Đen:/);
 };
 const NO_RECIPE = 'no keyboard move recipe yet (per-app flow D, P4)';
 

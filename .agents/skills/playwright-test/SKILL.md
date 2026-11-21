@@ -57,4 +57,5 @@ Copy `specs/_template.spec.mjs` to `specs/<app>.spec.mjs`, replace `<APP>`, fill
 
 - Chromium flags: `--use-angle=swiftshader --enable-unsafe-swiftshader`. Firefox: `webgl.force-enabled`.
 - "Canvas blank" usually means the data-URL import map or Three.js failed in that engine: check the console guard output first.
-- Retries are 1 on CI only. A first-frame race on desktop Chromium is fixed by waiting for `canvasColours` in the helper, not by a sleep.
+- Retries are 1 on CI only. Under load, caro B4 and B7 failed once and passed on rerun: rerun a single test before debugging it.
+- Open finding: caro `ensureVisible()` recentres the camera on every placement (see caro.spec D4a).

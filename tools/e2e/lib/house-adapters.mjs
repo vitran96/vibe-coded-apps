@@ -7,7 +7,9 @@ export const HOUSE = {
     prefix: 'caro_',
     async openSettings(p) {
       if (await p.locator('#dlg-settings').isVisible()) return;
-      if (!(await p.locator('#dlg-menu').isVisible())) await p.locator('#btn-menu').click();
+      // The menu opens by itself on first boot; wait for it, and only click the menu button if it does not appear.
+      const menu = p.locator('#dlg-menu');
+      if (!(await menu.isVisible())) await menu.waitFor({ state: 'visible', timeout: 1500 }).catch(() => p.locator('#btn-menu').click());
       await p.locator('#mn-settings').click();
     },
     pickTheme: (p, id) => p.locator(`input[name="st_theme"][value="${id}"]`).check({ force: true }),
