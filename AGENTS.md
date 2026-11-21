@@ -79,6 +79,13 @@ Manual check (not automated): serve the repo root (`npx serve .`), open `/<app>/
 - Commit messages: Conventional Commits with the app as scope, e.g. `fix(caro): …`, `feat(chess): …`, `ci(game-launcher): …`.
 - Do not commit `tmp/`, `out/`, `node_modules/`, `dist/`, `target/` (gitignored). Plans and scratch notes go in `out/`.
 
+## Spec-driven workflow
+
+- `specs/` (see `specs/README.md`) is the source of truth for requirements. Each app has `specs/<app>.md`; shared rules are in `specs/house-kit.md`.
+- A new requirement goes to a spec first (`save-spec`), then code (`implement-spec`). Do not build from chat alone.
+- Each spec numbers its requirements `R1..`, maps each one to a test or manual check, and has a `status` (`draft`, `accepted`, `implemented`).
+- If code and spec disagree, the spec is right until the user changes it.
+
 ## Skills
 
 Agent-agnostic skills live in `.agents/skills/<name>/SKILL.md` (plain Markdown, `name` + `description` frontmatter only, plain shell commands). If your agent does not auto-load skills, read the file when its description matches the task.
@@ -92,3 +99,5 @@ Agent-agnostic skills live in `.agents/skills/<name>/SKILL.md` (plain Markdown, 
 | `.agents/skills/release-app/SKILL.md` | Publishing a release (apps on Pages, or a launcher desktop build via a `v*` tag) |
 | `.agents/skills/bump-version/SKILL.md` | Setting the one repo-wide version (apps, `version.json`, launcher files) |
 | `.agents/skills/archive-version/SKILL.md` | Keeping playable copies of the builds before a breaking change |
+| `.agents/skills/save-spec/SKILL.md` | A user states a requirement for an app (new or existing): write or update `specs/<app>.md` |
+| `.agents/skills/implement-spec/SKILL.md` | Building or fixing what an accepted spec says; marks it `implemented` |

@@ -7,6 +7,8 @@ description: Create a new vibe-coded app or game folder in this repo from shared
 
 Read the root `AGENTS.md` first. Every hard rule there applies; this skill is the procedure.
 
+Spec first: write `specs/<app>.md` with `save-spec` (or confirm it exists) before scaffolding. `implement-spec` calls this skill for new apps.
+
 ## 1. Decide
 
 - `id`: kebab-case folder name (`connect-four`). It is also the `version.json` id and the launcher cache name.
