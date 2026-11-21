@@ -27,7 +27,7 @@ A collection of small AI-built ("vibe-coded") browser games/apps, mostly written
    **Default theme is always light (`giay`), forced: never follow the OS dark-mode setting** (no `prefers-color-scheme` detection, no `auto` default). Players may pick another theme in Settings and that choice persists.
 8. **Storage is namespaced per app.** Many apps share one origin. Every `localStorage` key starts with the app's prefix (current: `caro_`, `covua_`, `cotuong_`); never `localStorage.clear()`; "reset data" removes only own keys; wrap storage in try/catch and keep the game playable when it fails; store objects carry a schema `v`. The only shared key is `house:prefs` (`{ v, theme, lang }`).
 9. **Version.** `const APP_VERSION = 'x.y.z'` shown in Settings → Thông tin. Bump it on every user-visible change and keep `version.json` in sync (the launcher compares them to offer updates).
-10. **Tooling is Node only, zero npm dependencies** for apps (`node scripts/*.mjs`). No Python. (`game-launcher/` is the exception: it uses npm, Vite, Tauri, Rust.)
+10. **Tooling is Node only, zero npm dependencies** for apps (`node scripts/*.mjs`). No Python. (`game-launcher/` is the exception: it uses npm, Vite, Tauri, Rust.) `tools/e2e/` (Playwright, dev/CI only) is the second exception; apps must build, check and test without it.
 11. **Phone first-class**: Pointer Events, `touch-action: none` on the canvas, `100dvh`, safe-area insets, portrait + landscape.
 
 ## Layout
@@ -64,6 +64,7 @@ node shared/scripts/check.mjs <app...> | --all                  # build is curre
 |---|---|
 | `chess` | `cd chess && node scripts/perft.mjs` |
 | `chinese-chess` | `node chinese-chess/scripts/run-rules-tests.mjs` |
+| `tools/e2e` (browser E2E, optional locally, required in CI; run `cd tools/e2e && npm ci` once) | `npx playwright test --project=chromium` (add `--grep @<app>` to narrow) |
 | `game-launcher` (not built by `shared/scripts`) | `cd game-launcher && npm ci && npm test && npm run build` (`npm run tauri build` for the binary) |
 
 Manual check (not automated): serve the repo root (`npx serve .`), open `/<app>/` and a renamed copy of the folder, and play with the keyboard only. The `verify-app` skill lists the steps.
@@ -86,4 +87,5 @@ Agent-agnostic skills live in `.agents/skills/<name>/SKILL.md` (plain Markdown, 
 | `.agents/skills/build-app/SKILL.md` | Building, testing, checking or packaging any app or the launcher |
 | `.agents/skills/new-app/SKILL.md` | Creating a new app/game folder in this repo |
 | `.agents/skills/verify-app/SKILL.md` | Before committing any change to an app (build, tests, offline, sub-route, i18n, a11y, launcher) |
+| `.agents/skills/playwright-test/SKILL.md` | Running, debugging or adding browser E2E tests in `tools/e2e` (UI, storage, keyboard changes) |
 | `.agents/skills/release-app/SKILL.md` | Bumping an app version, updating `version.json`, releasing the launcher |

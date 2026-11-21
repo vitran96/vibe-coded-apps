@@ -1,0 +1,222 @@
+
+Running 161 tests using 4 workers
+
+[1/161] [chromium] › specs/caro.spec.mjs:25:3 › caro › D0 keyboard-only game: win by five, result announced, record kept
+[2/161] [chromium] › specs/boot.spec.mjs:35:5 › caro › A1 boots with network blocked, zero external requests
+[3/161] [chromium] › specs/chinese-chess.spec.mjs:16:3 › chinese-chess › D0 keyboard-only game: move, resign from the keyboard, result shown, record kept
+[4/161] [chromium] › specs/chess.spec.mjs:16:3 › chess › D0 keyboard-only game: move by cursor, resign, result announced, record kept
+[5/161] [chromium] › specs/chess.spec.mjs:29:3 › chess › D1 PvE undo reverts two plies and the turn returns to the human
+[6/161] [chromium] › specs/caro.spec.mjs:38:3 › caro › D1 PvE undo takes back the human move and the computer reply (two plies)
+[7/161] [chromium] › specs/boot.spec.mjs:42:5 › caro › A2 loads fully offline from file://
+[8/161] [chromium] › specs/chinese-chess.spec.mjs:29:3 › chinese-chess › D7 legacy co-tuong: keys resume the game and cotuong_prefs migrates to house:prefs
+[9/161] [chromium] › specs/chess.spec.mjs:39:3 › chess › D5 legacy chess: keys resume the saved game and new writes go to covua_
+[10/161] [chromium] › specs/chess.spec.mjs:49:3 › chess › D6 undo is a setting, not a flip button; off means no undo
+[11/161] [chromium] › specs/boot.spec.mjs:49:5 › caro › A3 same start screen at every URL form
+[12/161] [chromium] › specs/chess.spec.mjs:56:3 › chess › D12 pointer tap on a square makes the same move as the keyboard
+[13/161] [chromium] › specs/chinese-chess.spec.mjs:38:3 › chinese-chess › D8 no flip button, no draw offer, and no f shortcut
+[14/161] [chromium] › specs/coverage.spec.mjs:9:1 › every app has specs/<app>.spec.mjs
+[15/161] [chromium] › specs/chinese-chess.spec.mjs:49:8 › chinese-chess › D8 choosing Black flips the board so Black is at the bottom
+[16/161] [chromium] › specs/chinese-chess.spec.mjs:51:3 › chinese-chess › D9 resign shows a translated reason, never a raw key
+[17/161] [chromium] › specs/house.spec.mjs:25:5 › caro › B1 fresh storage: Vietnamese and light theme, Settings in Vietnamese
+[18/161] [chromium] › specs/chinese-chess.spec.mjs:61:3 › chinese-chess › D10 action buttons have visible text; the move list fills after a ply
+[19/161] [chromium] › specs/house.spec.mjs:33:5 › caro › B2 English switch updates lang and strings, and persists after reload
+[20/161] [chromium] › specs/caro.spec.mjs:48:3 › caro › D2 PvP five in a row in caro rule mode
+[21/161] [chromium] › specs/chinese-chess.spec.mjs:71:3 › chinese-chess › D10 undo off: Undo does not revert and tells the player why
+[22/161] [chromium] › specs/chinese-chess.spec.mjs:84:8 › chinese-chess › D11 history: Chơi tiếp and replay start a live game from a record
+[23/161] [chromium] › specs/caro.spec.mjs:57:3 › caro › D3 legacy 1.1.0 Vietnamese save: UI vi, game resumes with two stones, one record
+[24/161] [phone-portrait] › specs/boot.spec.mjs:35:5 › caro › A1 boots with network blocked, zero external requests
+[25/161] [phone-portrait] › specs/boot.spec.mjs:42:5 › caro › A2 loads fully offline from file://
+[26/161] [chromium] › specs/boot.spec.mjs:60:5 › caro › A4 WebGL board is drawn after a new game
+[27/161] [chromium] › specs/caro.spec.mjs:65:3 › caro › D3 legacy 1.1.0 English save: UI en
+[28/161] [phone-portrait] › specs/boot.spec.mjs:49:5 › caro › A3 same start screen at every URL form
+[29/161] [chromium] › specs/house.spec.mjs:48:5 › caro › B3 forced light theme: OS dark mode is ignored, also when it changes at runtime
+[30/161] [chromium] › specs/caro.spec.mjs:71:3 › caro › D3 legacy 1.0.0 caro. keys: records load
+[31/161] [chromium] › specs/house.spec.mjs:59:5 › caro › B4 each of the 4 themes persists and the board is still drawn
+[32/161] [chromium] › specs/caro.spec.mjs:77:3 › caro › D4 camera: a centre move never pans; a move next to the edge does
+[33/161] [chromium] › specs/boot.spec.mjs:68:5 › caro › A5 computer replies after one human move
+[34/161] [chromium] › specs/boot.spec.mjs:75:5 › caro › A6 no raw i18n keys on screen
+[35/161] [phone-portrait] › specs/boot.spec.mjs:60:5 › caro › A4 WebGL board is drawn after a new game
+[36/161] [chromium] › specs/boot.spec.mjs:35:5 › chess › A1 boots with network blocked, zero external requests
+[37/161] [chromium] › specs/boot.spec.mjs:42:5 › chess › A2 loads fully offline from file://
+[38/161] [chromium] › specs/boot.spec.mjs:49:5 › chess › A3 same start screen at every URL form
+  1) [chromium] › specs/caro.spec.mjs:77:3 › caro › D4 camera: a centre move never pans; a move next to the edge does 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+    -   "x": 0.5,
+    +   "x": 0.49958342013268264,
+        "y": -0.5,
+        "z": 80,
+      }
+
+      82 |     const before = await cam();
+      83 |     await place(page, [CENTRE]);
+    > 84 |     expect(await cam()).toEqual(before);
+         |                         ^
+      85 |     await place(page, [{ x: 0, y: 0 }], CENTRE); // corner: within 1.2 cells of the edge
+      86 |     await expect.poll(cam).not.toEqual(before);
+      87 |   });
+        at /home/vi-tran/repos/vibe-coded-apps/tools/e2e/specs/caro.spec.mjs:84:25
+
+    Error Context: test-results/caro-caro-D4-camera-a-cent-c01f3--move-next-to-the-edge-does-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/caro-caro-D4-camera-a-cent-c01f3--move-next-to-the-edge-does-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/caro-caro-D4-camera-a-cent-c01f3--move-next-to-the-edge-does-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[39/161] [chromium] › specs/caro.spec.mjs:89:3 › caro › D12 pointer tap on a cell places the same stone as the keyboard
+[40/161] [chromium] › specs/boot.spec.mjs:60:5 › chess › A4 WebGL board is drawn after a new game
+[41/161] [phone-portrait] › specs/boot.spec.mjs:68:5 › caro › A5 computer replies after one human move
+[42/161] [phone-portrait] › specs/boot.spec.mjs:75:5 › caro › A6 no raw i18n keys on screen
+[43/161] [chromium] › specs/boot.spec.mjs:68:5 › chess › A5 computer replies after one human move
+[44/161] [phone-portrait] › specs/boot.spec.mjs:35:5 › chess › A1 boots with network blocked, zero external requests
+[45/161] [chromium] › specs/boot.spec.mjs:75:5 › chess › A6 no raw i18n keys on screen
+[46/161] [phone-portrait] › specs/boot.spec.mjs:42:5 › chess › A2 loads fully offline from file://
+[47/161] [phone-portrait] › specs/boot.spec.mjs:49:5 › chess › A3 same start screen at every URL form
+[48/161] [chromium] › specs/boot.spec.mjs:35:5 › chinese-chess › A1 boots with network blocked, zero external requests
+[49/161] [chromium] › specs/boot.spec.mjs:42:5 › chinese-chess › A2 loads fully offline from file://
+[50/161] [phone-portrait] › specs/boot.spec.mjs:60:5 › chess › A4 WebGL board is drawn after a new game
+[51/161] [phone-portrait] › specs/caro.spec.mjs:25:3 › caro › D0 keyboard-only game: win by five, result announced, record kept
+[52/161] [chromium] › specs/boot.spec.mjs:49:5 › chinese-chess › A3 same start screen at every URL form
+[53/161] [phone-portrait] › specs/boot.spec.mjs:68:5 › chess › A5 computer replies after one human move
+[54/161] [phone-portrait] › specs/caro.spec.mjs:38:3 › caro › D1 PvE undo takes back the human move and the computer reply (two plies)
+[55/161] [phone-portrait] › specs/boot.spec.mjs:75:5 › chess › A6 no raw i18n keys on screen
+[56/161] [phone-portrait] › specs/boot.spec.mjs:35:5 › chinese-chess › A1 boots with network blocked, zero external requests
+[57/161] [chromium] › specs/boot.spec.mjs:60:5 › chinese-chess › A4 WebGL board is drawn after a new game
+[58/161] [phone-portrait] › specs/boot.spec.mjs:42:5 › chinese-chess › A2 loads fully offline from file://
+[59/161] [phone-portrait] › specs/boot.spec.mjs:49:5 › chinese-chess › A3 same start screen at every URL form
+[60/161] [phone-portrait] › specs/caro.spec.mjs:48:3 › caro › D2 PvP five in a row in caro rule mode
+[61/161] [chromium] › specs/boot.spec.mjs:68:5 › chinese-chess › A5 computer replies after one human move
+[62/161] [phone-portrait] › specs/boot.spec.mjs:60:5 › chinese-chess › A4 WebGL board is drawn after a new game
+[63/161] [phone-portrait] › specs/boot.spec.mjs:68:5 › chinese-chess › A5 computer replies after one human move
+[64/161] [phone-portrait] › specs/caro.spec.mjs:57:3 › caro › D3 legacy 1.1.0 Vietnamese save: UI vi, game resumes with two stones, one record
+  2) [chromium] › specs/boot.spec.mjs:68:5 › chinese-chess › A5 computer replies after one human move 
+
+    Error: expect(received).not.toBe(expected) // Object.is equality
+
+    Expected: not "Lượt của Đỏ. Đỏ: Xe a0, Mã b0, Tượng c0, Sĩ d0, Tướng e0, Sĩ f0, Tượng g0, Mã h0, Xe i0, Pháo b2, Pháo h2, Tốt a3, Tốt c3, Tốt e3, Tốt g3, Tốt i3. Đen: Tốt a6, Tốt c6, Tốt e6, Tốt g6, Tốt i6, Pháo b7, Pháo h7, Xe a9, Mã b9, Tượng c9, Sĩ d9, Tướng e9, Sĩ f9, Tượng g9, Mã h9, Xe i9."
+
+    Call Log:
+    - Timeout 15000ms exceeded while waiting on the predicate
+
+      25 |   const before = await text();
+      26 |   await houseOf('chinese-chess').keyMove(page);
+    > 27 |   await expect.poll(text, { timeout: 15_000 }).not.toBe(before);
+         |                                                    ^
+      28 |   const afterHuman = await text();
+      29 |   await expect.poll(text, { timeout: 15_000 }).not.toBe(afterHuman);
+      30 | };
+        at Object.AI_REPLY.chinese-chess (/home/vi-tran/repos/vibe-coded-apps/tools/e2e/specs/boot.spec.mjs:27:52)
+        at /home/vi-tran/repos/vibe-coded-apps/tools/e2e/specs/boot.spec.mjs:72:7
+
+    Error Context: test-results/boot-chinese-chess-A5-computer-replies-after-one-human-move-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/boot-chinese-chess-A5-computer-replies-after-one-human-move-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/boot-chinese-chess-A5-computer-replies-after-one-human-move-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[65/161] [chromium] › specs/boot.spec.mjs:75:5 › chinese-chess › A6 no raw i18n keys on screen
+[66/161] [phone-portrait] › specs/caro.spec.mjs:65:3 › caro › D3 legacy 1.1.0 English save: UI en
+[67/161] [phone-portrait] › specs/chess.spec.mjs:16:3 › chess › D0 keyboard-only game: move by cursor, resign, result announced, record kept
+[68/161] [phone-portrait] › specs/caro.spec.mjs:71:3 › caro › D3 legacy 1.0.0 caro. keys: records load
+  3) [phone-portrait] › specs/boot.spec.mjs:68:5 › chinese-chess › A5 computer replies after one human move 
+
+    Error: expect(received).not.toBe(expected) // Object.is equality
+
+    Expected: not "Lượt của Đỏ. Đỏ: Xe a0, Mã b0, Tượng c0, Sĩ d0, Tướng e0, Sĩ f0, Tượng g0, Mã h0, Xe i0, Pháo b2, Pháo h2, Tốt a3, Tốt c3, Tốt e3, Tốt g3, Tốt i3. Đen: Tốt a6, Tốt c6, Tốt e6, Tốt g6, Tốt i6, Pháo b7, Pháo h7, Xe a9, Mã b9, Tượng c9, Sĩ d9, Tướng e9, Sĩ f9, Tượng g9, Mã h9, Xe i9."
+
+    Call Log:
+    - Timeout 15000ms exceeded while waiting on the predicate
+
+      25 |   const before = await text();
+      26 |   await houseOf('chinese-chess').keyMove(page);
+    > 27 |   await expect.poll(text, { timeout: 15_000 }).not.toBe(before);
+         |                                                    ^
+      28 |   const afterHuman = await text();
+      29 |   await expect.poll(text, { timeout: 15_000 }).not.toBe(afterHuman);
+      30 | };
+        at Object.AI_REPLY.chinese-chess (/home/vi-tran/repos/vibe-coded-apps/tools/e2e/specs/boot.spec.mjs:27:52)
+        at /home/vi-tran/repos/vibe-coded-apps/tools/e2e/specs/boot.spec.mjs:72:7
+
+    Error Context: test-results/boot-chinese-chess-A5-computer-replies-after-one-human-move-phone-portrait/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/boot-chinese-chess-A5-computer-replies-after-one-human-move-phone-portrait/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/boot-chinese-chess-A5-computer-replies-after-one-human-move-phone-portrait/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[69/161] [phone-portrait] › specs/chess.spec.mjs:29:3 › chess › D1 PvE undo reverts two plies and the turn returns to the human
+[70/161] [phone-portrait] › specs/caro.spec.mjs:77:3 › caro › D4 camera: a centre move never pans; a move next to the edge does
+[71/161] [phone-portrait] › specs/boot.spec.mjs:75:5 › chinese-chess › A6 no raw i18n keys on screen
+[72/161] [phone-portrait] › specs/chess.spec.mjs:39:3 › chess › D5 legacy chess: keys resume the saved game and new writes go to covua_
+[73/161] [phone-portrait] › specs/chinese-chess.spec.mjs:16:3 › chinese-chess › D0 keyboard-only game: move, resign from the keyboard, result shown, record kept
+[74/161] [phone-portrait] › specs/caro.spec.mjs:89:3 › caro › D12 pointer tap on a cell places the same stone as the keyboard
+[75/161] [phone-portrait] › specs/chess.spec.mjs:49:3 › chess › D6 undo is a setting, not a flip button; off means no undo
+[76/161] [phone-portrait] › specs/chess.spec.mjs:56:3 › chess › D12 pointer tap on a square makes the same move as the keyboard
+[77/161] [phone-portrait] › specs/coverage.spec.mjs:9:1 › every app has specs/<app>.spec.mjs
+[78/161] [phone-portrait] › specs/chinese-chess.spec.mjs:29:3 › chinese-chess › D7 legacy co-tuong: keys resume the game and cotuong_prefs migrates to house:prefs
+[79/161] [phone-portrait] › specs/house.spec.mjs:25:5 › caro › B1 fresh storage: Vietnamese and light theme, Settings in Vietnamese
+[80/161] [phone-portrait] › specs/chinese-chess.spec.mjs:38:3 › chinese-chess › D8 no flip button, no draw offer, and no f shortcut
+[81/161] [phone-portrait] › specs/house.spec.mjs:33:5 › caro › B2 English switch updates lang and strings, and persists after reload
+[82/161] [phone-portrait] › specs/chinese-chess.spec.mjs:49:8 › chinese-chess › D8 choosing Black flips the board so Black is at the bottom
+[83/161] [phone-portrait] › specs/chinese-chess.spec.mjs:51:3 › chinese-chess › D9 resign shows a translated reason, never a raw key
+[84/161] [chromium] › specs/house.spec.mjs:76:5 › caro › B5 reset removes only own keys; foreign keys and house:prefs stay; localStorage.clear is never called
+[85/161] [phone-portrait] › specs/chinese-chess.spec.mjs:61:3 › chinese-chess › D10 action buttons have visible text; the move list fills after a ply
+  4) [phone-portrait] › specs/caro.spec.mjs:89:3 › caro › D12 pointer tap on a cell places the same stone as the keyboard 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: undefined
+
+    Call Log:
+    - Timeout 10000ms exceeded while waiting on the predicate
+
+      92 |     const p = await page.evaluate(([x, y]) => House.debug.cellToClient(x, y), [CENTRE.x, CENTRE.y]); // page CSS px
+      93 |     await page.mouse.click(p.x, p.y);
+    > 94 |     await expect.poll(async () => (await stored(page, 'caro_current'))?.moves?.length, { timeout: 10_000 }).toBe(1);
+         |                                                                                                             ^
+      95 |   });
+      96 | });
+      97 |
+        at /home/vi-tran/repos/vibe-coded-apps/tools/e2e/specs/caro.spec.mjs:94:109
+
+    Error Context: test-results/caro-caro-D12-pointer-tap--dd7da--same-stone-as-the-keyboard-phone-portrait/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/caro-caro-D12-pointer-tap--dd7da--same-stone-as-the-keyboard-phone-portrait/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/caro-caro-D12-pointer-tap--dd7da--same-stone-as-the-keyboard-phone-portrait/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[86/161] [chromium] › specs/house.spec.mjs:95:5 › caro › B6 failing storage: game stays playable and the user is told once
+[87/161] [phone-portrait] › specs/chinese-chess.spec.mjs:71:3 › chinese-chess › D10 undo off: Undo does not revert and tells the player why
+[88/161] [phone-portrait] › specs/chinese-chess.spec.mjs:84:8 › chinese-chess › D11 history: Chơi tiếp and replay start a live game from a record
+[89/161] [phone-portrait] › specs/house.spec.mjs:48:5 › caro › B3 forced light theme: OS dark mode is ignored, also when it changes at runtime
+[90/161] [phone-portrait] › specs/house.spec.mjs:59:5 › caro › B4 each of the 4 themes persists and the board is still drawn
+[91/161] [chromium] › specs/house.spec.mjs:106:5 › caro › B7 shortcuts N H S ? open their sheet; keys are ignored while a sheet is open
+[92/161] [chromium] › specs/house.spec.mjs:119:5 › caro › B7 key M toggles sound and the Settings checkbox follows
+[93/161] [phone-portrait] › specs/house.spec.mjs:76:5 › caro › B5 reset removes only own keys; foreign keys and house:prefs stay; localStorage.clear is never called
+[94/161] [phone-portrait] › specs/house.spec.mjs:95:5 › caro › B6 failing storage: game stays playable and the user is told once
+[95/161] [chromium] › specs/house.spec.mjs:128:5 › caro › B8 Esc closes the sheet and focus returns to the button that opened it

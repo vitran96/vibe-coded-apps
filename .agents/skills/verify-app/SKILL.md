@@ -18,6 +18,8 @@ node shared/scripts/check.mjs <app>     # must print PASS
 
 Also run the extra tests the root `AGENTS.md` lists for the app (chess perft, chinese-chess run-rules-tests).
 
+UI, storage or keyboard change: then run the `playwright-test` skill (`cd tools/e2e && npx playwright test --grep @<app>`).
+
 ## 2. Sub-route and file://
 
 ```sh

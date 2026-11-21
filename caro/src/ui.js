@@ -174,6 +174,16 @@ function getGameFieldsValues(container, prefix = '') {
   };
 }
 
+// A switch has no visible text of its own: name it after the row label it sits beside (axe: label).
+function labelSwitches(root = document) {
+  root.querySelectorAll('label.switch input').forEach(inp => {
+    const lbl = inp.closest('.row')?.querySelector('.lbl');
+    if (!lbl) return;
+    lbl.id ||= uuid();
+    inp.setAttribute('aria-labelledby', lbl.id);
+  });
+}
+
 class UIBindings {
   constructor() {
     this.initDialogCloseButtons();
@@ -208,6 +218,7 @@ class UIBindings {
     const dlg = $('#dlg-new-game');
     const container = dlg.querySelector('.game-fields');
     renderGameFields(container, App.settings.game, 'ng');
+    labelSwitches(dlg);
     dlg.showModal();
   }
 
@@ -263,6 +274,7 @@ class UIBindings {
     const dlg = $('#dlg-settings');
     const container = dlg.querySelector('.game-fields');
     renderGameFields(container, App.settings.game, 'st');
+    labelSwitches(dlg);
 
     // Undo button switch
     const uSwitch = dlg.querySelector('input[name="allowUndo"]');
@@ -483,6 +495,17 @@ class UIBindings {
     $('#dlg-history')?.showModal();
   }
 
+  openHelp() {
+    $('#dlg-help')?.showModal();
+  }
+
+  // Key M: same setting as the Sound checkbox in Settings.
+  toggleSound() {
+    App.settings.audio.sfxOn = !App.settings.audio.sfxOn;
+    saveSettings();
+    App.audio.applySettings();
+  }
+
   renderHistoryList() {
     const list = $('#hist-list');
     const modeFilter = $('#hf-mode')?.value || 'all';
@@ -668,6 +691,11 @@ class UIBindings {
     $('#mn-settings')?.addEventListener('click', () => {
       $('#dlg-menu')?.close();
       this.openSettings();
+    });
+
+    $('#mn-help')?.addEventListener('click', () => {
+      $('#dlg-menu')?.close();
+      this.openHelp();
     });
 
     $('#mn-forfeit')?.addEventListener('click', async () => {

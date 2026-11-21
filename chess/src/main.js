@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 const APP_ID = 'chess';
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.1.2';
 const MAKER = '';
 
 const STORAGE_PREFIX = 'covua_';
@@ -230,6 +230,14 @@ function initThree() {
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setSize(size, size);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Test hook (House.debug): read-only CSS px of a cell centre and the camera position.
+  House.debug.cellToClient = (x, y) => {
+    camera.updateMatrixWorld();
+    const v = sqToPos(visToSq(x, y)).project(camera);
+    const r = canvas.getBoundingClientRect();
+    return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height };
+  };
+  House.debug.camera = () => ({ x: camera.position.x, y: camera.position.y, z: camera.position.z });
 
   // Lights
   const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.9);
@@ -366,7 +374,21 @@ function getPieceRotation(z) {
   return z < 0 ? -Math.PI / 2 : Math.PI / 2;
 }
 
+// Text alternative for the 3D board: every piece by square, plus whose turn it is.
+function describeBoard() {
+  const el = document.getElementById('board-text');
+  if (!el || !curGame) return;
+  const t = (k, p) => House.i18n.t(k, p);
+  const white = [], black = [];
+  curGame.state.board.forEach((p, sq) => {
+    if (p) (p > 0 ? white : black).push(`${ChessRules.toCoord(sq)} ${t(PIECE_NAME_KEY[Math.abs(p)])}`);
+  });
+  const side = (s) => t(s === 1 ? 'game.side.white' : 'game.side.black');
+  el.textContent = `${t('turn.of', { name: side(curGame.state.turn) })}. ${side(1)}: ${white.join(', ')}. ${side(-1)}: ${black.join(', ')}.`;
+}
+
 function syncBoard3D(prevBoard = null) {
+  describeBoard();
   while (piecesGroup.children.length) piecesGroup.remove(piecesGroup.children[0]);
   pieceMeshes = [];
 

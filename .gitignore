@@ -7,3 +7,5 @@ target/
 
 node_modules/
 .venv/
+tools/e2e/test-results/
+tools/e2e/playwright-report/

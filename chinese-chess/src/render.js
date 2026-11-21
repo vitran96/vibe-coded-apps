@@ -704,6 +704,16 @@
       this.requestRender();
     },
 
+    // Test hook (House.debug): CSS px of a square centre, and the camera position. Reads only.
+    squareToClient(sq) {
+      const { x, z } = sqToCoords(sq);
+      camera.updateMatrixWorld();
+      const v = new THREE.Vector3(x, 0, z).project(camera);
+      const r = renderer.domElement.getBoundingClientRect();
+      return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height };
+    },
+    cameraPos() { return { x: camera.position.x, y: camera.position.y, z: camera.position.z }; },
+
     raycastSquare(clientX, clientY) {
       if (!containerEl || !camera) return -1;
       const rect = containerEl.getBoundingClientRect();

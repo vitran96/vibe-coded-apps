@@ -1,0 +1,12 @@
+{
+  "name": "vibe-coded-apps-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test server.test.mjs && playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1"
+  }
+}

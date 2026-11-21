@@ -29,7 +29,7 @@
 </head>
 <body>
 <div id="app">
-  <div id="canvas-host" tabindex="0" aria-label="Game board. Use arrow keys to move the cursor, Enter to place."></div>
+  <div id="canvas-host" tabindex="0" role="application" aria-label="Game board. Use arrow keys to move the cursor, Enter to place."></div>
 
   <div id="side" class="glass">
     <div id="hud">
@@ -48,7 +48,7 @@
         <div id="status-line">Start a new game</div>
       </div>
     </div>
-    <div id="movelist" aria-label="Move list"><ol></ol></div>
+    <div id="movelist" role="region" aria-label="Move list"><ol></ol></div>
     <div id="toolbar">
       <div class="tb-inner glass" role="toolbar" aria-label="Game controls">
         <button class="tb-btn" id="btn-undo" title="Undo (U)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span data-i18n="undo">Hoàn tác</span></button>
@@ -204,27 +204,15 @@
       <button class="btn" id="mn-new" data-i18n="newGame">➕ Ván mới</button>
       <button class="btn" id="mn-restart" data-i18n="restart">🔄 Chơi lại</button>
       <button class="btn" id="mn-replay" data-i18n="replay">⏪ Xem lại &amp; Lịch sử</button>
+      <button class="btn" id="mn-help" data-i18n="menuHelp">📖 Hướng dẫn</button>
       <button class="btn" id="mn-settings" data-i18n="settings">⚙️ Cài đặt</button>
       <button class="btn danger" id="mn-forfeit" data-i18n="menuForfeit">🏳️ Đầu hàng</button>
     </div></div>
   </dialog>
 
   <dialog id="dlg-help" class="sheet" aria-labelledby="hp-title">
-    <div class="dlg-head"><h2 id="hp-title">How to play</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
-    <div class="dlg-body help">
-      <h3>Goal</h3><p>Get <b>five in a row</b> — horizontally, vertically or diagonally.</p>
-      <h3>Rules</h3>
-      <ul>
-        <li><b>Gomoku (freestyle):</b> five or more in a row wins. With “Exact five only”, six or more does not count.</li>
-        <li><b>Caro (Blocked-End Rule):</b> a five only wins if <i>not both ends</i> are blocked by the opponent. Optionally the board edge also counts as a block.</li>
-      </ul>
-      <h3>Touch</h3>
-      <ul><li>Tap to place (with tap-to-confirm: tap again or press ✓).</li><li>Drag to pan, pinch to zoom.</li><li>Double-tap an occupied spot or outside the board to zoom in.</li></ul>
-      <h3>Mouse &amp; keyboard</h3>
-      <ul><li>Click to place, drag to pan, wheel to zoom.</li><li><kbd>←↑→↓</kbd> move cursor, <kbd>Enter</kbd>/<kbd>Space</kbd> place, <kbd>+</kbd>/<kbd>-</kbd> zoom, <kbd>F</kbd> fit, <kbd>U</kbd> undo, <kbd>Esc</kbd> close dialog.</li></ul>
-      <h3>Sound</h3><p>Audio starts after your first tap. On iPhone, the hardware silent switch may mute web audio.</p>
-      <h3>Install</h3><p>On iPhone/iPad: Safari → Share → <b>Add to Home Screen</b>. On Android/desktop Chrome use “Install app” in the menu.</p>
-    </div>
+    <div class="dlg-head"><h2 id="hp-title" data-i18n="helpTitle">Hướng dẫn chơi</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dlg-body help" tabindex="0" data-i18n-html="helpBody"></div>
   </dialog>
 </div>
 

@@ -224,7 +224,12 @@ class InputController {
   initKeyboard() {
     window.addEventListener('keydown', (e) => {
       // Ignore keyboard if inside input/dialog
-      if (e.target.matches('input, select, textarea, button') && e.key !== 'Escape') return;
+      // Focus on a button (e.g. after a sheet closes) must not swallow letter shortcuts; Enter/Space stay native.
+      if (e.target.matches('input, select, textarea') && e.key !== 'Escape') return;
+      if (e.target.matches('button') && (e.key === 'Enter' || e.key === ' ')) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // A sheet is open: only Esc (closes it) reaches the board.
+      if (document.querySelector('dialog[open]') && e.key !== 'Escape') return;
 
       const N = this.renderer.N;
       let handled = false;
@@ -273,6 +278,15 @@ class InputController {
           if (App.settings.game.allowUndo !== false) App.game.undo();
           handled = true;
           break;
+        case 'n':
+        case 'N': App.ui.openNewGame(); handled = true; break;
+        case 'h':
+        case 'H': App.ui.openHistory(); handled = true; break;
+        case 's':
+        case 'S': App.ui.openSettings(); handled = true; break;
+        case '?': App.ui.openHelp(); handled = true; break;
+        case 'm':
+        case 'M': App.ui.toggleSound(); handled = true; break;
         case 'Escape':
           this.dismissConfirm();
           $$('dialog[open]').forEach(d => d.close());

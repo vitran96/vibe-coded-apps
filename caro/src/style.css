@@ -82,7 +82,7 @@ button { cursor: pointer; }
 .rb-text { border: 0; border-radius: 10px; background: var(--chip); padding: 8px 12px; font-weight: 800; min-height: 40px; font-size: .85em; }
 
 #sound-hint { position: absolute; left: 50%; transform: translateX(-50%); top: calc(var(--sat) + 104px); border-radius: 999px;
-  padding: 6px 14px; font-size: .85em; font-weight: 700; z-index: 4; border: 0; }
+  min-height: 44px; padding: 6px 14px; font-size: .85em; font-weight: 700; z-index: 4; border: 0; }
 #toasts { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--sab) + 150px); display: flex; flex-direction: column;
   gap: 6px; align-items: center; z-index: 50; pointer-events: none; width: max-content; max-width: 90vw; }
 .toast { padding: 9px 16px; border-radius: 14px; font-weight: 700; font-size: .9em; animation: toast-in .25s ease-out; text-align: center; }
@@ -126,8 +126,8 @@ dialog.small { width: min(400px, calc(100vw - 24px)); }
 .dlg-body { padding: 6px 20px 12px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0; user-select: text; -webkit-user-select: text; }
 .dlg-foot { display: flex; gap: 8px; padding: 12px 20px 16px; justify-content: flex-end; flex-wrap: wrap; border-top: 1px solid var(--line); flex: none; }
 .btn { border: 0; border-radius: 12px; padding: 0 18px; min-height: 46px; font-weight: 800; background: var(--chip); }
-.btn.primary { background: var(--accent); color: #fff; }
-.btn.danger { color: var(--warn); }
+.btn.primary { background: var(--accent); color: var(--on-accent); }
+.btn.danger { color: var(--danger); }
 .btn:active { transform: scale(.97); }
 @media (max-width: 600px) {
   dialog.sheet { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0;

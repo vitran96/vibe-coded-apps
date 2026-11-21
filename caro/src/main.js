@@ -81,6 +81,8 @@ async function main() {
   // Initialize renderer & controllers
   const host = $('#canvas-host');
   App.renderer = new BoardRenderer(host);
+  House.debug.cellToClient = (x, y) => App.renderer.cellToClient(x, y);
+  House.debug.camera = () => ({ x: App.renderer.camera.position.x, y: App.renderer.camera.position.y, z: App.renderer.camera.position.z });
   App.game = new GameController();
   App.input = new InputController(App.renderer, (x, y) => App.game.placeStone(x, y));
   App.replay = new ReplayController();

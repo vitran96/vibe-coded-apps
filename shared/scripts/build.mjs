@@ -146,7 +146,7 @@ export function buildFile(srcPath) {
   return buildSource(readFileSync(srcPath, 'utf8'), dirname(resolve(srcPath)));
 }
 
-const SKIP = new Set(['shared', 'game-launcher', 'node_modules', 'out', 'dist', 'target']);
+const SKIP = new Set(['shared', 'game-launcher', 'node_modules', 'out', 'dist', 'target', 'tools']);
 // Every app folder: has index.html (built or source) or src/index.html.
 export function allApps() {
   return readdirSync(ROOT).filter((d) => !d.startsWith('.') && !SKIP.has(d)

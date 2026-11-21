@@ -90,15 +90,6 @@ function initPWA() {
     const btn = $('#mn-install');
     if (btn) btn.hidden = false;
   });
-
-  // Optional Service Worker registration probe
-  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    fetch('sw.js', { method: 'HEAD' })
-      .then(res => {
-        if (res.ok) navigator.serviceWorker.register('sw.js');
-      })
-      .catch(() => {});
-  }
 }
 
 // ============================================================

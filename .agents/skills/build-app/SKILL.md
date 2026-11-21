@@ -23,4 +23,3 @@ Run from the repo root. Zero dependencies for apps (Node 22 in CI). Scripts exit
 - Commit the rebuilt `index.html` together with the `src/` change. `check.mjs` fails when the committed file is stale.
 - Test scripts not named `test*.mjs` (chess `perft.mjs`, chinese-chess `run-rules-tests.mjs`) are not run by `check.mjs`; run them by hand (root `AGENTS.md` lists them).
 - A new app is found automatically: any top-level folder with `src/index.html` or `index.html`.
-- Do not use the old root `scripts/build.mjs` for apps; it predates `shared/` and its `--test`, `--check` and `--zip` flags are not in the shared build.

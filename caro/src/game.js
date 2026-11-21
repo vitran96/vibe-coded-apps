@@ -199,6 +199,7 @@ class GameController {
     this.refreshMoveList();
     this.updateHUD();
     this.autosave();
+    this.autosave();
 
     if (this.isAITurn()) {
       this.triggerAIMove();
@@ -397,7 +398,8 @@ class GameController {
   }
 
   autosave() {
-    if (this.state === 'playing' && this.moves.length > 0) {
+    if (this.state === 'playing' && this.moves.length === 0) store.remove(LS.current); // undone to empty: do not resume old moves
+    else if (this.state === 'playing') {
       const data = {
         session: this.session,
         moves: this.moves,

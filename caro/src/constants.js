@@ -2,7 +2,7 @@
 // ============================================================
 // 01 constants & defaults
 // ============================================================
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.1.1';
 const BOARD_SIZES = [30];
 const TIME_PRESETS = [5, 10, 15, 30, 45, 60, 90, 120, 300];
 const STORAGE_PREFIX = 'caro_'; // House.store adds it; legacy 'caro.' keys are still read

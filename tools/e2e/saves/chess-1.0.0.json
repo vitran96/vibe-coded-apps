@@ -1,0 +1,8 @@
+{
+  "source": "hand-built from chess/scripts/test-house.mjs legacy shape + d53f8fb store.set calls (capture-saves could not reach a move without the 1.1.0 cursor)",
+  "localStorage": {
+    "chess:settings": "{\"v\":1,\"sfx\":false,\"music\":false}",
+    "chess:current": "{\"v\":1,\"session\":{\"id\":\"legacy-chess-1\",\"startedAt\":1795000000000,\"mode\":\"pve\",\"aiLevel\":\"easy\",\"humanSide\":\"w\",\"timerConfig\":{\"enabled\":false},\"allowUndo\":true,\"startFEN\":\"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1\",\"moves\":[]}}",
+    "chess:records": "{\"v\":1,\"games\":[]}"
+  }
+}

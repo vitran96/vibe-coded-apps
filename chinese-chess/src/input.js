@@ -20,6 +20,8 @@
 
   // Screen cell (x 0..8 left to right, y 0..9 top to bottom) <-> square (rank * 9 + file). Black's view is flipped.
   const cellToSq = (x, y) => (flipped() ? y * 9 + (8 - x) : (9 - y) * 9 + x);
+  H.debug.cellToClient = (x, y) => window.XQ.Render.squareToClient(cellToSq(x, y));
+  H.debug.camera = () => window.XQ.Render.cameraPos();
   const sqToCell = (sq) => {
     const f = sq % 9, r = Math.floor(sq / 9);
     return flipped() ? { x: 8 - f, y: r } : { x: f, y: 9 - r };

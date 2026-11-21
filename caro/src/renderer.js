@@ -262,6 +262,15 @@ class BoardRenderer {
     return { wx, wy };
   }
 
+  // Test hook (House.debug): CSS px of a cell centre on screen. Reads only.
+  cellToClient(x, y) {
+    const { wx, wy } = this.cellToWorld(x, y);
+    this.camera.updateMatrixWorld();
+    const v = new THREE.Vector3(wx, wy, 0).project(this.camera);
+    const r = this.renderer.domElement.getBoundingClientRect();
+    return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height };
+  }
+
   // Convert world coordinate to (cx, cy) cell
   worldToCell(wx, wy) {
     const S = this.cellSize;

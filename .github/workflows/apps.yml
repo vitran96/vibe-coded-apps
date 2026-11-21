@@ -3,6 +3,9 @@ name: Apps
 on:
   push:
   pull_request:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 jobs:
   apps:
@@ -28,3 +31,48 @@ jobs:
 
       - name: chinese-chess rules tests (not named test*, so check.mjs skips it)
         run: node chinese-chess/scripts/run-rules-tests.mjs
+
+  # Browser E2E (tools/e2e). Burn-in: continue-on-error until 5 green runs in a row, then remove it and make e2e required.
+  e2e:
+    needs: apps
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    env:
+      E2E_WEBKIT: "1"
+    defaults:
+      run:
+        working-directory: tools/e2e
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/e2e/package-lock.json
+
+      - run: npm ci
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ hashFiles('tools/e2e/package-lock.json') }}
+
+      - run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: PR and push - Chromium and phone, full
+        if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+        run: npx playwright test --project=chromium --project=phone-portrait
+
+      - name: Nightly or manual - every engine, full
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: npx playwright test
+
+      - name: Report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: tools/e2e/playwright-report
+          retention-days: 7

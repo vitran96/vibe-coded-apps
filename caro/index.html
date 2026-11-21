@@ -41,7 +41,7 @@
   --ink: #2B2622; --muted: #6A6158;
   --accent: #B8432E; --on-accent: #FFFFFF; --accent-2: #2E7566;
   --p1: #2B2622; --p2: #B8432E;
-  --ok: #2E7566; --warn: #B7791F; --danger: #B8432E;
+  --ok: #2E7566; --warn: #B7791F; --danger: #A33C27;
   --board: #E9DCC4; --board-line: #8C7A62;
   --shadow: 0 1px 0 rgb(43 38 34 / .05), 0 10px 28px -12px rgb(43 38 34 / .35);
   --grain-opacity: .05;
@@ -77,10 +77,10 @@
 [data-theme="bien"] {
   color-scheme: light;
   --bg: #E7EEEF; --surface: #F6FAFA; --surface-2: #D9E4E6; --line: #BFD0D3;
-  --ink: #1D2B30; --muted: #546A70;
+  --ink: #1D2B30; --muted: #4B6066;
   --accent: #1D6A85; --on-accent: #FFFFFF; --accent-2: #B5742A;
   --p1: #1D2B30; --p2: #1D6A85;
-  --ok: #2E7566; --warn: #B5742A; --danger: #B8432E;
+  --ok: #2E7566; --warn: #B5742A; --danger: #A33C27;
   --board: #D3E2E3; --board-line: #6F8D93;
   --shadow: 0 1px 0 rgb(29 43 48 / .05), 0 10px 28px -12px rgb(29 43 48 / .35);
   --grain-opacity: .04;
@@ -224,7 +224,7 @@ button { cursor: pointer; }
 .rb-text { border: 0; border-radius: 10px; background: var(--chip); padding: 8px 12px; font-weight: 800; min-height: 40px; font-size: .85em; }
 
 #sound-hint { position: absolute; left: 50%; transform: translateX(-50%); top: calc(var(--sat) + 104px); border-radius: 999px;
-  padding: 6px 14px; font-size: .85em; font-weight: 700; z-index: 4; border: 0; }
+  min-height: 44px; padding: 6px 14px; font-size: .85em; font-weight: 700; z-index: 4; border: 0; }
 #toasts { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--sab) + 150px); display: flex; flex-direction: column;
   gap: 6px; align-items: center; z-index: 50; pointer-events: none; width: max-content; max-width: 90vw; }
 .toast { padding: 9px 16px; border-radius: 14px; font-weight: 700; font-size: .9em; animation: toast-in .25s ease-out; text-align: center; }
@@ -268,8 +268,8 @@ dialog.small { width: min(400px, calc(100vw - 24px)); }
 .dlg-body { padding: 6px 20px 12px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0; user-select: text; -webkit-user-select: text; }
 .dlg-foot { display: flex; gap: 8px; padding: 12px 20px 16px; justify-content: flex-end; flex-wrap: wrap; border-top: 1px solid var(--line); flex: none; }
 .btn { border: 0; border-radius: 12px; padding: 0 18px; min-height: 46px; font-weight: 800; background: var(--chip); }
-.btn.primary { background: var(--accent); color: #fff; }
-.btn.danger { color: var(--warn); }
+.btn.primary { background: var(--accent); color: var(--on-accent); }
+.btn.danger { color: var(--danger); }
 .btn:active { transform: scale(.97); }
 @media (max-width: 600px) {
   dialog.sheet { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0;
@@ -331,7 +331,7 @@ kbd { background: var(--chip); border-radius: 6px; padding: 1px 6px; font-family
 </head>
 <body>
 <div id="app">
-  <div id="canvas-host" tabindex="0" aria-label="Game board. Use arrow keys to move the cursor, Enter to place."></div>
+  <div id="canvas-host" tabindex="0" role="application" aria-label="Game board. Use arrow keys to move the cursor, Enter to place."></div>
 
   <div id="side" class="glass">
     <div id="hud">
@@ -350,7 +350,7 @@ kbd { background: var(--chip); border-radius: 6px; padding: 1px 6px; font-family
         <div id="status-line">Start a new game</div>
       </div>
     </div>
-    <div id="movelist" aria-label="Move list"><ol></ol></div>
+    <div id="movelist" role="region" aria-label="Move list"><ol></ol></div>
     <div id="toolbar">
       <div class="tb-inner glass" role="toolbar" aria-label="Game controls">
         <button class="tb-btn" id="btn-undo" title="Undo (U)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span data-i18n="undo">Hoàn tác</span></button>
@@ -506,27 +506,15 @@ kbd { background: var(--chip); border-radius: 6px; padding: 1px 6px; font-family
       <button class="btn" id="mn-new" data-i18n="newGame">➕ Ván mới</button>
       <button class="btn" id="mn-restart" data-i18n="restart">🔄 Chơi lại</button>
       <button class="btn" id="mn-replay" data-i18n="replay">⏪ Xem lại &amp; Lịch sử</button>
+      <button class="btn" id="mn-help" data-i18n="menuHelp">📖 Hướng dẫn</button>
       <button class="btn" id="mn-settings" data-i18n="settings">⚙️ Cài đặt</button>
       <button class="btn danger" id="mn-forfeit" data-i18n="menuForfeit">🏳️ Đầu hàng</button>
     </div></div>
   </dialog>
 
   <dialog id="dlg-help" class="sheet" aria-labelledby="hp-title">
-    <div class="dlg-head"><h2 id="hp-title">How to play</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
-    <div class="dlg-body help">
-      <h3>Goal</h3><p>Get <b>five in a row</b> — horizontally, vertically or diagonally.</p>
-      <h3>Rules</h3>
-      <ul>
-        <li><b>Gomoku (freestyle):</b> five or more in a row wins. With “Exact five only”, six or more does not count.</li>
-        <li><b>Caro (Blocked-End Rule):</b> a five only wins if <i>not both ends</i> are blocked by the opponent. Optionally the board edge also counts as a block.</li>
-      </ul>
-      <h3>Touch</h3>
-      <ul><li>Tap to place (with tap-to-confirm: tap again or press ✓).</li><li>Drag to pan, pinch to zoom.</li><li>Double-tap an occupied spot or outside the board to zoom in.</li></ul>
-      <h3>Mouse &amp; keyboard</h3>
-      <ul><li>Click to place, drag to pan, wheel to zoom.</li><li><kbd>←↑→↓</kbd> move cursor, <kbd>Enter</kbd>/<kbd>Space</kbd> place, <kbd>+</kbd>/<kbd>-</kbd> zoom, <kbd>F</kbd> fit, <kbd>U</kbd> undo, <kbd>Esc</kbd> close dialog.</li></ul>
-      <h3>Sound</h3><p>Audio starts after your first tap. On iPhone, the hardware silent switch may mute web audio.</p>
-      <h3>Install</h3><p>On iPhone/iPad: Safari → Share → <b>Add to Home Screen</b>. On Android/desktop Chrome use “Install app” in the menu.</p>
-    </div>
+    <div class="dlg-head"><h2 id="hp-title" data-i18n="helpTitle">Hướng dẫn chơi</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dlg-body help" tabindex="0" data-i18n-html="helpBody"></div>
   </dialog>
 </div>
 
@@ -753,6 +741,9 @@ kbd { background: var(--chip); border-radius: 6px; padding: 1px 6px; font-family
     return null;
   };
 
+  // Read-only test hook, filled by each app: cellToClient(x, y) -> {x, y} CSS px, camera() -> {x, y, z}. No setters.
+  H.debug = {};
+
   // Board keyboard cursor on `el`. Arrows/Home/End/PageUp/PageDown move; Enter/Space activate.
   // describe(x, y) gives the localized text announced on each move. Returns the live cursor {x, y}.
   H.boardCursor = ({ el, cols, rows, describe, onMove, onActivate }) => {
@@ -788,7 +779,7 @@ window.threeReady = Promise.all([import('three'), import('three/addons/utils/Buf
 // ============================================================
 // 01 constants & defaults
 // ============================================================
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.1.1';
 const BOARD_SIZES = [30];
 const TIME_PRESETS = [5, 10, 15, 30, 45, 60, 90, 120, 300];
 const STORAGE_PREFIX = 'caro_'; // House.store adds it; legacy 'caro.' keys are still read
@@ -873,6 +864,22 @@ const I18N = {
     'replay': '⏪ Xem lại & Lịch sử',
     'settings': '⚙️ Cài đặt',
     'menuForfeit': '🏳️ Đầu hàng',
+    'menuHelp': '📖 Hướng dẫn',
+    'helpTitle': 'Hướng dẫn chơi',
+    'helpBody': `<h3>Mục tiêu</h3><p>Xếp <b>năm quân liên tiếp</b> theo hàng ngang, dọc hoặc chéo.</p>
+      <h3>Luật</h3>
+      <ul>
+        <li><b>Gomoku (tự do):</b> từ năm quân trở lên là thắng. Với “Chỉ đúng năm”, sáu quân trở lên không được tính.</li>
+        <li><b>Caro (luật chặn hai đầu):</b> năm quân chỉ thắng nếu <i>không bị chặn cả hai đầu</i> bởi đối phương. Có thể chọn để mép bàn cờ cũng được tính là chặn.</li>
+      </ul>
+      <h3>Cảm ứng</h3>
+      <ul><li>Chạm để đặt quân (nếu bật xác nhận: chạm lần nữa hoặc bấm ✓).</li><li>Kéo để di chuyển bàn cờ, hai ngón để phóng to hoặc thu nhỏ.</li><li>Chạm đúp vào ô đã có quân hoặc ngoài bàn cờ để phóng to.</li></ul>
+      <h3>Chuột và bàn phím</h3>
+      <ul><li>Nhấp để đặt quân, kéo để di chuyển, lăn chuột để phóng to hoặc thu nhỏ.</li><li><kbd>←↑→↓</kbd> di chuyển con trỏ, <kbd>Enter</kbd>/<kbd>Space</kbd> đặt quân, <kbd>+</kbd>/<kbd>-</kbd> phóng to hoặc thu nhỏ.</li></ul>
+      <h3>Phím tắt</h3>
+      <ul><li><kbd>N</kbd> ván mới · <kbd>H</kbd> lịch sử · <kbd>S</kbd> cài đặt · <kbd>?</kbd> hướng dẫn · <kbd>M</kbd> bật/tắt âm thanh</li><li><kbd>U</kbd> đi lại · <kbd>F</kbd> vừa bàn cờ · <kbd>Esc</kbd> đóng cửa sổ</li></ul>
+      <h3>Âm thanh</h3><p>Âm thanh bật sau lần chạm đầu tiên. Trên iPhone, công tắc im lặng phần cứng có thể tắt âm thanh trên web.</p>
+      <h3>Cài đặt ứng dụng</h3><p>Trên iPhone/iPad: Safari → Chia sẻ → <b>Thêm vào Màn hình chính</b>. Trên Android hoặc Chrome máy tính, dùng “Cài ứng dụng” trong menu.</p>`,
 
     'gameMode': 'Chế độ chơi',
     'vsAI': 'Đấu với Máy',
@@ -1047,6 +1054,22 @@ const I18N = {
     'replay': '⏪ History & Replay',
     'settings': '⚙️ Settings',
     'menuForfeit': '🏳️ Forfeit',
+    'menuHelp': '📖 How to play',
+    'helpTitle': 'How to play',
+    'helpBody': `<h3>Goal</h3><p>Get <b>five in a row</b> — horizontally, vertically or diagonally.</p>
+      <h3>Rules</h3>
+      <ul>
+        <li><b>Gomoku (freestyle):</b> five or more in a row wins. With “Exact five only”, six or more does not count.</li>
+        <li><b>Caro (Blocked-End Rule):</b> a five only wins if <i>not both ends</i> are blocked by the opponent. Optionally the board edge also counts as a block.</li>
+      </ul>
+      <h3>Touch</h3>
+      <ul><li>Tap to place (with tap-to-confirm: tap again or press ✓).</li><li>Drag to pan, pinch to zoom.</li><li>Double-tap an occupied spot or outside the board to zoom in.</li></ul>
+      <h3>Mouse &amp; keyboard</h3>
+      <ul><li>Click to place, drag to pan, wheel to zoom.</li><li><kbd>←↑→↓</kbd> move cursor, <kbd>Enter</kbd>/<kbd>Space</kbd> place, <kbd>+</kbd>/<kbd>-</kbd> zoom.</li></ul>
+      <h3>Shortcuts</h3>
+      <ul><li><kbd>N</kbd> new game · <kbd>H</kbd> history · <kbd>S</kbd> settings · <kbd>?</kbd> how to play · <kbd>M</kbd> sound on/off</li><li><kbd>U</kbd> undo · <kbd>F</kbd> fit board · <kbd>Esc</kbd> close dialog</li></ul>
+      <h3>Sound</h3><p>Audio starts after your first tap. On iPhone, the hardware silent switch may mute web audio.</p>
+      <h3>Install</h3><p>On iPhone/iPad: Safari → Share → <b>Add to Home Screen</b>. On Android/desktop Chrome use “Install app” in the menu.</p>`,
 
     'gameMode': 'Game mode',
     'vsAI': 'vs AI',
@@ -1203,6 +1226,10 @@ function setLang(lang) {
 House.i18n.add({ vi: I18N.vi, en: I18N.en });
 
 function applyI18n() {
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const val = t(el.dataset.i18nHtml);
+    if (val) el.innerHTML = val; // dictionary markup only, never user text
+  });
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const k = el.dataset.i18n;
     const val = t(k);
@@ -1218,6 +1245,7 @@ function applyI18n() {
     const val = t(k);
     if (val) el.setAttribute('aria-label', val);
   });
+  labelSwitches();
   if (App?.game) App.game.updateHUD();
 }
 
@@ -2391,6 +2419,15 @@ class BoardRenderer {
     return { wx, wy };
   }
 
+  // Test hook (House.debug): CSS px of a cell centre on screen. Reads only.
+  cellToClient(x, y) {
+    const { wx, wy } = this.cellToWorld(x, y);
+    this.camera.updateMatrixWorld();
+    const v = new THREE.Vector3(wx, wy, 0).project(this.camera);
+    const r = this.renderer.domElement.getBoundingClientRect();
+    return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height };
+  }
+
   // Convert world coordinate to (cx, cy) cell
   worldToCell(wx, wy) {
     const S = this.cellSize;
@@ -2904,7 +2941,12 @@ class InputController {
   initKeyboard() {
     window.addEventListener('keydown', (e) => {
       // Ignore keyboard if inside input/dialog
-      if (e.target.matches('input, select, textarea, button') && e.key !== 'Escape') return;
+      // Focus on a button (e.g. after a sheet closes) must not swallow letter shortcuts; Enter/Space stay native.
+      if (e.target.matches('input, select, textarea') && e.key !== 'Escape') return;
+      if (e.target.matches('button') && (e.key === 'Enter' || e.key === ' ')) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // A sheet is open: only Esc (closes it) reaches the board.
+      if (document.querySelector('dialog[open]') && e.key !== 'Escape') return;
 
       const N = this.renderer.N;
       let handled = false;
@@ -2953,6 +2995,15 @@ class InputController {
           if (App.settings.game.allowUndo !== false) App.game.undo();
           handled = true;
           break;
+        case 'n':
+        case 'N': App.ui.openNewGame(); handled = true; break;
+        case 'h':
+        case 'H': App.ui.openHistory(); handled = true; break;
+        case 's':
+        case 'S': App.ui.openSettings(); handled = true; break;
+        case '?': App.ui.openHelp(); handled = true; break;
+        case 'm':
+        case 'M': App.ui.toggleSound(); handled = true; break;
         case 'Escape':
           this.dismissConfirm();
           $$('dialog[open]').forEach(d => d.close());
@@ -3175,6 +3226,7 @@ class GameController {
     this.refreshMoveList();
     this.updateHUD();
     this.autosave();
+    this.autosave();
 
     if (this.isAITurn()) {
       this.triggerAIMove();
@@ -3373,7 +3425,8 @@ class GameController {
   }
 
   autosave() {
-    if (this.state === 'playing' && this.moves.length > 0) {
+    if (this.state === 'playing' && this.moves.length === 0) store.remove(LS.current); // undone to empty: do not resume old moves
+    else if (this.state === 'playing') {
       const data = {
         session: this.session,
         moves: this.moves,
@@ -3829,6 +3882,16 @@ function getGameFieldsValues(container, prefix = '') {
   };
 }
 
+// A switch has no visible text of its own: name it after the row label it sits beside (axe: label).
+function labelSwitches(root = document) {
+  root.querySelectorAll('label.switch input').forEach(inp => {
+    const lbl = inp.closest('.row')?.querySelector('.lbl');
+    if (!lbl) return;
+    lbl.id ||= uuid();
+    inp.setAttribute('aria-labelledby', lbl.id);
+  });
+}
+
 class UIBindings {
   constructor() {
     this.initDialogCloseButtons();
@@ -3863,6 +3926,7 @@ class UIBindings {
     const dlg = $('#dlg-new-game');
     const container = dlg.querySelector('.game-fields');
     renderGameFields(container, App.settings.game, 'ng');
+    labelSwitches(dlg);
     dlg.showModal();
   }
 
@@ -3918,6 +3982,7 @@ class UIBindings {
     const dlg = $('#dlg-settings');
     const container = dlg.querySelector('.game-fields');
     renderGameFields(container, App.settings.game, 'st');
+    labelSwitches(dlg);
 
     // Undo button switch
     const uSwitch = dlg.querySelector('input[name="allowUndo"]');
@@ -4138,6 +4203,17 @@ class UIBindings {
     $('#dlg-history')?.showModal();
   }
 
+  openHelp() {
+    $('#dlg-help')?.showModal();
+  }
+
+  // Key M: same setting as the Sound checkbox in Settings.
+  toggleSound() {
+    App.settings.audio.sfxOn = !App.settings.audio.sfxOn;
+    saveSettings();
+    App.audio.applySettings();
+  }
+
   renderHistoryList() {
     const list = $('#hist-list');
     const modeFilter = $('#hf-mode')?.value || 'all';
@@ -4325,6 +4401,11 @@ class UIBindings {
       this.openSettings();
     });
 
+    $('#mn-help')?.addEventListener('click', () => {
+      $('#dlg-menu')?.close();
+      this.openHelp();
+    });
+
     $('#mn-forfeit')?.addEventListener('click', async () => {
       $('#dlg-menu')?.close();
       if (App.game.state === 'playing') {
@@ -4443,15 +4524,6 @@ function initPWA() {
     const btn = $('#mn-install');
     if (btn) btn.hidden = false;
   });
-
-  // Optional Service Worker registration probe
-  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    fetch('sw.js', { method: 'HEAD' })
-      .then(res => {
-        if (res.ok) navigator.serviceWorker.register('sw.js');
-      })
-      .catch(() => {});
-  }
 }
 
 // ============================================================
@@ -4541,6 +4613,8 @@ async function main() {
   // Initialize renderer & controllers
   const host = $('#canvas-host');
   App.renderer = new BoardRenderer(host);
+  House.debug.cellToClient = (x, y) => App.renderer.cellToClient(x, y);
+  House.debug.camera = () => ({ x: App.renderer.camera.position.x, y: App.renderer.camera.position.y, z: App.renderer.camera.position.z });
   App.game = new GameController();
   App.input = new InputController(App.renderer, (x, y) => App.game.placeStone(x, y));
   App.replay = new ReplayController();

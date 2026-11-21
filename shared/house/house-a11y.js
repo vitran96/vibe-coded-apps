@@ -43,6 +43,9 @@
     return null;
   };
 
+  // Read-only test hook, filled by each app: cellToClient(x, y) -> {x, y} CSS px, camera() -> {x, y, z}. No setters.
+  H.debug = {};
+
   // Board keyboard cursor on `el`. Arrows/Home/End/PageUp/PageDown move; Enter/Space activate.
   // describe(x, y) gives the localized text announced on each move. Returns the live cursor {x, y}.
   H.boardCursor = ({ el, cols, rows, describe, onMove, onActivate }) => {

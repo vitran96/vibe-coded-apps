@@ -349,7 +349,7 @@
 }
 
 .btn-action {
-  min-height: 40px;
+  min-height: 46px;
   padding: 0 var(--sp-2);
   font-size: var(--fs-sm);
   font-weight: 600;

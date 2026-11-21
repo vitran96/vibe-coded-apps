@@ -1,0 +1,9 @@
+{
+  "source": "hand-built from chinese-chess/src/storage.js (co-tuong: keys, cotuong_prefs migration); capture-saves could not reach the 1.0.0 start screen",
+  "localStorage": {
+    "co-tuong:settings": "{\"v\":1,\"labels\":\"viet\",\"sfx\":{\"on\":false}}",
+    "co-tuong:current": "{\"v\":1,\"id\":\"legacy-xq-1\",\"status\":\"in_progress\",\"startedAt\":1795000000000,\"mode\":\"pve\",\"humanSide\":\"r\",\"ai\":{\"level\":\"easy\"},\"rules\":{\"startFen\":\"rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1\"},\"plies\":[]}",
+    "co-tuong:records": "{\"v\":1,\"items\":[]}",
+    "cotuong_prefs": "{\"v\":1,\"theme\":\"dem\",\"lang\":\"vi\"}"
+  }
+}

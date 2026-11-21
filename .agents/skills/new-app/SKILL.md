@@ -49,6 +49,8 @@ Add the entry to root `version.json`:
 
 ## 4. Build and check
 
+Then the `playwright-test` skill step 6: copy `tools/e2e/specs/_template.spec.mjs` to `tools/e2e/specs/<id>.spec.mjs` and fill it in.
+
 ```sh
 node shared/scripts/build.mjs <id>
 node shared/scripts/check.mjs <id>     # must print PASS

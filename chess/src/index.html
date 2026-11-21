@@ -66,8 +66,9 @@
         </div>
 
         <!-- 3D Board Canvas wrapper -->
+        <p id="board-text" class="sr-only"></p>
         <div class="board-wrapper">
-          <canvas id="chess-canvas" data-i18n-aria="board.label"></canvas>
+          <canvas id="chess-canvas" data-i18n-aria="board.label" aria-describedby="board-text"></canvas>
           <div id="board-glow" class="board-glow" style="display:none;"></div>
           <div id="countdown-overlay" style="display:none;">
             <div id="countdown-num" class="countdown-num">5</div>

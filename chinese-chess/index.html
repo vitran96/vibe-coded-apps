@@ -32,7 +32,7 @@
   --ink: #2B2622; --muted: #6A6158;
   --accent: #B8432E; --on-accent: #FFFFFF; --accent-2: #2E7566;
   --p1: #2B2622; --p2: #B8432E;
-  --ok: #2E7566; --warn: #B7791F; --danger: #B8432E;
+  --ok: #2E7566; --warn: #B7791F; --danger: #A33C27;
   --board: #E9DCC4; --board-line: #8C7A62;
   --shadow: 0 1px 0 rgb(43 38 34 / .05), 0 10px 28px -12px rgb(43 38 34 / .35);
   --grain-opacity: .05;
@@ -68,10 +68,10 @@
 [data-theme="bien"] {
   color-scheme: light;
   --bg: #E7EEEF; --surface: #F6FAFA; --surface-2: #D9E4E6; --line: #BFD0D3;
-  --ink: #1D2B30; --muted: #546A70;
+  --ink: #1D2B30; --muted: #4B6066;
   --accent: #1D6A85; --on-accent: #FFFFFF; --accent-2: #B5742A;
   --p1: #1D2B30; --p2: #1D6A85;
-  --ok: #2E7566; --warn: #B5742A; --danger: #B8432E;
+  --ok: #2E7566; --warn: #B5742A; --danger: #A33C27;
   --board: #D3E2E3; --board-line: #6F8D93;
   --shadow: 0 1px 0 rgb(29 43 48 / .05), 0 10px 28px -12px rgb(29 43 48 / .35);
   --grain-opacity: .04;
@@ -482,7 +482,7 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
 }
 
 .btn-action {
-  min-height: 40px;
+  min-height: 46px;
   padding: 0 var(--sp-2);
   font-size: var(--fs-sm);
   font-weight: 600;
@@ -1516,6 +1516,9 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
     if (key === 'PageDown') return { x, y: rows - 1 };
     return null;
   };
+
+  // Read-only test hook, filled by each app: cellToClient(x, y) -> {x, y} CSS px, camera() -> {x, y, z}. No setters.
+  H.debug = {};
 
   // Board keyboard cursor on `el`. Arrows/Home/End/PageUp/PageDown move; Enter/Space activate.
   // describe(x, y) gives the localized text announced on each move. Returns the live cursor {x, y}.
@@ -4503,6 +4506,16 @@ if (typeof module !== 'undefined' && module.exports) {
       this.requestRender();
     },
 
+    // Test hook (House.debug): CSS px of a square centre, and the camera position. Reads only.
+    squareToClient(sq) {
+      const { x, z } = sqToCoords(sq);
+      camera.updateMatrixWorld();
+      const v = new THREE.Vector3(x, 0, z).project(camera);
+      const r = renderer.domElement.getBoundingClientRect();
+      return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height };
+    },
+    cameraPos() { return { x: camera.position.x, y: camera.position.y, z: camera.position.z }; },
+
     raycastSquare(clientX, clientY) {
       if (!containerEl || !camera) return -1;
       const rect = containerEl.getBoundingClientRect();
@@ -4599,6 +4612,8 @@ if (typeof module !== 'undefined' && module.exports) {
 
   // Screen cell (x 0..8 left to right, y 0..9 top to bottom) <-> square (rank * 9 + file). Black's view is flipped.
   const cellToSq = (x, y) => (flipped() ? y * 9 + (8 - x) : (9 - y) * 9 + x);
+  H.debug.cellToClient = (x, y) => window.XQ.Render.squareToClient(cellToSq(x, y));
+  H.debug.camera = () => window.XQ.Render.cameraPos();
   const sqToCell = (sq) => {
     const f = sq % 9, r = Math.floor(sq / 9);
     return flipped() ? { x: 8 - f, y: r } : { x: f, y: 9 - r };
@@ -6028,7 +6043,7 @@ if (typeof module !== 'undefined' && module.exports) {
 import * as THREE from 'three';
 
 (() => {
-  const APP_VERSION = '1.2.0';
+  const APP_VERSION = '1.2.2';
   const MAKER = '';
 
   let game = null;

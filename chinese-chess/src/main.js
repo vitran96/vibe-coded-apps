@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 
 (() => {
-  const APP_VERSION = '1.2.0';
+  const APP_VERSION = '1.2.2';
   const MAKER = '';
 
   let game = null;

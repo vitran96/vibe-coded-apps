@@ -37,7 +37,7 @@
   --ink: #2B2622; --muted: #6A6158;
   --accent: #B8432E; --on-accent: #FFFFFF; --accent-2: #2E7566;
   --p1: #2B2622; --p2: #B8432E;
-  --ok: #2E7566; --warn: #B7791F; --danger: #B8432E;
+  --ok: #2E7566; --warn: #B7791F; --danger: #A33C27;
   --board: #E9DCC4; --board-line: #8C7A62;
   --shadow: 0 1px 0 rgb(43 38 34 / .05), 0 10px 28px -12px rgb(43 38 34 / .35);
   --grain-opacity: .05;
@@ -73,10 +73,10 @@
 [data-theme="bien"] {
   color-scheme: light;
   --bg: #E7EEEF; --surface: #F6FAFA; --surface-2: #D9E4E6; --line: #BFD0D3;
-  --ink: #1D2B30; --muted: #546A70;
+  --ink: #1D2B30; --muted: #4B6066;
   --accent: #1D6A85; --on-accent: #FFFFFF; --accent-2: #B5742A;
   --p1: #1D2B30; --p2: #1D6A85;
-  --ok: #2E7566; --warn: #B5742A; --danger: #B8432E;
+  --ok: #2E7566; --warn: #B5742A; --danger: #A33C27;
   --board: #D3E2E3; --board-line: #6F8D93;
   --shadow: 0 1px 0 rgb(29 43 48 / .05), 0 10px 28px -12px rgb(29 43 48 / .35);
   --grain-opacity: .04;
@@ -844,6 +844,8 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
 .help-keys li { display: flex; gap: var(--sp-3); align-items: center; }
 .help-keys kbd { min-width: 44px; text-align: center; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); font-weight: 700; }
 
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
 </style>
 </head>
 <body>
@@ -890,8 +892,9 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
         </div>
 
         <!-- 3D Board Canvas wrapper -->
+        <p id="board-text" class="sr-only"></p>
         <div class="board-wrapper">
-          <canvas id="chess-canvas" data-i18n-aria="board.label"></canvas>
+          <canvas id="chess-canvas" data-i18n-aria="board.label" aria-describedby="board-text"></canvas>
           <div id="board-glow" class="board-glow" style="display:none;"></div>
           <div id="countdown-overlay" style="display:none;">
             <div id="countdown-num" class="countdown-num">5</div>
@@ -1455,6 +1458,9 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
     if (key === 'PageDown') return { x, y: rows - 1 };
     return null;
   };
+
+  // Read-only test hook, filled by each app: cellToClient(x, y) -> {x, y} CSS px, camera() -> {x, y, z}. No setters.
+  H.debug = {};
 
   // Board keyboard cursor on `el`. Arrows/Home/End/PageUp/PageDown move; Enter/Space activate.
   // describe(x, y) gives the localized text announced on each move. Returns the live cursor {x, y}.
@@ -3589,7 +3595,7 @@ dialog::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6
 import * as THREE from 'three';
 
 const APP_ID = 'chess';
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.1.2';
 const MAKER = '';
 
 const STORAGE_PREFIX = 'covua_';
@@ -3818,6 +3824,14 @@ function initThree() {
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setSize(size, size);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Test hook (House.debug): read-only CSS px of a cell centre and the camera position.
+  House.debug.cellToClient = (x, y) => {
+    camera.updateMatrixWorld();
+    const v = sqToPos(visToSq(x, y)).project(camera);
+    const r = canvas.getBoundingClientRect();
+    return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height };
+  };
+  House.debug.camera = () => ({ x: camera.position.x, y: camera.position.y, z: camera.position.z });
 
   // Lights
   const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.9);
@@ -3954,7 +3968,21 @@ function getPieceRotation(z) {
   return z < 0 ? -Math.PI / 2 : Math.PI / 2;
 }
 
+// Text alternative for the 3D board: every piece by square, plus whose turn it is.
+function describeBoard() {
+  const el = document.getElementById('board-text');
+  if (!el || !curGame) return;
+  const t = (k, p) => House.i18n.t(k, p);
+  const white = [], black = [];
+  curGame.state.board.forEach((p, sq) => {
+    if (p) (p > 0 ? white : black).push(`${ChessRules.toCoord(sq)} ${t(PIECE_NAME_KEY[Math.abs(p)])}`);
+  });
+  const side = (s) => t(s === 1 ? 'game.side.white' : 'game.side.black');
+  el.textContent = `${t('turn.of', { name: side(curGame.state.turn) })}. ${side(1)}: ${white.join(', ')}. ${side(-1)}: ${black.join(', ')}.`;
+}
+
 function syncBoard3D(prevBoard = null) {
+  describeBoard();
   while (piecesGroup.children.length) piecesGroup.remove(piecesGroup.children[0]);
   pieceMeshes = [];
 

@@ -230,3 +230,10 @@ Before finalizing any changes or reviews, always execute this mandatory checklis
   1. Use `window.XQ.toast` in `src/main.js`.
   2. The kit is now the shared `shared/house/house-kit.js` (dark theme honoured). `cotuong_prefs` is migrated once into `house:prefs` on load and then removed (`src/storage.js`). Default is still light (`giay`), never OS detection.
 - **Invariant:** storage goes through `House.store('cotuong_', { legacy: ['co-tuong:'] })`; never add a second prefs key.
+
+### Issue #019: Rules Chips and Danger Buttons Below Contrast (Sea and Paper themes)
+- **Symptom:** The rule-section chips (Mục tiêu, Bàn cờ, ...) on the Sea theme measured 4.4:1; the Paper danger colour measured 4.2:1 (axe `color-contrast`, serious).
+- **Root Cause:** `--muted` (Sea) and `--danger` (Paper, Sea) in the shared `shared/house/house-theme.css` were just under 4.5:1 on their surfaces.
+- **Fix:** Sea `--muted` `#4B6066`, Paper and Sea `--danger` `#A33C27` (all ≥ 4.5:1). Shared fix; caro and chess are rebuilt with it.
+- **Invariant:** every theme token used as text passes 4.5:1 on its surface (`tools/e2e/specs/house.spec.mjs` B13).
+- **Location:** `shared/house/house-theme.css`.
