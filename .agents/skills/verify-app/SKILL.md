@@ -1,72 +1,62 @@
 ---
 name: verify-app
-description: Checklist to run before committing any change to an app in this repo - build, tests, no CDN/offline, relative paths and sub-route, i18n vi-first, accessibility and keyboard, storage prefix, version, and launcher compatibility.
+description: Checklist to run before committing any change to an app in this repo - the automated check (build current, no network, i18n, storage, version, a11y, app tests), then the manual keyboard, sub-route, offline and language pass.
 ---
 
 # Verify an app
 
-Run from the app folder (`cd <app>`). Stop and fix at the first failure.
+Run from the repo root. Stop and fix at the first failure.
 
-## 1. Build and test
-
-From the repo root: `node scripts/build.mjs <app> --test --check` (see the `build-app` skill). The build must finish with no warnings about missing files.
-
-## 2. Offline / no CDN
+## 1. Automated gate
 
 ```sh
-grep -noE '(src|href)="https?://[^"]+"|from ?"https?://[^"]+"|"https?://[^"]+\.(m?js|css|woff2?)"' index.html
+node shared/scripts/build.mjs <app>
+node shared/scripts/check.mjs <app>     # must print PASS
 ```
 
-Expected: no output. Any hit is a runtime network dependency; vendor it.
+`check.mjs` covers: the committed `index.html` equals a fresh build; no network URL, root-absolute path or un-inlined file; `vi` and `en` keys match and every used key exists; storage keys and `House.store` use the app prefix, and there is no `localStorage.clear()`; `APP_VERSION` equals the `version.json` entry; static a11y (`<html lang>`, an `aria-live` region, labelled buttons, no `tabindex` > 0, no focus outline removed without `:focus-visible`); and every `scripts/test*.mjs` passes.
 
-## 3. Relative paths only
+Also run the extra tests the root `AGENTS.md` lists for the app (chess perft, chinese-chess run-rules-tests).
+
+## 2. Sub-route and file://
 
 ```sh
-grep -noE '(src|href|action)="/[^/][^"]*"|register\(["'"'"']/|start_url["'"'"']?: *["'"'"']/' index.html
+npx serve .     # from the repo root
 ```
 
-Expected: no output. Then serve the repo root and open the app twice, at its own route and at a renamed copy:
+Open `http://localhost:3000/<app>/`. Copy the folder to a throwaway name (`cp -r <app> zz-route-check`), open it at its new route, then delete the copy. Both must start, play, save and reload state the same way. Open `<app>/index.html` straight from disk (`file://`); it must start too.
 
-```sh
-cd .. && cp -r <app> tmp-route-check && npx serve . 
-# open http://localhost:3000/<app>/ and http://localhost:3000/tmp-route-check/ ; delete tmp-route-check after
-```
+## 3. Offline
 
-Both must load, play, save and reload state the same way. Also open `index.html` directly from disk (`file://`) — it must still start.
+In browser devtools, set the network to offline and reload. The app must start, play and play a sound with no network requests.
 
-## 4. i18n
+## 4. Keyboard only
 
-- Start with cleared storage **and the OS in dark mode**: UI is Vietnamese, `<html lang="vi">`, and the theme is light (Giấy). `grep -n "prefers-color-scheme" src/*.js src/*.css index.html` must not show theme detection.
-- Switch to English: every visible string changes (HUD, dialogs, toasts, results, rules page). No raw keys like `game.foo` on screen.
-- Every new key exists in both `vi` and `en`.
+Do not touch the mouse. Play a full game:
 
-## 5. Accessibility and keyboard
-
-Unplug the mouse mentally: play a full game with keyboard only.
-
-- Tab reaches every control in a sensible order, focus ring always visible.
-- Board: arrow keys move a cursor, Enter/Space selects/places, the cursor is visible on the board.
-- Esc closes the top dialog and returns focus to the control that opened it.
-- Turn changes, check, win/lose/draw are announced via `aria-live`.
-- Icon-only buttons have `aria-label` (translated).
+- Tab reaches every control in a sensible order, and the focus ring is always visible.
+- Board: arrow keys move the cursor, Enter/Space place or select, and the cursor is visible on the board.
+- Esc closes the open dialog and returns focus to the control that opened it.
+- Turn changes, check, win/lose/draw are announced in the `aria-live` region.
+- Icon-only buttons have a translated `aria-label`.
 - Reduced motion (OS setting) removes non-essential animation.
-- New text/background colors keep ≥ 4.5:1 contrast in all four themes (`chess/scripts/check-contrast.mjs` shows how to check).
+- New text or background colors keep at least 4.5:1 contrast in all four themes (`chess/scripts/check-contrast.mjs` shows how to check).
+
+## 5. Language and theme
+
+- Clear this app's data, set the OS to dark mode, and start: Vietnamese, `<html lang="vi">`, light theme (Giấy). The app must never follow the OS theme.
+- Switch to English: every visible string changes (HUD, dialogs, toasts, results, rules). No raw keys such as `game.foo` on screen.
 
 ## 6. Storage and version
 
-```sh
-grep -noE "localStorage\.(get|set|remove)Item\(['\"][^'\"]+" src/*.js index.html | grep -v "<prefix>_" | grep -v "house:prefs"
-grep -n "localStorage.clear" src/*.js index.html
-```
-
-Expected: no output for both (replace `<prefix>` with the app's prefix). Keys built from a prefix constant are fine; check that constant.
-If the change is user-visible: `APP_VERSION` bumped and equal to this app's entry in root `version.json` (see `release-app`).
+- Load a save written by the previous released version; it must still resume.
+- Settings → Dữ liệu clears only this app's keys; `house:prefs` (theme, language) and other apps' keys stay.
+- If the change is user-visible: `APP_VERSION` is bumped and equals the `version.json` entry (see `release-app`).
 
 ## 7. Launcher
 
-The launcher runs `type: "html"` apps from `srcdoc` (no base URL, `localStorage` proxied).
-If the app needs any file besides `index.html` to play, it must ship as `type: "zip"` instead. If you touched `game-launcher/`, run `npm test` there.
+The launcher runs `type: "html"` apps from `srcdoc`. If the app needs any file besides `index.html`, it must ship as `type: "zip"` instead. If you touched `game-launcher/`, run `npm test` there.
 
 ## 8. Regression log
 
-If you fixed a bug that could come back, add an entry to `FIXED_ISSUES.md`: symptom, root cause, invariant, location, test.
+If you fixed a bug that could come back, add an entry to the app's `FIXED_ISSUES.md`: symptom, root cause, invariant, location, test.

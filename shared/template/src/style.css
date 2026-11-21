@@ -1,0 +1,11 @@
+/* App-specific styles only. Shared tokens and components live in shared/house/house-theme.css. */
+[hidden] { display: none !important; }
+body { display: flex; min-height: 100dvh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+#app { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-4); padding: var(--sp-5); }
+.screen { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); width: min(360px, 100%); }
+.btn { width: 100%; }
+.status { min-height: 1.5em; font-weight: 600; color: var(--muted); text-align: center; }
+.row { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.row .btn { flex: 1 1 auto; width: auto; }
+.label { margin: var(--sp-3) 0 var(--sp-1); color: var(--muted); font-weight: 600; }
+.check { display: flex; align-items: center; gap: var(--sp-2); min-height: var(--tap); }

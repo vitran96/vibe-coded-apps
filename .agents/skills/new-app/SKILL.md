@@ -1,52 +1,43 @@
 ---
 name: new-app
-description: Create a new vibe-coded app or game folder in this repo (plain HTML/CSS/JS + Three.js, vi-first i18n, house style, single-HTML build, sub-route agnostic, registered in version.json for the launcher).
+description: Create a new vibe-coded app or game folder in this repo from shared/template (plain HTML/CSS/JS + Three.js, vi-first i18n, house style, forced light theme, single-HTML build, sub-route agnostic, registered in version.json for the launcher).
 ---
 
 # New app
 
-Read `AGENTS.md` (root) first. Every hard rule there applies; this skill is the procedure.
+Read the root `AGENTS.md` first. Every hard rule there applies; this skill is the procedure.
 
 ## 1. Decide
 
 - `id`: kebab-case folder name (`connect-four`). It is also the `version.json` id and the launcher cache name.
 - Storage prefix: short, Vietnamese-flavoured, ends in `_` (existing: `caro_`, `covua_`, `cotuong_`). Must not collide with an existing app.
 - Vietnamese name (default) and English name.
-- If the game rules (win condition, board size, turns) are unclear, ask once. Pick everything else yourself and record it in the app's `AGENTS.md` under "Decisions".
+- If the game rules (win condition, board size, turns) are unclear, ask once. Pick everything else yourself and record it in the app's `AGENTS.md`.
 
-## 2. Scaffold
+## 2. Scaffold from the template
 
-Copy the structure of the newest well-structured app (`chinese-chess/` today) rather than inventing a new one:
-
+```sh
+cp -r shared/template <id>
 ```
-<id>/
-  AGENTS.md            # app rules, decisions, invariants (short)
-  FIXED_ISSUES.md      # empty log with the header only
-  src/index.html       # references ./house-theme.css, ./style.css, ./house-kit.js, ./i18n.js, ..., ./main.js
-  src/house-theme.css  # shared house tokens/components: copy verbatim, never edit per app
-  src/house-kit.js     # shared House kit (themes, prefs, i18n core, SFX): copy verbatim
-  src/i18n.js          # House.i18n.add({ vi: {...}, en: {...} }), app keys under `game.*`
-  src/rules.js         # pure, DOM-free game rules (board games)
-  src/main.js          # wiring; the only ES module entry (imports 'three')
-  scripts/build-single-html.mjs
-  scripts/test-*.mjs   # Node tests for rules/AI, zero deps
-```
+
+The template is a working app: start screen, game screen with an `aria-live` status line, Settings in the house order (Trò chơi → Âm thanh → Giao diện → Dữ liệu → Thông tin), theme and language from `house:prefs`, one namespaced store, and `scripts/test-smoke.mjs`. Then, in `<id>/`:
+
+- `src/main.js`: set `APP_VERSION` (`'1.0.0'`) and `STORAGE_PREFIX` (`'<prefix>_'`). `check.mjs` compares both with `version.json` and the prefix.
+- `src/index.html`: `<title>` and the game's markup. Keep the Settings sections in order.
+- `src/i18n.js`: replace the template keys with the game's `game.*` keys. Every key needs both `vi` and `en`.
+- `AGENTS.md`: replace the stub with the app's rules and decisions.
+- `FIXED_ISSUES.md`: keep the header only.
+- Game logic: pure rules in `src/rules.js` and wiring in `src/main.js`. Plain scripts, no `import` between local files. For Three.js or Tone.js, copy the import map and script tags from `chess/src/index.html`; they point at `../../shared/vendor/`, never a CDN.
+- Keep `scripts/test-smoke.mjs` or replace it with rule tests named `scripts/test-*.mjs`.
 
 Rules while writing code:
 
-- Local files must not `import` each other (the build inlines them into one HTML). Use plain scripts that attach to one namespace object, plus one module entry for Three.js.
-- Three.js / Tone.js / fonts come from the vendored copies, never a CDN URL (see `AGENTS.md` rule 2). Until a shared `vendor/` exists, copy the same pinned version the other apps use (Three.js 0.170.0, Tone.js 15.0.4).
 - Colors in Three.js come from `House.palette()`; re-color on the `housethemechange` event.
-- Every user-visible string goes through `t()` / `data-i18n`, `vi` first.
-- Keyboard: board cursor with arrow keys, Enter/Space to act, Esc to close dialogs, visible focus. Announce turns/results in an `aria-live` region.
-- `const APP_VERSION = '1.0.0'` shown in Settings → Thông tin.
-- Board games: AI Easy/Medium/Hard in a Web Worker built from an inline Blob, PvP same screen, records + replay, undo (PvE undoes 2 plies, PvP 1), timer (off by default), BGM off by default, SFX on by default.
+- Every user-visible string goes through `House.i18n.t()` or `data-i18n`, `vi` first. No hard-coded UI text in markup or JS.
+- Keyboard: board cursor with arrow keys, Enter/Space to act, Esc to close dialogs, visible focus. Announce turns and results in the `aria-live` region.
+- Board games: AI Easy/Medium/Hard in a Web Worker built from an inline Blob, PvP on one screen, records + replay, undo (PvE undoes 2 plies, PvP 1), timer off by default, BGM off by default, SFX on by default.
 
-## 3. Build and register
-
-```sh
-node scripts/build.mjs <id> --test   # from the repo root; see the build-app skill
-```
+## 3. Register
 
 Add the entry to root `version.json`:
 
@@ -54,8 +45,13 @@ Add the entry to root `version.json`:
 { "id": "<id>", "name": "<English>", "names": { "vi": "<Tiếng Việt>" }, "version": "1.0.0", "type": "html", "url": "https://vitran96.github.io/vibe-coded-apps/<id>" }
 ```
 
-Add a row for the app to the Commands table in root `AGENTS.md`.
+`version` must equal `APP_VERSION`.
 
-## 4. Verify
+## 4. Build and check
 
-Run the `verify-app` skill (`.agents/skills/verify-app/SKILL.md`) before committing.
+```sh
+node shared/scripts/build.mjs <id>
+node shared/scripts/check.mjs <id>     # must print PASS
+```
+
+Then run the `verify-app` skill (manual keyboard and sub-route pass) before committing.

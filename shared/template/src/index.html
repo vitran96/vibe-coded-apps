@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="giay">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Trò chơi mới</title>
+  <meta name="theme-color" content="#F3EDE2">
+
+  <link rel="stylesheet" href="../../shared/house/house-theme.css">
+  <link rel="stylesheet" href="./style.css">
+  <script src="../../shared/house/house-kit.js"></script>
+  <script src="../../shared/house/house-store.js"></script>
+  <script src="../../shared/house/house-a11y.js"></script>
+  <script src="../../shared/house/house-audio.js"></script>
+  <script src="./i18n.js"></script>
+  <script src="./main.js"></script>
+</head>
+<body>
+  <main id="app">
+    <section id="start-screen" class="screen">
+      <h1 data-i18n="game.title"></h1>
+      <button id="btn-play" class="btn btn-primary" data-i18n="common.play"></button>
+      <button id="btn-settings" class="btn" data-i18n="common.settings"></button>
+    </section>
+
+    <section id="game-screen" class="screen" hidden>
+      <h1 data-i18n="game.title"></h1>
+      <p id="status" class="status" aria-live="polite"></p>
+      <button id="btn-new" class="btn btn-primary" data-i18n="common.newGame"></button>
+      <button id="btn-game-settings" class="btn" data-i18n="common.settings"></button>
+      <button id="btn-back" class="btn" data-i18n="common.back"></button>
+    </section>
+  </main>
+
+  <dialog id="dialog-settings" aria-labelledby="settings-title">
+    <h2 id="settings-title" data-i18n="common.settings"></h2>
+
+    <h3 data-i18n="settings.game"></h3>
+    <p data-i18n="game.noOptions"></p>
+
+    <h3 data-i18n="settings.audio"></h3>
+    <label class="check"><input type="checkbox" id="sfx-on"> <span data-i18n="settings.sfx"></span></label>
+
+    <h3 data-i18n="settings.look"></h3>
+    <p class="label" id="label-theme" data-i18n="settings.theme"></p>
+    <div class="row" role="group" aria-labelledby="label-theme">
+      <button class="btn" data-theme-val="giay" data-i18n="theme.giay"></button>
+      <button class="btn" data-theme-val="dem" data-i18n="theme.dem"></button>
+      <button class="btn" data-theme-val="sonmai" data-i18n="theme.sonmai"></button>
+      <button class="btn" data-theme-val="bien" data-i18n="theme.bien"></button>
+    </div>
+    <p class="label" id="label-lang" data-i18n="settings.language"></p>
+    <div class="row" role="group" aria-labelledby="label-lang">
+      <button class="btn" data-lang-val="vi">Tiếng Việt</button>
+      <button class="btn" data-lang-val="en">English</button>
+    </div>
+
+    <h3 data-i18n="settings.data"></h3>
+    <p id="plays"></p>
+    <button id="btn-clear" class="btn" data-i18n="settings.clearOwn"></button>
+
+    <h3 data-i18n="settings.about"></h3>
+    <p id="app-version"></p>
+
+    <div class="row">
+      <button id="btn-close-settings" class="btn btn-primary" data-i18n="common.close"></button>
+    </div>
+  </dialog>
+</body>
+</html>

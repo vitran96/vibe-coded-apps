@@ -8,11 +8,15 @@ description: Bump an app's version and publish it (APP_VERSION + version.json ca
 ## An app (published by GitHub Pages on push to `main`)
 
 1. Pick the semver bump: patch = fix, minor = feature, major = breaking saved data (needs a storage migration).
-2. Update `APP_VERSION` in the app source (`src/*.js`, or `index.html` for `caro`).
-3. Rebuild and test from the repo root: `node scripts/build.mjs <app> --test`.
+2. Update `APP_VERSION` in the app's `src/` (find it with `grep -n APP_VERSION <app>/src/*.js`).
+3. Rebuild and check from the repo root:
+   ```sh
+   node shared/scripts/build.mjs <app>
+   node shared/scripts/check.mjs <app>     # fails if version.json differs from APP_VERSION
+   ```
 4. Set the same version on the app's entry in root `version.json`. The launcher shows "update available" whenever the installed version differs from this value.
-5. Run the `verify-app` skill.
-6. Commit with the app scope, e.g. `feat(chess): add timer and bump to v1.1.0`.
+5. Run the `verify-app` skill (manual pass).
+6. Commit with the app scope, e.g. `feat(chess): add timer and bump to v1.1.0`. Commit the rebuilt `<app>/index.html` with the change.
 
 ## The launcher (`game-launcher/`)
 

@@ -8,7 +8,7 @@ An app folder may have its own `AGENTS.md` with app-specific rules; this file wi
 
 A collection of small AI-built ("vibe-coded") browser games/apps, mostly written by agents.
 
-- Each top-level folder is one app (`caro/`, `chess/`, `chinese-chess/`, …), except `game-launcher/` (desktop wrapper) and dot-folders.
+- Each top-level folder is one app (`caro/`, `chess/`, `chinese-chess/`, …), except `game-launcher/` (desktop wrapper), `shared/` (common code, below) and dot-folders.
 - The repo is served as-is by GitHub Pages: `https://<user>.github.io/vibe-coded-apps/<app>/`. Every app is a sub-route.
 - `version.json` (root) is the catalog the launcher reads: `{ id, name, names.vi, version, type: "html" | "zip", url }`.
 - `game-launcher/` is a Tauri 2 + Vite app that downloads apps from the catalog, caches them in app-data, and runs them offline in an iframe (`srcdoc` for `type: "html"`, `asset://` URL for `type: "zip"`). It shims `localStorage` per game (`__game_<id>__` prefix).
@@ -23,53 +23,56 @@ A collection of small AI-built ("vibe-coded") browser games/apps, mostly written
 4. **Sub-route agnostic.** Only `./`-relative URLs, never a leading `/`, never a hard-coded host or repo name. The app must work unchanged at `/`, `/vibe-coded-apps/caro/`, `/any/other/path/`, from `file://`, and inside the launcher `srcdoc` iframe. Renaming the folder or route must not need a rebuild.
 5. **i18n by default: Vietnamese first, English second.** Language codes `vi` and `en`. `vi` is the default. No hard-coded UI strings outside the dictionaries; `data-i18n` for static text, `t(key, params)` in JS; update `<html lang>` on switch.
 6. **Accessibility + keyboard.** Everything playable and every control reachable by keyboard alone (visible `:focus-visible`, logical tab order, Esc closes dialogs, arrow keys move a board cursor, Enter/Space acts). Semantic HTML (`button`, `dialog`, labels), `aria-live` for turn/result announcements, text alternative for the canvas (board state readable by screen readers), contrast ≥ 4.5:1 for text, honour `prefers-reduced-motion`, touch targets ≥ 44px.
-7. **Same look and structure in every app** (house style "Mộc"): shared theme tokens + house kit (themes `giay`, `dem`, `sonmai`, `bien`; Be Vietnam Pro font; shared SFX names; shared vi/en common strings; same start screen and Settings order: Trò chơi → Âm thanh → Giao diện → Dữ liệu → Thông tin). Apps extend the kit, never fork it. Current copies: `chess/src/house-kit.js`, `chess/src/house-theme.css`.
+7. **Same look and structure in every app** (house style "Mộc"): shared theme tokens + house kit (themes `giay`, `dem`, `sonmai`, `bien`; Be Vietnam Pro font; shared SFX names; shared vi/en common strings; same start screen and Settings order: Trò chơi → Âm thanh → Giao diện → Dữ liệu → Thông tin). Apps extend the kit, never fork it. The one copy lives in `shared/house/` (`house-kit.js`, `house-theme.css`, `house-store.js`, `house-a11y.js`, `house-audio.js`).
    **Default theme is always light (`giay`), forced: never follow the OS dark-mode setting** (no `prefers-color-scheme` detection, no `auto` default). Players may pick another theme in Settings and that choice persists.
 8. **Storage is namespaced per app.** Many apps share one origin. Every `localStorage` key starts with the app's prefix (current: `caro_`, `covua_`, `cotuong_`); never `localStorage.clear()`; "reset data" removes only own keys; wrap storage in try/catch and keep the game playable when it fails; store objects carry a schema `v`. The only shared key is `house:prefs` (`{ v, theme, lang }`).
 9. **Version.** `const APP_VERSION = 'x.y.z'` shown in Settings → Thông tin. Bump it on every user-visible change and keep `version.json` in sync (the launcher compares them to offer updates).
 10. **Tooling is Node only, zero npm dependencies** for apps (`node scripts/*.mjs`). No Python. (`game-launcher/` is the exception: it uses npm, Vite, Tauri, Rust.)
 11. **Phone first-class**: Pointer Events, `touch-action: none` on the canvas, `100dvh`, safe-area insets, portrait + landscape.
 
-## App folder layout
+## Layout
 
 ```
+shared/
+  house/       # the one house kit: theme CSS, House kit, store, a11y, audio
+  vendor/      # pinned Three.js, Tone.js and fonts, with their licenses
+  scripts/     # build.mjs (builds any app into one index.html), check.mjs (static checks)
+  template/    # scaffold for a new app (copy it; see the new-app skill)
 <app>/
   index.html          # BUILT output, committed, what Pages and the launcher serve
   AGENTS.md           # optional app-specific rules / invariants
   FIXED_ISSUES.md     # regression log: symptom, root cause, invariant, location
   src/                # source of truth: index.html + *.css + *.js (plain scripts or one module entry)
   assets/             # optional static files (vendored per-app assets)
-  scripts/            # zero-dependency Node .mjs: build, tests, self-play, checks
+  scripts/            # zero-dependency Node .mjs: tests, self-play
 ```
 
-Built files are generated. Edit `src/`, then rebuild; never hand-edit a built `index.html` of an app that has `src/`.
-Exception today: `caro/` has no `src/` yet — its `index.html` is the source (use `node caro/scripts/caro.js`, see `caro/AGENTS.md`).
+Built files are generated. Edit `src/`, then rebuild; never hand-edit a built `index.html`.
 
 ## Commands
 
-Preferred, from the repo root (all cases, see the `build-app` skill):
+From the repo root:
 
 ```sh
-node scripts/build.mjs <app...> | --all  [--test] [--check] [--zip]
-node scripts/build.mjs launcher [--test] [--desktop]
+node shared/scripts/build.mjs <app...> | --all | --self-test   # src/index.html -> index.html
+node shared/scripts/check.mjs <app...> | --all                  # build is current, no network, i18n, storage, version, a11y, app tests
 ```
 
-Underlying per-app commands, run from the app folder:
+`check.mjs` runs every `scripts/test*.mjs` in the app folder. Two test scripts do not match that name and must be run by hand: `chess/scripts/perft.mjs` and `chinese-chess/scripts/run-rules-tests.mjs`.
 
-| App | Build | Test |
-|---|---|---|
-| `chess` | `node scripts/build-single-html.mjs src/index.html index.html` | `node scripts/test-rules.mjs && node scripts/test-undo.mjs && node scripts/perft.mjs` |
-| `chinese-chess` | `node scripts/build-single-html.mjs src/index.html index.html` | `node scripts/run-rules-tests.mjs` |
-| `caro` | (no build; source is `index.html`) | `node scripts/caro.js check` |
-| `game-launcher` | `npm ci && npm run build` (`npm run tauri build` for the binary) | `npm test` |
+| App | Test extras (run by hand) |
+|---|---|
+| `chess` | `cd chess && node scripts/perft.mjs` |
+| `chinese-chess` | `node chinese-chess/scripts/run-rules-tests.mjs` |
+| `game-launcher` (not built by `shared/scripts`) | `cd game-launcher && npm ci && npm test && npm run build` (`npm run tauri build` for the binary) |
 
-Manual check: serve the repo root (`npx serve .`) and open `/<app>/` and also a renamed copy of the folder to prove sub-route agnosticism.
+Manual check (not automated): serve the repo root (`npx serve .`), open `/<app>/` and a renamed copy of the folder, and play with the keyboard only. The `verify-app` skill lists the steps.
 
 ## Workflow for agents
 
 - Read the app's `AGENTS.md` / `FIXED_ISSUES.md` before touching it; keep every listed invariant.
 - Use the skills below; they hold the step-by-step procedures.
-- After a change: build, run the app's tests, run the `verify-app` checklist, bump `APP_VERSION` + `version.json` if user-visible.
+- After a change: `node shared/scripts/build.mjs <app>`, then `node shared/scripts/check.mjs <app>`, then the `verify-app` manual pass; bump `APP_VERSION` + `version.json` if user-visible.
 - When you fix a bug that could come back, add an entry to the app's `FIXED_ISSUES.md`.
 - Commit messages: Conventional Commits with the app as scope, e.g. `fix(caro): …`, `feat(chess): …`, `ci(game-launcher): …`.
 - Do not commit `tmp/`, `out/`, `node_modules/`, `dist/`, `target/` (gitignored). Plans and scratch notes go in `out/`.
@@ -84,4 +87,3 @@ Agent-agnostic skills live in `.agents/skills/<name>/SKILL.md` (plain Markdown, 
 | `.agents/skills/new-app/SKILL.md` | Creating a new app/game folder in this repo |
 | `.agents/skills/verify-app/SKILL.md` | Before committing any change to an app (build, tests, offline, sub-route, i18n, a11y, launcher) |
 | `.agents/skills/release-app/SKILL.md` | Bumping an app version, updating `version.json`, releasing the launcher |
-| `caro/.agents/skills/caro-dev/SKILL.md` | Editing the single-file `caro/index.html` |

@@ -1,0 +1,30 @@
+name: Apps
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  apps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build and check helper self-tests
+        run: node shared/scripts/build.mjs --self-test
+
+      - name: House helper self-tests
+        run: node shared/house/self-test.mjs
+
+      - name: Check all apps (build is up to date, no network, i18n, storage, version, a11y, scripts/test*.mjs)
+        run: node shared/scripts/check.mjs --all
+
+      - name: chess perft (not named test*, so check.mjs skips it)
+        run: cd chess && node scripts/perft.mjs
+
+      - name: chinese-chess rules tests (not named test*, so check.mjs skips it)
+        run: node chinese-chess/scripts/run-rules-tests.mjs
