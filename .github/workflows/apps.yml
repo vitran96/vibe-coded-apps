@@ -23,6 +23,9 @@ jobs:
       - name: House helper self-tests
         run: node shared/house/self-test.mjs
 
+      - name: Version and archive helper self-tests
+        run: node shared/scripts/bump-version.mjs --self-test && node shared/scripts/archive-version.mjs --self-test
+
       - name: Check all apps (build is up to date, no network, i18n, storage, version, a11y, scripts/test*.mjs)
         run: node shared/scripts/check.mjs --all
 

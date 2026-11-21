@@ -53,7 +53,7 @@ Do not touch the mouse. Play a full game:
 
 - Load a save written by the previous released version; it must still resume.
 - Settings → Dữ liệu clears only this app's keys; `house:prefs` (theme, language) and other apps' keys stay.
-- If the change is user-visible: `APP_VERSION` is bumped and equals the `version.json` entry (see `release-app`).
+- If the change is user-visible: the repo version is bumped with `bump-version` (see `bump-version`).
 
 ## 7. Launcher
 

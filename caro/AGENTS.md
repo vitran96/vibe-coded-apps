@@ -17,7 +17,7 @@ Root `AGENTS.md` applies and wins on conflict. This file lists what is specific 
 2. Look: house themes (`giay` default, `dem`, `sonmai`, `bien`). The default is always light; never read the OS dark-mode setting. Theme and language choices are saved in `house:prefs` through the kit.
 3. Storage: keys are `STORAGE_PREFIX` (`caro_`) plus a suffix from `LS`, through `House.store(STORAGE_PREFIX, { legacy: ['caro.'] })`. Never `localStorage.clear()`. Settings and records objects carry `v: 1`.
 4. Spa music is off by default. SFX on. Timer off.
-5. Version: `APP_VERSION` in `src/constants.js` must match `version.json`. Bump both on user-visible changes.
+5. Version: one repo-wide version. Bump it with `node shared/scripts/bump-version.mjs` (never edit `APP_VERSION` or `version.json` by hand).
 
 ## Invariants (see FIXED_ISSUES.md)
 

@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // Static checks per app: up-to-date build, no network, i18n parity, storage prefix, version, a11y smoke, app tests.
+// Also checks the repo-wide version (bump-version.mjs sites) once per run.
 // Usage: node shared/scripts/check.mjs <app...> | --all
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT, buildFile, findProblems, allApps } from './build.mjs';
+import { versionProblems } from './bump-version.mjs';
 
 const read = (p) => readFileSync(p, 'utf8');
 const catalog = JSON.parse(read(join(ROOT, 'version.json'))).games;
@@ -129,7 +131,11 @@ if (!targets.length) {
   process.exit(2);
 }
 
-let hard = 0;
+// Repo-wide: every version site equals version.json's top-level version (bump-version.mjs writes them).
+const repo = versionProblems();
+console.log(repo.length ? 'FAIL  repo versions' : 'PASS  repo versions');
+repo.forEach((p) => console.log(`        - ${p}`));
+let hard = repo.length ? 1 : 0;
 for (const name of targets) {
   const problems = existsSync(join(ROOT, name)) ? appChecks(name) : [`no such app folder: ${name}`];
   if (!problems.length) {
@@ -140,5 +146,5 @@ for (const name of targets) {
     problems.forEach((p) => console.log(`        - ${p}`));
   }
 }
-console.log(`\n${targets.length} app(s): ${hard} failing`);
+console.log(`\n${targets.length} app(s) + repo versions: ${hard} failing`);
 process.exit(hard ? 1 : 0);

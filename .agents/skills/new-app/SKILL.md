@@ -22,7 +22,7 @@ cp -r shared/template <id>
 
 The template is a working app: start screen, game screen with an `aria-live` status line, Settings in the house order (Trò chơi → Âm thanh → Giao diện → Dữ liệu → Thông tin), theme and language from `house:prefs`, one namespaced store, and `scripts/test-smoke.mjs`. Then, in `<id>/`:
 
-- `src/main.js`: set `APP_VERSION` (`'1.0.0'`) and `STORAGE_PREFIX` (`'<prefix>_'`). `check.mjs` compares both with `version.json` and the prefix.
+- `src/main.js`: set `APP_VERSION` to the current repo version (see `version.json` top-level `version`) and `STORAGE_PREFIX` (`'<prefix>_'`). `check.mjs` compares both with `version.json` and the prefix.
 - `src/index.html`: `<title>` and the game's markup. Keep the Settings sections in order.
 - `src/i18n.js`: replace the template keys with the game's `game.*` keys. Every key needs both `vi` and `en`.
 - `AGENTS.md`: replace the stub with the app's rules and decisions.
@@ -45,7 +45,7 @@ Add the entry to root `version.json`:
 { "id": "<id>", "name": "<English>", "names": { "vi": "<Tiếng Việt>" }, "version": "1.0.0", "type": "html", "url": "https://vitran96.github.io/vibe-coded-apps/<id>" }
 ```
 
-`version` must equal `APP_VERSION`.
+`version` must equal the repo version (run `bump-version` if it moved).
 
 ## 4. Build and check
 
