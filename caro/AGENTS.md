@@ -1,36 +1,26 @@
-# Caro & Gomoku - Project Guidelines & Rules
+# Caro & Gomoku — app rules
 
-> App-specific rules for `caro/`. Root `AGENTS.md` applies too and wins on conflict (e.g. the split `src/` + build rule; caro is scheduled to migrate, see the rebuild plan).
+Root `AGENTS.md` applies and wins on conflict. This file lists what is specific to `caro/`.
 
-## 1. Single-File Architecture Constraint
-- **Single File Truth:** The entire application runtime must reside strictly in [index.html](index.html).
-- Do NOT extract or split runtime styles, templates, or scripts into external `.css` or `.js` asset files.
-- All styles (`<style>`), dialogs (`<dialog>`), game logic, AI Web Worker, Three.js 3D board renderer, Tone.js audio engine, i18n dictionaries, and service worker templates are bundled in [index.html](index.html).
+## Layout
 
-## 2. i18n (Internationalization) Standards
-- **Supported Languages:** ONLY Vietnamese (`vn`) and English (`eng`) are supported. Do NOT add any other languages.
-- **Default Language:** Vietnamese (`vn`) is always the default (`DEFAULT_SETTINGS.display.lang = 'vn'`).
-- **Translation Completeness:** Every user-facing string (HUD, toolbar, replay bar, dialogs, toasts, confirmation messages, game settings, history filters) MUST have both `vn` and `eng` translations in the `I18N` object.
-- **Template Bindings:** Use `data-i18n="<key>"` in HTML elements and call `t('<key>', ...args)` in JavaScript.
+- `src/` is the source: `index.html` (markup and dialogs), `style.css`, and one plain script per area (`constants.js`, `i18n.js`, `storage.js`, `rules.js`, `ai-engine.js`, `ai-client.js`, `audio.js`, `timer.js`, `renderer.js`, `input.js`, `game.js`, `replay.js`, `ui.js`, `pwa.js`, `main.js`), plus `three.js` (loads Three.js) and `sw.js` (optional service worker template; the build does not ship it).
+- `index.html` (here) is BUILT. Never edit it. Run `node shared/scripts/build.mjs caro`.
+- All scripts share one global scope in the build, so keep the load order in `src/index.html`.
+- Shared kit: `shared/house/` (House kit, `House.store`, a11y helpers, `house-theme.css`). Vendored libraries and fonts: `shared/vendor/`. No CDN, no network at runtime.
+- Tests: `node scripts/test-caro.mjs` (rules and AI unit tests, run in Node) and `node scripts/test-save.mjs` (old saves still load).
+- Check: `node shared/scripts/check.mjs caro`.
 
-## 3. Audio & Music Defaults
-- **Default State:** Background music is disabled by default (`DEFAULT_SETTINGS.audio.musicOn: false`).
-- **Music Style:** Ambient relaxing spa music (warm sine pads, soft meditation chimes, lush 6.5s reverb, 44 BPM). No drums, beats, or vinyl noise.
+## Rules
 
-## 4. Developer Toolchain & Scripts
-- **Strictly Node.js / JavaScript:** Do NOT use Python. All helper scripts, test runners, and automation must use Node.js with standard library JS (no external npm dependencies).
-- **CLI Helper:** Use [scripts/caro.js](scripts/caro.js) for all development tasks:
-  - `node scripts/caro.js list` - View code sections, line numbers, and sizes.
-  - `node scripts/caro.js view <section|query>` - View isolated sections or search code.
-  - `node scripts/caro.js patch "<search>" "<replace>"` - Safe unique string replacement with auto-backup and syntax validation.
-  - `node scripts/caro.js test` - Run all 27 unit tests directly in Node.js.
-  - `node scripts/caro.js check` - Run comprehensive sanity checks (syntax, tag balance, i18n parity, default language, unit tests).
-  - `node scripts/caro.js i18n check` / `list` / `add` - Inspect and maintain translation keys.
-- **Verification Rule:** Always run `node scripts/caro.js check` after making edits to guarantee zero regression.
+1. Languages: `vi` (default) and `en` only. Every UI string is in `I18N.vi` and `I18N.en` with quoted keys, and is reached through `t(key, ...args)` or `data-i18n`. Change the language with `setLang()`.
+2. Look: house themes (`giay` default, `dem`, `sonmai`, `bien`). The default is always light; never read the OS dark-mode setting. Theme and language choices are saved in `house:prefs` through the kit.
+3. Storage: keys are `STORAGE_PREFIX` (`caro_`) plus a suffix from `LS`, through `House.store(STORAGE_PREFIX, { legacy: ['caro.'] })`. Never `localStorage.clear()`. Settings and records objects carry `v: 1`.
+4. Spa music is off by default. SFX on. Timer off.
+5. Version: `APP_VERSION` in `src/constants.js` must match `version.json`. Bump both on user-visible changes.
 
-## 5. Fixed Issues & Regression Invariants
-See [FIXED_ISSUES.md](FIXED_ISSUES.md) for full incident history.
-- **Camera Auto-Move:** Never pan camera if placed piece is comfortably inside viewport. Only pan slightly (`clearance = 2.0 * S`) when piece is within 1.2 cell size of screen edge.
-- **Undo in PvE vs PvP:** In PvE (`session.mode === 'pve' && session.ai`), Undo MUST revert 2 moves (bot + player) so turn returns to the human. In PvP, Undo reverts 1 move.
-- **Storage Prefix:** All `localStorage` keys must have prefix `caro_` (`caro_settings`, `caro_current`, `caro_records`, `caro_iosHint`).
+## Invariants (see FIXED_ISSUES.md)
 
+- The camera pans only when the placed stone is within 1.2 cells of the edge, by `2.0 * S`.
+- Undo: against the computer (`session.mode === 'pve' && session.ai`) it reverts 2 moves; two players, 1 move.
+- Storage keys use the `caro_` prefix; 1.0.0 `caro.` keys are still read.

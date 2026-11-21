@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<!-- Caro & Gomoku. Built from src/ by shared/scripts/build.mjs: edit src/, not index.html. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#1d1b22">
+<meta name="description" content="Gomoku and Caro (five in a row) with AI, hot-seat play, replays and lofi music.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Caro">
+<title>Caro &amp; Gomoku</title>
+<link rel="apple-touch-icon" id="apple-icon" href="">
+<link rel="icon" id="favicon" href="data:,">
+<link rel="manifest" id="manifest-link" href="data:application/manifest+json,{}">
+<script type="importmap">
+{
+  "imports": {
+    "three": "../../shared/vendor/three@0.170.0/three.module.min.js",
+    "three/addons/utils/BufferGeometryUtils.js": "../../shared/vendor/three@0.170.0/BufferGeometryUtils.js"
+  }
+}
+</script>
+<!-- Lofi music engine -->
+<script src="../../shared/vendor/tone@15.0.4/Tone.js"></script>
+<link rel="stylesheet" href="../../shared/house/house-theme.css">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div id="app">
+  <div id="canvas-host" tabindex="0" aria-label="Game board. Use arrow keys to move the cursor, Enter to place."></div>
+
+  <div id="side" class="glass">
+    <div id="hud">
+      <div class="hud-card glass">
+        <div class="players">
+          <div class="pchip" id="chip-1" data-p="1">
+            <div class="picon"><svg class="ring" viewBox="0 0 40 40" aria-hidden="true"><circle class="track" cx="20" cy="20" r="17" fill="none" stroke-width="3"/><circle class="prog" cx="20" cy="20" r="17" fill="none" stroke-width="3" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="0"/></svg><span class="pico"></span></div>
+            <div class="pmeta"><span class="pname">Player X</span><span class="ptime"></span></div>
+          </div>
+          <div class="hud-mid"><span class="badge" id="rule-badge">Caro</span><span id="move-no">Move 0</span></div>
+          <div class="pchip right" id="chip-2" data-p="2">
+            <div class="picon"><svg class="ring" viewBox="0 0 40 40" aria-hidden="true"><circle class="track" cx="20" cy="20" r="17" fill="none" stroke-width="3"/><circle class="prog" cx="20" cy="20" r="17" fill="none" stroke-width="3" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="0"/></svg><span class="pico"></span></div>
+            <div class="pmeta"><span class="pname">Player O</span><span class="ptime"></span></div>
+          </div>
+        </div>
+        <div id="status-line">Start a new game</div>
+      </div>
+    </div>
+    <div id="movelist" aria-label="Move list"><ol></ol></div>
+    <div id="toolbar">
+      <div class="tb-inner glass" role="toolbar" aria-label="Game controls">
+        <button class="tb-btn" id="btn-undo" title="Undo (U)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span data-i18n="undo">Hoàn tác</span></button>
+        <button class="tb-btn" id="btn-fit" title="Zoom to fit (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span data-i18n="fit">Vừa bàn</span></button>
+        <button class="tb-btn" id="btn-menu" title="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span data-i18n="menu">Menu</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirm-bar" class="glass" hidden>
+    <button id="btn-confirm-no" aria-label="Cancel move" data-i18n="cancelPlace">✕</button>
+    <button id="btn-confirm-yes" aria-label="Place stone here" data-i18n="confirmPlace">✓ Đặt quân</button>
+  </div>
+
+  <div id="replay-bar" class="glass" hidden role="region" aria-label="Replay controls">
+    <div class="rb-row">
+      <button class="tb-btn" id="rb-start" title="Start" aria-label="Go to start"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5h2.5v14H5zM19 5l-10 7 10 7z"/></svg></button>
+      <button class="tb-btn" id="rb-back" title="Step back" aria-label="Step back"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l-8 6 8 6z"/></svg></button>
+      <button class="tb-btn" id="rb-play" title="Play / pause" aria-label="Play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5l12 7-12 7z"/></svg></button>
+      <button class="tb-btn" id="rb-fwd" title="Step forward" aria-label="Step forward"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 6l8 6-8 6z"/></svg></button>
+      <button class="tb-btn" id="rb-end" title="End" aria-label="Go to end"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 5H19v14h-2.5zM5 5l10 7-10 7z"/></svg></button>
+      <span id="rb-count">0 / 0</span>
+    </div>
+    <div class="rb-row">
+      <input type="range" id="rb-scrub" min="0" max="0" value="0" aria-label="Replay position">
+    </div>
+    <div class="rb-row">
+      <label class="rb-opt"><span data-i18n="speed">Tốc độ</span> <select id="rb-speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+      <label class="rb-opt"><input type="checkbox" id="rb-real"> <span data-i18n="realTiming">Thời gian thực</span></label>
+      <label class="rb-opt"><input type="checkbox" id="rb-nums"> <span data-i18n="numbers">Số thứ tự</span></label>
+      <button class="rb-text" id="rb-from" data-i18n="playFromHere">Chơi từ đây</button>
+      <button class="rb-text" id="rb-exit" data-i18n="exitReplay">Thoát</button>
+    </div>
+  </div>
+
+  <button id="sound-hint" class="glass" hidden data-i18n="soundHint">🔊 Chạm để bật âm thanh</button>
+  <div id="toasts" aria-live="polite"></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+
+  <!-- ============ dialogs ============ -->
+  <dialog id="dlg-new-game" class="sheet" aria-labelledby="ng-title">
+    <form method="dialog" id="form-new">
+      <div class="dlg-head"><h2 id="ng-title" data-i18n="newGame">Ván mới</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <div class="dlg-body"><div class="game-fields"></div>
+        <div class="row"><span class="lbl" data-i18n="saveAsDefault">Lưu làm mặc định</span><label class="switch"><input type="checkbox" name="saveDefault"><span></span></label></div>
+      </div>
+      <div class="dlg-foot"><button type="button" class="btn" data-close data-i18n="cancel">Hủy</button><button type="submit" class="btn primary" value="start" data-i18n="startGame">Bắt đầu</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-settings" class="sheet" aria-labelledby="st-title">
+    <form method="dialog" id="form-settings">
+      <div class="dlg-head"><h2 id="st-title" data-i18n="settingsTitle">Cài đặt</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <div class="dlg-body">
+        <div class="sec-title" data-i18n="settings.game">Trò chơi</div>
+        <p class="note" data-i18n="ruleSettingsNote">Áp dụng cho ván mới — ván đang chơi giữ nguyên luật.</p>
+        <div class="game-fields"></div>
+        <div class="row">
+          <div><span class="lbl" data-i18n="undoBtn">Nút hoàn tác</span><span class="sub" data-i18n="undoBtnSub">Hiển thị nút hoàn tác trên thanh công cụ</span></div>
+          <label class="switch"><input type="checkbox" name="allowUndo"><span></span></label>
+        </div>
+        <div class="field"><span class="lbl" data-i18n="tapConfirm">Xác nhận khi chạm</span><div class="seg" data-seg="tapConfirm" data-opts="auto:Tự động (cảm ứng)|always:Luôn hỏi|never:Không hỏi"></div></div>
+
+        <div class="sec-divider"></div>
+
+        <div class="sec-title" style="margin-top:14px" data-i18n="settings.audio">Âm thanh</div>
+        <div class="row"><span class="lbl" data-i18n="music">Nhạc nền (spa thư giãn)</span><label class="switch"><input type="checkbox" name="musicOn"><span></span></label></div>
+        <input type="range" name="musicVol" min="0" max="100" step="1" aria-label="Music volume">
+        <div class="row"><span class="lbl" data-i18n="sfx">Hiệu ứng âm thanh</span><label class="switch"><input type="checkbox" name="sfxOn"><span></span></label></div>
+        <input type="range" name="sfxVol" min="0" max="100" step="1" aria-label="Sound effects volume">
+        <p class="note" data-i18n="iphoneNote">Trên iPhone, gạt rung có thể tắt âm thanh web.</p>
+
+        <div class="sec-divider"></div>
+
+        <div class="sec-title" style="margin-top:14px" data-i18n="settings.look">Giao diện</div>
+        <div class="field"><span class="lbl" data-i18n="settings.theme">Chủ đề</span><div class="seg" data-seg="theme"></div></div>
+        <div class="field">
+          <span class="lbl" data-i18n="language">Ngôn ngữ</span>
+          <div class="seg" data-seg="lang" data-opts="vi:Tiếng Việt|en:English"></div>
+        </div>
+        <div class="field"><span class="lbl" data-i18n="cellSize">Kích thước ô (chạm tay)</span><div class="seg" data-seg="cellSize" data-opts="normal:Vừa|large:Lớn (iPad/iPhone)|huge:Rất lớn"></div></div>
+        <div class="field"><span class="lbl" data-i18n="pieceStyle">Kiểu quân cờ</span><div class="seg" data-seg="pieceStyle" data-opts="auto:Tự động|xo:X-O|stones:Quân tròn"></div></div>
+        <div class="row"><span class="lbl" data-i18n="showCoords">Hiện tọa độ mép bàn</span><label class="switch"><input type="checkbox" name="showCoords"><span></span></label></div>
+        <div class="field"><span class="lbl" data-i18n="reduceMotion">Giảm chuyển động</span><div class="seg" data-seg="reduceMotion" data-opts="system:Hệ thống|on:Bật|off:Tắt"></div></div>
+
+        <div class="sec-divider"></div>
+
+        <div class="sec-title" style="margin-top:14px" data-i18n="settings.data">Dữ liệu</div>
+        <div class="menu-list">
+          <button type="button" class="btn" id="btn-export" data-i18n="exportHist">Xuất lịch sử (JSON)</button>
+          <button type="button" class="btn" id="btn-import" data-i18n="importHist">Nhập lịch sử (JSON)</button>
+          <button type="button" class="btn danger" id="btn-clear-history" data-i18n="clearHist">Xóa lịch sử đấu</button>
+          <button type="button" class="btn danger" id="btn-reset-settings" data-i18n="resetSettings">Khôi phục mặc định</button>
+        </div>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+
+        <div class="sec-divider"></div>
+
+        <div class="sec-title" style="margin-top:14px" data-i18n="settings.about">Thông tin</div>
+        <div style="text-align:center;margin-top:20px;font-size:0.82rem;color:var(--text-sub);"><span data-i18n="version">Phiên bản</span> <span id="st-version">2.0.0</span></div>
+      </div>
+      <div class="dlg-foot"><button type="submit" class="btn primary" data-i18n="done">Xong</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-history" class="sheet" aria-labelledby="hi-title">
+    <div class="dlg-head"><h2 id="hi-title" data-i18n="historyTitle">Lịch sử đấu</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dlg-body">
+      <div class="hist-filters">
+        <select id="hf-mode" aria-label="Filter by mode">
+          <option value="all" data-i18n="allModes">Tất cả chế độ</option>
+          <option value="pve" data-i18n="vsAI">Đấu với Máy</option>
+          <option value="pvp" data-i18n="twoPlayers">2 Người</option>
+        </select>
+        <select id="hf-result" aria-label="Filter by result">
+          <option value="all" data-i18n="allResults">Tất cả kết quả</option>
+          <option value="won" data-i18n="wonVsAI">Thắng Máy</option>
+          <option value="lost" data-i18n="lostVsAI">Thua Máy</option>
+          <option value="x" data-i18n="xWon">X thắng</option>
+          <option value="o" data-i18n="oWon">O thắng</option>
+          <option value="draw" data-i18n="draw">Hòa</option>
+          <option value="forfeit" data-i18n="forfeit">Đầu hàng</option>
+          <option value="abandoned" data-i18n="abandoned">Bỏ dở</option>
+        </select>
+      </div>
+      <ul class="hist-list" id="hist-list"></ul>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-result" class="small" aria-labelledby="rs-title">
+    <div class="dlg-body">
+      <div class="result-big" id="rs-title">Bạn đã thắng!</div>
+      <div class="result-sub" id="rs-sub">5 ô liên tiếp</div>
+    </div>
+    <div class="dlg-foot" style="justify-content:center">
+      <button class="btn primary" id="rs-rematch" data-i18n="rematch">🔄 Đấu lại</button>
+      <button class="btn" id="rs-new" data-i18n="newGame">➕ Ván mới</button>
+      <button class="btn" id="rs-replay" data-i18n="watchReplay">⏪ Xem lại</button>
+      <button class="btn" data-close data-i18n="close">Đóng</button>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-confirm" class="small" aria-labelledby="cf-msg">
+    <div class="dlg-body"><p id="cf-msg" style="font-weight:700;font-size:1.05em;margin:14px 0 4px"></p><p id="cf-sub" class="note"></p></div>
+    <div class="dlg-foot"><button class="btn" id="cf-no" data-i18n="cancel">Hủy</button><button class="btn primary" id="cf-yes" data-i18n="ok">Đồng ý</button></div>
+  </dialog>
+
+  <dialog id="dlg-menu" class="small" aria-labelledby="mn-title">
+    <div class="dlg-head"><h2 id="mn-title" data-i18n="menuTitle">Cờ Caro &amp; Gomoku</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dlg-body"><div class="menu-list">
+      <button class="btn primary" id="mn-vs-bot" data-i18n="vsBot">🤖 Đấu với Máy</button>
+      <button class="btn" id="mn-vs-player" data-i18n="vsPlayer">👥 2 Người chơi</button>
+      <button class="btn" id="mn-new" data-i18n="newGame">➕ Ván mới</button>
+      <button class="btn" id="mn-restart" data-i18n="restart">🔄 Chơi lại</button>
+      <button class="btn" id="mn-replay" data-i18n="replay">⏪ Xem lại &amp; Lịch sử</button>
+      <button class="btn" id="mn-settings" data-i18n="settings">⚙️ Cài đặt</button>
+      <button class="btn danger" id="mn-forfeit" data-i18n="menuForfeit">🏳️ Đầu hàng</button>
+    </div></div>
+  </dialog>
+
+  <dialog id="dlg-help" class="sheet" aria-labelledby="hp-title">
+    <div class="dlg-head"><h2 id="hp-title">How to play</h2><button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dlg-body help">
+      <h3>Goal</h3><p>Get <b>five in a row</b> — horizontally, vertically or diagonally.</p>
+      <h3>Rules</h3>
+      <ul>
+        <li><b>Gomoku (freestyle):</b> five or more in a row wins. With “Exact five only”, six or more does not count.</li>
+        <li><b>Caro (Blocked-End Rule):</b> a five only wins if <i>not both ends</i> are blocked by the opponent. Optionally the board edge also counts as a block.</li>
+      </ul>
+      <h3>Touch</h3>
+      <ul><li>Tap to place (with tap-to-confirm: tap again or press ✓).</li><li>Drag to pan, pinch to zoom.</li><li>Double-tap an occupied spot or outside the board to zoom in.</li></ul>
+      <h3>Mouse &amp; keyboard</h3>
+      <ul><li>Click to place, drag to pan, wheel to zoom.</li><li><kbd>←↑→↓</kbd> move cursor, <kbd>Enter</kbd>/<kbd>Space</kbd> place, <kbd>+</kbd>/<kbd>-</kbd> zoom, <kbd>F</kbd> fit, <kbd>U</kbd> undo, <kbd>Esc</kbd> close dialog.</li></ul>
+      <h3>Sound</h3><p>Audio starts after your first tap. On iPhone, the hardware silent switch may mute web audio.</p>
+      <h3>Install</h3><p>On iPhone/iPad: Safari → Share → <b>Add to Home Screen</b>. On Android/desktop Chrome use “Install app” in the menu.</p>
+    </div>
+  </dialog>
+</div>
+
+<script src="../../shared/house/house-kit.js"></script>
+<script src="../../shared/house/house-store.js"></script>
+<script src="../../shared/house/house-a11y.js"></script>
+<script src="./three.js"></script>
+<script src="./constants.js"></script>
+<script src="./i18n.js"></script>
+<script src="./storage.js"></script>
+<script src="./rules.js"></script>
+<script src="./ai-engine.js"></script>
+<script src="./ai-client.js"></script>
+<script src="./audio.js"></script>
+<script src="./timer.js"></script>
+<script src="./renderer.js"></script>
+<script src="./input.js"></script>
+<script src="./game.js"></script>
+<script src="./replay.js"></script>
+<script src="./ui.js"></script>
+<script src="./pwa.js"></script>
+<script src="./main.js"></script>
+</body>
+</html>

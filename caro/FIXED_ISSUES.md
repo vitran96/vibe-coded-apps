@@ -11,7 +11,7 @@ This document logs resolved bugs and architectural fixes to prevent regressions.
   - Placed pieces that are not near the screen edge must **never** move the camera.
   - If the entire board dimension fits on screen, camera remains fixed or centered.
   - When near an edge (within 1.2 cell size), camera moves **only slightly** (`clearance = 2.0 * S`) to comfortably reveal the piece without disorienting the player.
-- **Location:** `index.html` → `BoardRenderer.ensureVisible()`.
+- **Location:** `src/renderer.js` → `BoardRenderer.ensureVisible()`.
 
 ---
 
@@ -21,7 +21,7 @@ This document logs resolved bugs and architectural fixes to prevent regressions.
 - **Invariant:**
   - When playing against AI (`session.mode === 'pve' && session.ai`), Undo **must revert 2 moves** (the bot move and the human move), returning the turn to the human.
   - When playing 2 players / pass-and-play (`pvp`), Undo reverts **1 move**.
-- **Location:** `index.html` → `GameController.undo()`.
+- **Location:** `src/game.js` → `GameController.undo()`.
 
 ---
 
@@ -29,7 +29,7 @@ This document logs resolved bugs and architectural fixes to prevent regressions.
 - **Symptom:** Storage keys were formatted with dot notation (`caro.settings`, `caro.records`), inconsistent with the `caro_` namespace prefix.
 - **Root Cause:** `LS` constant used legacy dot syntax.
 - **Invariant:**
-  - All LocalStorage keys must strictly start with prefix `caro_` (`caro_settings`, `caro_current`, `caro_records`, `caro_iosHint`).
-  - `Store.read()` maintains backward-compatible fallback for legacy `caro.` keys to prevent player data loss.
-- **Test:** Unit test in `runTests()` verifies all `LS` values start with `caro_`.
-- **Location:** `index.html` → `LS` constant, `Store` object, `runTests()`.
+  - All LocalStorage keys start with prefix `caro_` (`caro_settings`, `caro_current`, `caro_records`, `caro_iosHint`); the suffixes are in `LS`.
+  - `House.store('caro_', { legacy: ['caro.'] })` still reads legacy `caro.` keys to prevent player data loss.
+- **Test:** `scripts/test-caro.mjs` checks the storage prefix; `scripts/test-save.mjs` checks old saves load.
+- **Location:** `src/constants.js` → `LS` and `STORAGE_PREFIX`; `src/storage.js` → `store` (House.store); `scripts/test-caro.mjs`.
