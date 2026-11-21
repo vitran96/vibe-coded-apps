@@ -5,16 +5,18 @@ export function generateStorageShim(gameId) {
       (function() {
         const prefix = "__game_${safeId}__";
         const rawStorage = window.localStorage;
+        // house:prefs (theme + language) is shared by every game, so it is not prefixed.
+        const full = function(key) { return key === "house:prefs" ? key : prefix + key; };
 
         const proxyStorage = {
           getItem: function(key) {
-            return rawStorage.getItem(prefix + key);
+            return rawStorage.getItem(full(key));
           },
           setItem: function(key, val) {
-            rawStorage.setItem(prefix + key, String(val));
+            rawStorage.setItem(full(key), String(val));
           },
           removeItem: function(key) {
-            rawStorage.removeItem(prefix + key);
+            rawStorage.removeItem(full(key));
           },
           clear: function() {
             Object.keys(rawStorage).forEach(function(k) {

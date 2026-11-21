@@ -2,7 +2,27 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateStorageShim } from '../src/js/storageShim.js';
 
+// Runs the real generated shim against a fake window and returns the raw storage map.
+function runShim(gameId, raw) {
+  const body = generateStorageShim(gameId).match(/<script[^>]*>([\s\S]*?)<\/script>/)[1];
+  const win = { localStorage: { getItem: (k) => (raw.has(k) ? raw.get(k) : null), setItem: (k, v) => raw.set(k, String(v)), removeItem: (k) => raw.delete(k) } };
+  new Function('window', body)(win);
+  return win.localStorage;
+}
+
 describe('Storage Shim Generator', () => {
+  test('house:prefs is shared between games, other keys stay per game', () => {
+    const raw = new Map();
+    const caro = runShim('caro', raw);
+    const chess = runShim('chess', raw);
+    caro.setItem('house:prefs', '{"theme":"dem"}');
+    assert.equal(chess.getItem('house:prefs'), '{"theme":"dem"}');
+    assert.equal(raw.get('house:prefs'), '{"theme":"dem"}');
+    caro.setItem('score', '5');
+    assert.equal(chess.getItem('score'), null);
+    assert.equal(raw.get('__game_caro__score'), '5');
+  });
+
   test('generates valid script tag with gameId prefix', () => {
     const shim = generateStorageShim('retro-rpg');
     assert.match(shim, /<script id="__storage_shim__">/);

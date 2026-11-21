@@ -231,6 +231,16 @@ describe('Game Manager & Cache Operations', () => {
       /Game file missing/
     );
   });
+
+  test('prepareGameForLaunch passes an import map with a data: URL through srcdoc unchanged', async () => {
+    const { files, ops } = createMockOps();
+    const rawHtml = '<!doctype html><script type="importmap">{"imports":{"three":"data:text/javascript;base64,ZXhwb3J0IGNvbnN0IHg9MTs="}}</script><script type="module">import "three";</script>';
+    files.set('/mock_appdata/games_cache/game-map.html', rawHtml);
+
+    const config = await prepareGameForLaunch({ id: 'game-map', type: 'html' }, ops);
+    assert.equal(config.mode, 'srcdoc');
+    assert.ok(config.content.endsWith(rawHtml), 'raw HTML must follow the shim byte for byte');
+  });
   test('removeAllGames uninstalls all installed games and updates manifest', async () => {
     const { files, dirs, ops } = createMockOps();
     const manifest = {
