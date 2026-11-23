@@ -1,7 +1,8 @@
 import JSZip from 'jszip';
 import { join as tauriJoin } from '@tauri-apps/api/path';
 import { writeFile as tauriWriteFile, writeTextFile as tauriWriteTextFile, mkdir as tauriMkdir, exists as tauriExists } from '@tauri-apps/plugin-fs';
-import { generateStorageShim } from './storageShim.js';
+import { injectStorageShim } from './storageShim.js';
+import { LauncherError, unsafePath } from './safety.js';
 
 export async function extractZipBundle(
   zipBytes,
@@ -16,12 +17,23 @@ export async function extractZipBundle(
   const writeTextFile = customOps.writeTextFile || tauriWriteTextFile;
   const join = customOps.join || tauriJoin;
 
+  let zip;
+  try {
+    zip = await JSZip.loadAsync(zipBytes);
+  } catch {
+    throw new LauncherError('err_damaged', 'The download is not a valid zip file');
+  }
+  const files = Object.keys(zip.files);
+
+  // R1: every name is checked before anything is written; one bad name rejects the whole archive.
+  for (const name of files) {
+    const why = unsafePath(name.replace(/\/$/, ''));
+    if (why) throw new LauncherError('err_damaged', `Unsafe path in zip (${why}): ${name.slice(0, 60)}`);
+  }
+
   if (!(await exists(targetDir))) {
     await mkdir(targetDir, { recursive: true });
   }
-
-  const zip = await JSZip.loadAsync(zipBytes);
-  const files = Object.keys(zip.files);
 
   for (const relativePath of files) {
     const entry = zip.files[relativePath];
@@ -43,18 +55,10 @@ export async function extractZipBundle(
       }
     }
 
-    if (relativePath === entryPoint || relativePath.endsWith('/' + entryPoint)) {
-      let htmlContent = await entry.async('string');
-      const shim = generateStorageShim(gameId);
-      if (htmlContent.includes('<head>')) {
-        htmlContent = htmlContent.replace('<head>', `<head>${shim}`);
-      } else {
-        htmlContent = shim + htmlContent;
-      }
-      await writeTextFile(fullPath, htmlContent);
+    if (relativePath === entryPoint) {
+      await writeTextFile(fullPath, injectStorageShim(await entry.async('string'), gameId));
     } else {
-      const data = await entry.async('uint8array');
-      await writeFile(fullPath, data);
+      await writeFile(fullPath, await entry.async('uint8array'));
     }
   }
 }

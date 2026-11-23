@@ -1,20 +1,17 @@
 import { test, describe, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { promptUpdatesIfAvailable } from '../src/js/updateModal.js';
+import { getManifest } from '../src/js/gameManager.js';
+import { createMockOps, createFetch } from './helpers.js';
 
 describe('Update Modal Flow', () => {
-  let modal;
-  let list;
-  let chkDontAsk;
-  let btnUpdateSelected;
-  let btnUpdateAll;
-  let btnSkip;
-  let elementsMap;
+  let els;
 
   function createMockElement(id = '', tag = 'div') {
-    const el = {
+    return {
       id,
       tagName: tag.toUpperCase(),
+      textContent: '',
       classList: {
         _classes: new Set(),
         add(c) { this._classes.add(c); },
@@ -22,152 +19,112 @@ describe('Update Modal Flow', () => {
         contains(c) { return this._classes.has(c); }
       },
       children: [],
-      appendChild(child) {
-        this.children.push(child);
-      },
+      appendChild(child) { this.children.push(child); },
       querySelectorAll(selector) {
         const found = [];
-        function walk(node) {
-          if (selector === '.update-select-item:checked') {
-            if (node.classList?.contains('update-select-item') && node.checked) {
-              found.push(node);
-            }
-          }
-          if (node.children) {
-            for (const c of node.children) walk(c);
-          }
-        }
+        const walk = (node) => {
+          if (selector === '.update-select-item:checked' && node.classList?.contains('update-select-item') && node.checked) found.push(node);
+          for (const c of node.children || []) walk(c);
+        };
         walk(this);
         return found;
       },
       get innerHTML() { return ''; },
-      set innerHTML(val) {
-        this.children = [];
-      }
+      set innerHTML(_v) { this.children = []; }
     };
-    return el;
   }
 
   beforeEach(() => {
-    modal = createMockElement('update-modal');
-    modal.classList.add('hidden');
-    list = createMockElement('update-modal-list');
-    chkDontAsk = { ...createMockElement('chk-dont-ask', 'input'), type: 'checkbox', checked: false };
-    btnUpdateSelected = createMockElement('btn-update-selected', 'button');
-    btnUpdateAll = createMockElement('btn-update-all', 'button');
-    btnSkip = createMockElement('btn-update-skip', 'button');
-
-    elementsMap = new Map([
-      ['update-modal', modal],
-      ['update-modal-list', list],
-      ['chk-dont-ask', chkDontAsk],
-      ['btn-update-selected', btnUpdateSelected],
-      ['btn-update-all', btnUpdateAll],
-      ['btn-update-skip', btnSkip]
-    ]);
-
+    els = {};
+    for (const id of ['update-modal', 'update-modal-list', 'update-modal-choose', 'update-modal-progress', 'update-modal-result',
+      'btn-update-selected', 'btn-update-all', 'btn-update-skip', 'btn-update-retry', 'btn-update-close']) els[id] = createMockElement(id, id.startsWith('btn') ? 'button' : 'div');
+    els['update-modal'].classList.add('hidden');
+    els['chk-dont-ask'] = { ...createMockElement('chk-dont-ask', 'input'), type: 'checkbox', checked: false };
     globalThis.document = {
-      getElementById: (id) => elementsMap.get(id) || null,
-      createElement: (tag) => {
-        const el = createMockElement('', tag);
-        return el;
-      }
+      getElementById: (id) => els[id] || null,
+      createElement: (tag) => createMockElement('', tag)
     };
   });
 
-  const pendingGames = [
-    { id: 'game-1', name: 'Game One', version: '2.0.0', installedVersion: '1.0.0', url: 'https://example.com/1.html' },
-    { id: 'game-2', name: 'Game Two', version: '3.0.0', installedVersion: '2.0.0', url: 'https://example.com/2.html' }
-  ];
+  const game = (id, extra = {}) => ({ id, name: id, version: '2.0.0', installedVersion: '1.0.0', type: 'html', url: `https://example.com/${id}.html`, ...extra });
+  const pendingGames = [game('game-1'), game('game-2')];
+  const page = '<html><body>game</body></html>';
 
-  test('promptUpdatesIfAvailable displays modal and populates items', () => {
+  test('displays the modal and populates items', () => {
     promptUpdatesIfAvailable(pendingGames);
-
-    assert.equal(modal.classList.contains('hidden'), false);
-    assert.equal(list.children.length, 2);
+    assert.equal(els['update-modal'].classList.contains('hidden'), false);
+    assert.equal(els['update-modal-list'].children.length, 2);
+    assert.equal(els['btn-update-retry'].classList.contains('hidden'), true);
   });
 
-  test('btnUpdateAll triggers updates for all pending games and closes modal', async () => {
-    const updatedGames = [];
-    const mockOps = {
-      fetch: async () => ({
-        ok: true,
-        headers: { get: () => '0' },
-        arrayBuffer: async () => new Uint8Array()
-      }),
-      appDataDir: async () => '/data',
-      join: async (...p) => p.join('/'),
-      exists: async () => true,
-      mkdir: async () => {},
-      writeTextFile: async (path, content) => {},
-      readTextFile: async () => JSON.stringify({ settings: {}, games: {} })
-    };
-
+  test('Update All installs every game and closes the dialog by itself', async () => {
+    const { ops } = createMockOps();
+    ops.fetch = createFetch({ 'https://example.com/game-1.html': page, 'https://example.com/game-2.html': page });
     let completed = false;
-    promptUpdatesIfAvailable(pendingGames, () => {
-      completed = true;
-    }, mockOps);
-
-    // Click Update All
-    await btnUpdateAll.onclick();
-
-    assert.equal(modal.classList.contains('hidden'), true);
+    promptUpdatesIfAvailable(pendingGames, () => { completed = true; }, ops);
+    await els['btn-update-all'].onclick();
+    assert.equal(els['update-modal'].classList.contains('hidden'), true);
     assert.equal(completed, true);
+    const m = await getManifest(ops);
+    assert.equal(m.games['game-1'].version, '2.0.0');
+    assert.equal(m.games['game-2'].version, '2.0.0');
   });
 
-  test('btnUpdateSelected updates only checked games', async () => {
-    let completed = false;
-    const mockOps = {
-      fetch: async () => ({
-        ok: true,
-        headers: { get: () => '0' },
-        arrayBuffer: async () => new Uint8Array()
-      }),
-      appDataDir: async () => '/data',
-      join: async (...p) => p.join('/'),
-      exists: async () => true,
-      mkdir: async () => {},
-      writeTextFile: async () => {},
-      readTextFile: async () => JSON.stringify({ settings: {}, games: {} })
-    };
-
-    promptUpdatesIfAvailable(pendingGames, () => {
-      completed = true;
-    }, mockOps);
-
-    // Mock that only game-1 checkbox is checked in DOM
-    list.querySelectorAll = () => [{ value: 'game-1' }];
-
-    await btnUpdateSelected.onclick();
-
-    assert.equal(modal.classList.contains('hidden'), true);
-    assert.equal(completed, true);
+  test('Update Selected updates only the checked game', async () => {
+    const { ops } = createMockOps();
+    ops.fetch = createFetch({ 'https://example.com/game-1.html': page });
+    promptUpdatesIfAvailable(pendingGames, () => {}, ops);
+    els['update-modal-list'].querySelectorAll = () => [{ value: 'game-1' }];
+    await els['btn-update-selected'].onclick();
+    const m = await getManifest(ops);
+    assert.ok(m.games['game-1']);
+    assert.ok(!m.games['game-2']);
   });
 
-  test('btnSkip closes modal without updating and saves dontAsk choice', async () => {
-    let savedManifest = null;
-    const mockOps = {
-      appDataDir: async () => '/data',
-      join: async (...p) => p.join('/'),
-      exists: async () => true,
-      writeTextFile: async (path, content) => {
-        savedManifest = JSON.parse(content);
-      },
-      readTextFile: async () => JSON.stringify({ settings: { skipUpdatePrompt: false }, games: {} })
-    };
-
-    chkDontAsk.checked = true;
+  // R16
+  test('R16 one of two fails: the result lists both, shows a retry, and retry updates only the failed one', async () => {
+    const { ops } = createMockOps();
+    ops.fetch = createFetch({ 'https://example.com/game-1.html': page }); // game-2 answers 404
     let completed = false;
+    promptUpdatesIfAvailable(pendingGames, () => { completed = true; }, ops);
+    await els['btn-update-all'].onclick();
 
-    promptUpdatesIfAvailable(pendingGames, () => {
-      completed = true;
-    }, mockOps);
+    assert.equal(els['update-modal'].classList.contains('hidden'), false, 'stays open to show the result');
+    assert.equal(completed, false);
+    const text = els['update-modal-result'].children.map((c) => c.textContent).join('\n');
+    assert.match(text, /game-1/);
+    assert.match(text, /game-2/);
+    assert.match(text, /kiểm tra kết nối mạng/, 'plain Vietnamese message, no HTTP code');
+    assert.doesNotMatch(text, /HTTP|https?:/);
+    assert.equal(els['btn-update-retry'].classList.contains('hidden'), false);
+    assert.equal(els['btn-update-close'].classList.contains('hidden'), false);
 
-    await btnSkip.onclick();
-
-    assert.equal(modal.classList.contains('hidden'), true);
+    ops.fetch = createFetch({ 'https://example.com/game-2.html': page });
+    await els['btn-update-retry'].onclick();
+    assert.equal(els['update-modal'].classList.contains('hidden'), true);
     assert.equal(completed, true);
-    assert.ok(savedManifest);
-    assert.equal(savedManifest.settings.skipUpdatePrompt, true);
+    assert.equal((await getManifest(ops)).games['game-2'].version, '2.0.0');
+  });
+
+  test('R16 progress text names the game being updated', async () => {
+    const { ops } = createMockOps();
+    const seen = [];
+    ops.fetch = createFetch({ 'https://example.com/game-1.html': page, 'https://example.com/game-2.html': page });
+    Object.defineProperty(els['update-modal-progress'], 'textContent', { set(v) { seen.push(v); }, get() { return seen.at(-1) || ''; } });
+    promptUpdatesIfAvailable(pendingGames, () => {}, ops);
+    await els['btn-update-all'].onclick();
+    assert.ok(seen.some((s) => /game-1.*1\/2/.test(s)));
+    assert.ok(seen.some((s) => /game-2.*2\/2/.test(s)));
+  });
+
+  test('Skip closes the modal without updating and saves the dont-ask choice', async () => {
+    const { ops } = createMockOps();
+    els['chk-dont-ask'].checked = true;
+    let completed = false;
+    promptUpdatesIfAvailable(pendingGames, () => { completed = true; }, ops);
+    await els['btn-update-skip'].onclick();
+    assert.equal(els['update-modal'].classList.contains('hidden'), true);
+    assert.equal(completed, true);
+    assert.equal((await getManifest(ops)).settings.skipUpdatePrompt, true);
   });
 });

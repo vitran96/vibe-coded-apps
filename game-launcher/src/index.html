@@ -76,6 +76,27 @@
             </div>
             <div id="settings-game-list" class="settings-list"></div>
           </div>
+
+          <div class="settings-card">
+            <h2 data-i18n="software_updates">Cập nhật phần mềm</h2>
+            <div class="settings-field">
+              <label for="select-update-mode" class="setting-label" data-i18n="update_mode_label">Khi có bản mới</label>
+              <select id="select-update-mode" class="settings-select">
+                <option value="ask" data-i18n="update_mode_ask">Hỏi tôi</option>
+                <option value="download" data-i18n="update_mode_download">Chỉ tải về</option>
+                <option value="never" data-i18n="update_mode_never">Không cập nhật</option>
+              </select>
+            </div>
+            <button id="btn-check-update" class="btn-secondary" data-i18n="btn_check_update">Kiểm tra cập nhật</button>
+            <p id="update-status" class="view-instructions" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="settings-card">
+            <h2 data-i18n="about_title">Thông tin</h2>
+            <p><span data-i18n="launcher_version">Phiên bản phần mềm</span>: <strong id="about-version"></strong></p>
+            <p><span data-i18n="last_check">Lần kiểm tra cuối</span>: <strong id="about-last-check"></strong></p>
+            <button id="btn-licenses" class="btn-secondary" data-i18n="btn_licenses">Giấy phép</button>
+          </div>
         </div>
       </section>
 
@@ -102,19 +123,50 @@
       <div class="modal-dialog">
         <h2 id="modal-title" data-i18n="modal_updates_title">Có bản cập nhật mới</h2>
         <p class="modal-subtitle" data-i18n="modal_updates_subtitle">Phiên bản mới đã sẵn sàng cho các trò chơi đã cài. Chọn trò chơi cần cập nhật:</p>
-        <div id="update-modal-list" class="update-list-box"></div>
-        
-        <div class="modal-options">
-          <label class="checkbox-label">
-            <input type="checkbox" id="chk-dont-ask" />
-            <span data-i18n="chk_dont_ask">Không hỏi lại nữa (luôn tự động cập nhật trong tương lai)</span>
-          </label>
+        <div id="update-modal-choose">
+          <div id="update-modal-list" class="update-list-box"></div>
+
+          <div class="modal-options">
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-dont-ask" />
+              <span data-i18n="chk_dont_ask">Không hỏi lại nữa (luôn tự động cập nhật trong tương lai)</span>
+            </label>
+          </div>
         </div>
+        <p id="update-modal-progress" class="modal-subtitle hidden" role="status" aria-live="polite"></p>
+        <div id="update-modal-result" class="modal-subtitle hidden" role="status" aria-live="polite"></div>
 
         <div class="modal-actions">
           <button id="btn-update-skip" class="btn-text" data-i18n="btn_skip_updates" data-i18n-title="btn_skip_updates_title" title="Bỏ qua cập nhật lúc này">Để sau</button>
           <button id="btn-update-selected" class="btn-secondary" data-i18n="btn_update_selected" data-i18n-title="btn_update_selected_title" title="Cập nhật các trò chơi đã chọn">Cập nhật mục đã chọn</button>
           <button id="btn-update-all" class="btn-primary" data-i18n="btn_update_all" data-i18n-title="btn_update_all_title" title="Cập nhật tất cả trò chơi ngay bây giờ">Cập nhật tất cả ngay</button>
+          <button id="btn-update-close" class="btn-text hidden" data-i18n="btn_close">Đóng</button>
+          <button id="btn-update-retry" class="btn-primary hidden" data-i18n="btn_retry">Thử lại</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Launcher update dialog (ask, progress, restart, error) -->
+    <div id="ota-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="ota-title">
+      <div class="modal-dialog">
+        <h2 id="ota-title"></h2>
+        <p id="ota-text" class="modal-subtitle" role="status" aria-live="polite"></p>
+        <pre id="ota-notes" class="license-box hidden"></pre>
+        <div id="ota-progress" class="progress-container hidden">
+          <div class="progress-bar-bg"><div id="ota-progress-fill" class="progress-bar-fill" style="width: 0%"></div></div>
+          <span id="ota-progress-text" class="progress-text"></span>
+        </div>
+        <div id="ota-actions" class="modal-actions"></div>
+      </div>
+    </div>
+
+    <!-- Open-source licenses -->
+    <div id="licenses-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="licenses-title">
+      <div class="modal-dialog">
+        <h2 id="licenses-title" data-i18n="licenses_title">Giấy phép mã nguồn mở</h2>
+        <pre id="licenses-text" class="license-box" tabindex="0"></pre>
+        <div class="modal-actions">
+          <button id="btn-licenses-close" class="btn-primary" data-i18n="btn_close">Đóng</button>
         </div>
       </div>
     </div>

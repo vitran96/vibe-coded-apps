@@ -69,4 +69,44 @@ describe('ZIP Extractor', () => {
     assert.ok(content.startsWith('\n    <script id="__storage_shim__">'));
     assert.match(content, /<div>Simple game without head tag<\/div>/);
   });
+
+  // hardening R1: one bad entry name rejects the whole archive and nothing is written
+  test('R1 rejects ../x, /x, C:\\x, a\\..\\x and writes nothing', async () => {
+    for (const bad of ['../x', '/x', 'C:\\x', 'a\\..\\x', 'good/../../x']) {
+      const zip = new JSZip();
+      zip.file('index.html', '<html></html>');
+      zip.file(bad, 'evil');
+      const zipBuffer = await zip.generateAsync({ type: 'uint8array' });
+      const touched = [];
+      const mockOps = {
+        exists: async () => false,
+        mkdir: async (p) => { touched.push(p); },
+        writeFile: async (p) => { touched.push(p); },
+        writeTextFile: async (p) => { touched.push(p); },
+        join: async (...parts) => parts.join('/').replace(/\/+/g, '/')
+      };
+      await assert.rejects(extractZipBundle(zipBuffer, '/cache/g', 'g', 'index.html', mockOps), (e) => e.key === 'err_damaged', bad);
+      assert.deepEqual(touched, [], bad);
+    }
+  });
+
+  test('R1 a file that is not a zip is a damaged download', async () => {
+    await assert.rejects(extractZipBundle(new Uint8Array([1, 2, 3]), '/c/g', 'g', 'index.html', { exists: async () => true, join: async (...p) => p.join('/') }), (e) => e.key === 'err_damaged');
+  });
+
+  test('only the entry point gets the shim, not a nested index.html', async () => {
+    const zip = new JSZip();
+    zip.file('index.html', '<html><head></head></html>');
+    zip.file('docs/index.html', '<html><head></head></html>');
+    const written = new Map();
+    await extractZipBundle(await zip.generateAsync({ type: 'uint8array' }), '/c/g', 'g', 'index.html', {
+      exists: async () => true,
+      mkdir: async () => {},
+      writeFile: async (p, d) => { written.set(p, new TextDecoder().decode(d)); },
+      writeTextFile: async (p, t) => { written.set(p, t); },
+      join: async (...p) => p.join('/').replace(/\/+/g, '/')
+    });
+    assert.match(written.get('/c/g/index.html'), /__storage_shim__/);
+    assert.doesNotMatch(written.get('/c/g/docs/index.html'), /__storage_shim__/);
+  });
 });

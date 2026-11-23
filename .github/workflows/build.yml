@@ -41,6 +41,9 @@ permissions:
 
 env:
   APP_NAME: game-launcher
+  # Signing is optional: with the TAURI_SIGNING_PRIVATE_KEY secret the build is signed and the release gets
+  # latest.json (auto-update); without it the build is unsigned and installed launchers are updated by hand.
+  HAS_SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
 
 jobs:
   build-linux:
@@ -94,8 +97,12 @@ jobs:
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Only used when the secret exists (specs/game-launcher-ota.md R6). Keep an offline backup of the key.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: game-launcher
+          args: ${{ env.HAS_SIGNING_KEY == 'true' && '--config src-tauri/tauri.signed.conf.json' || '' }}
 
       - name: Prepare Linux artifacts
         run: |
@@ -105,9 +112,7 @@ jobs:
           [ -f "game-launcher/src-tauri/target/release/tauri-app" ] && cp "game-launcher/src-tauri/target/release/tauri-app" "dist/${APP_NAME}-${VERSION}-linux-x86_64"
           for f in game-launcher/src-tauri/target/release/bundle/appimage/*.AppImage; do
             [ -f "$f" ] && cp "$f" "dist/${APP_NAME}-${VERSION}.AppImage"
-          done
-          for f in game-launcher/src-tauri/target/release/bundle/deb/*.deb; do
-            [ -f "$f" ] && cp "$f" "dist/${APP_NAME}-${VERSION}.deb"
+            [ -f "$f.sig" ] && cp "$f.sig" "dist/${APP_NAME}-${VERSION}.AppImage.sig"
           done
           chmod +x dist/* 2>/dev/null || true
 
@@ -125,12 +130,12 @@ jobs:
           path: dist/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.AppImage
           if-no-files-found: warn
 
-      - name: Upload Linux DEB
+      - name: Upload Linux AppImage signature
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}-${{ env.APP_VERSION }}.deb
-          path: dist/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.deb
-          if-no-files-found: warn
+          name: ${{ env.APP_NAME }}-${{ env.APP_VERSION }}.AppImage.sig
+          path: dist/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.AppImage.sig
+          if-no-files-found: ignore
 
   build-windows:
     name: Build Windows (x86_64)
@@ -168,8 +173,12 @@ jobs:
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Only used when the secret exists (specs/game-launcher-ota.md R6). Keep an offline backup of the key.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: game-launcher
+          args: ${{ env.HAS_SIGNING_KEY == 'true' && '--config src-tauri/tauri.signed.conf.json' || '' }}
 
       - name: Prepare Windows artifacts
         shell: bash
@@ -178,11 +187,9 @@ jobs:
           echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
           mkdir -p dist
           [ -f "game-launcher/src-tauri/target/release/tauri-app.exe" ] && cp "game-launcher/src-tauri/target/release/tauri-app.exe" "dist/${APP_NAME}-${VERSION}.exe"
-          for f in game-launcher/src-tauri/target/release/bundle/nsis/*.exe; do
+          for f in game-launcher/src-tauri/target/release/bundle/nsis/*-setup.exe; do
             [ -f "$f" ] && cp "$f" "dist/${APP_NAME}-installer-${VERSION}.exe"
-          done
-          for f in game-launcher/src-tauri/target/release/bundle/msi/*.msi; do
-            [ -f "$f" ] && cp "$f" "dist/${APP_NAME}-installer-${VERSION}.msi"
+            [ -f "$f.sig" ] && cp "$f.sig" "dist/${APP_NAME}-installer-${VERSION}.exe.sig"
           done
 
       - name: Upload Windows Standalone Executable
@@ -199,12 +206,12 @@ jobs:
           path: dist/${{ env.APP_NAME }}-installer-${{ env.APP_VERSION }}.exe
           if-no-files-found: warn
 
-      - name: Upload Windows Installer MSI
+      - name: Upload Windows Installer signature
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}-installer-${{ env.APP_VERSION }}.msi
-          path: dist/${{ env.APP_NAME }}-installer-${{ env.APP_VERSION }}.msi
-          if-no-files-found: warn
+          name: ${{ env.APP_NAME }}-installer-${{ env.APP_VERSION }}.exe.sig
+          path: dist/${{ env.APP_NAME }}-installer-${{ env.APP_VERSION }}.exe.sig
+          if-no-files-found: ignore
 
   release:
     name: Publish GitHub Release
@@ -237,6 +244,11 @@ jobs:
           fi
           echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
           echo "RELEASE_NAME=v$VERSION" >> $GITHUB_ENV
+
+      - name: Write the updater feed (latest.json) and attach LICENSE
+        run: |
+          node game-launcher/scripts/make-latest-json.mjs release-artifacts "${RELEASE_TAG}"
+          cp game-launcher/LICENSE release-artifacts/LICENSE
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2

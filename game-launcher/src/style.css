@@ -675,3 +675,23 @@ input[type="checkbox"] {
   color: var(--text-muted);
   padding: 20px 0;
 }
+
+/* Notes and warnings on cards, license and release-notes boxes */
+.card-note, .card-warning {
+  margin: 8px 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.card-note { color: #8a4b00; }
+.card-warning { color: #8a1c1c; }
+.license-box {
+  max-height: 50vh;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid #c9b99a;
+  border-radius: 8px;
+  background: #fff;
+  white-space: pre-wrap;
+  font-size: 0.95rem;
+}
+#update-modal-result p { margin: 6px 0; }

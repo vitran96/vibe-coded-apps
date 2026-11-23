@@ -46,3 +46,9 @@ export function generateStorageShim(gameId) {
     </script>
   `;
 }
+
+// The one place the shim goes into a game's HTML (zip and files types): after <head>, else in front.
+export function injectStorageShim(html, gameId) {
+  const shim = generateStorageShim(gameId);
+  return html.includes('<head>') ? html.replace('<head>', () => `<head>${shim}`) : shim + html;
+}
