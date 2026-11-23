@@ -2,6 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getManifest, prepareGameForLaunch, removeGame } from '../src/js/gameManager.js';
 import { createMockOps } from './helpers.js';
 
@@ -42,7 +43,7 @@ describe('Tauri packaging and updater configuration', () => {
   test('R6 a public key is configured, and no private key is in the repo', () => {
     const pub = Buffer.from(conf.plugins.updater.pubkey, 'base64').toString('utf8');
     assert.match(pub, /^untrusted comment: minisign public key/);
-    const root = new URL('../../', import.meta.url).pathname;
+    const root = fileURLToPath(new URL('../../', import.meta.url));
     const skip = new Set(['node_modules', '.git', '.jj', 'target', 'dist', 'archived']);
     const walk = (dir) => readdirSync(dir).flatMap((n) => {
       if (skip.has(n)) return [];

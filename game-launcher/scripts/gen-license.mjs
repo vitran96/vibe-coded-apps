@@ -157,7 +157,7 @@ export function buildLicense() {
     g.who.push(`${p.name} ${p.version} (${p.license})`);
     groups.set(body, g);
   }
-  const root = readFileSync(join(REPO, 'LICENSE'), 'utf8').trim();
+  const root = readFileSync(join(REPO, 'LICENSE'), 'utf8').replace(/\r\n/g, '\n').trim();
   let out = `${root}\n\n----------------------------------------------------------------\nThird-party notices\nDependency fingerprint: ${fingerprint(npm, crates)}\n----------------------------------------------------------------\n`;
   for (const g of [...groups.values()].sort((a, b) => a.who[0].localeCompare(b.who[0]))) {
     out += `\n== ${g.who.join(', ')} ==\n\n${g.body}\n`;
