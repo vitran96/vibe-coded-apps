@@ -112,7 +112,7 @@ jobs:
           [ -f "game-launcher/src-tauri/target/release/tauri-app" ] && cp "game-launcher/src-tauri/target/release/tauri-app" "dist/${APP_NAME}-${VERSION}-linux-x86_64"
           for f in game-launcher/src-tauri/target/release/bundle/appimage/*.AppImage; do
             [ -f "$f" ] && cp "$f" "dist/${APP_NAME}-${VERSION}.AppImage"
-            [ -f "$f.sig" ] && cp "$f.sig" "dist/${APP_NAME}-${VERSION}.AppImage.sig"
+            [ -f "$f.sig" ] && cp "$f.sig" "dist/${APP_NAME}-${VERSION}.AppImage.sig" || true
           done
           chmod +x dist/* 2>/dev/null || true
 
@@ -189,7 +189,7 @@ jobs:
           [ -f "game-launcher/src-tauri/target/release/tauri-app.exe" ] && cp "game-launcher/src-tauri/target/release/tauri-app.exe" "dist/${APP_NAME}-${VERSION}.exe"
           for f in game-launcher/src-tauri/target/release/bundle/nsis/*-setup.exe; do
             [ -f "$f" ] && cp "$f" "dist/${APP_NAME}-installer-${VERSION}.exe"
-            [ -f "$f.sig" ] && cp "$f.sig" "dist/${APP_NAME}-installer-${VERSION}.exe.sig"
+            [ -f "$f.sig" ] && cp "$f.sig" "dist/${APP_NAME}-installer-${VERSION}.exe.sig" || true
           done
 
       - name: Upload Windows Standalone Executable
