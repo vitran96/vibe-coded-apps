@@ -1,5 +1,5 @@
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "games": [
     {
       "id": "caro",
@@ -7,9 +7,11 @@
       "names": {
         "vi": "Cờ Caro"
       },
-      "version": "2.2.0",
+      "version": "2.3.0",
       "type": "html",
-      "url": "https://vitran96.github.io/vibe-coded-apps/caro"
+      "url": "https://vitran96.github.io/vibe-coded-apps/caro",
+      "sha256": "f737c7ae041c5f6487d9823e44a94f5600da01fc8028b49dfcb0c1c746420651",
+      "size": 1604794
     },
     {
       "id": "chess",
@@ -17,9 +19,11 @@
       "names": {
         "vi": "Cờ vua"
       },
-      "version": "2.2.0",
+      "version": "2.3.0",
       "type": "html",
-      "url": "https://vitran96.github.io/vibe-coded-apps/chess"
+      "url": "https://vitran96.github.io/vibe-coded-apps/chess",
+      "sha256": "d11e17371385cfd11d4397dc2a822d7256eaf21259eaebf82aca1aa6143b7a19",
+      "size": 1593145
     },
     {
       "id": "chinese-chess",
@@ -27,9 +31,11 @@
       "names": {
         "vi": "Cờ Tướng"
       },
-      "version": "2.2.0",
+      "version": "2.3.0",
       "type": "html",
-      "url": "https://vitran96.github.io/vibe-coded-apps/chinese-chess"
+      "url": "https://vitran96.github.io/vibe-coded-apps/chinese-chess",
+      "sha256": "6e9ad3695e0daca75e381dbdc08613e49eb522ff9c4f5e9227b79737c40f5e1f",
+      "size": 1637664
     }
   ]
 }

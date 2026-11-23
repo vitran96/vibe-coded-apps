@@ -5,7 +5,7 @@
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { ROOT, buildFile, findProblems, allApps } from './build.mjs';
+import { ROOT, buildFile, findProblems, allApps, VENDOR, sha256, catalogFields, badPath } from './build.mjs';
 import { versionProblems } from './bump-version.mjs';
 
 const read = (p) => readFileSync(p, 'utf8');
@@ -41,12 +41,43 @@ function appChecks(name) {
 
   // 1. Build: the committed index.html is what Pages and the launcher ship.
   const srcIndex = join(app, 'src', 'index.html');
+  let built = null;
   if (existsSync(srcIndex)) {
-    const { html, problems: bp } = buildFile(srcIndex);
-    if (bp.length) problems.push('build: ' + bp.join('; '));
-    else if (committed !== html) problems.push('index.html is stale: run node shared/scripts/build.mjs ' + name);
+    built = buildFile(srcIndex);
+    if (built.problems.length) problems.push('build: ' + built.problems.join('; '));
+    else if (committed !== built.html) problems.push('index.html is stale: run node shared/scripts/build.mjs ' + name);
+    else {
+      // LICENSE and files.txt are build outputs too (specs/licensing.md R3, game-launcher-files-type R5).
+      for (const [file, want] of [['LICENSE', built.license], ['files.txt', built.files]]) {
+        const p = join(app, file);
+        if (!existsSync(p)) problems.push(`${file} is missing: run node shared/scripts/build.mjs ${name}`);
+        else if (read(p) !== want) problems.push(`${file} is stale: run node shared/scripts/build.mjs ${name}`);
+      }
+    }
   } else if (!committed) {
     problems.push('no index.html');
+  }
+
+  // 1b. files.txt: every line is "<sha256>  <path>", a safe path, a file that exists with that hash; index.html first.
+  const manifest = join(app, 'files.txt');
+  if (existsSync(manifest)) {
+    const lines = read(manifest).trimEnd().split('\n');
+    if (!lines[0]?.endsWith('  index.html')) problems.push('files.txt: line 1 must be index.html');
+    for (const line of lines) {
+      const m = line.match(/^([0-9a-f]{64}) {2}(.+)$/);
+      if (!m) { problems.push(`files.txt: bad line "${line.slice(0, 40)}"`); continue; }
+      if (badPath(m[2])) { problems.push(`files.txt: unsafe path ${m[2]}`); continue; }
+      const p = join(app, m[2]);
+      if (!existsSync(p)) problems.push(`files.txt: lists a missing file ${m[2]}`);
+      else if (sha256(readFileSync(p)) !== m[1]) problems.push(`files.txt: sha256 of ${m[2]} differs`);
+    }
+  }
+
+  // 1c. version.json sha256 and size are those of what the launcher downloads (specs/game-launcher-hardening.md R18).
+  const cat = catalog.find((g) => g.id === name);
+  if (cat && committed && existsSync(manifest)) {
+    const want = catalogFields(cat, committed, read(manifest));
+    if (cat.sha256 !== want.sha256 || cat.size !== want.size) problems.push('version.json sha256/size are stale: run node shared/scripts/build.mjs ' + name);
   }
 
   // 2. No network in the shipped file (also catches a committed file that was never rebuilt).
@@ -135,7 +166,28 @@ if (!targets.length) {
 const repo = versionProblems();
 console.log(repo.length ? 'FAIL  repo versions' : 'PASS  repo versions');
 repo.forEach((p) => console.log(`        - ${p}`));
-let hard = repo.length ? 1 : 0;
+// Repo-wide: vendored libraries carry their license (specs/licensing.md R6); catalog launcher range is sane (game-launcher-ota R18).
+const SEMVER = /^\d+\.\d+\.\d+$/;
+const vc = (a, b) => { const x = a.split('.').map(Number), y = b.split('.').map(Number); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i]; return 0; };
+const repoExtra = [];
+for (const v of VENDOR) {
+  const dir = join(ROOT, 'shared/vendor');
+  // The pinned folder name (three@x.y.z) is read from disk, so a library upgrade does not break the check.
+  const pkg = readdirSync(dir).find((d) => /@/.test(d) && v.re.source.includes(d.split('@')[0]));
+  const probe = v.file(['', pkg ?? '']);
+  const p = join(dir, probe);
+  if (!existsSync(p)) repoExtra.push(`vendor: no license file shared/vendor/${probe} for ${v.name}`);
+  else if (!v.expect.test(read(p))) repoExtra.push(`vendor: ${probe} does not contain the ${v.license} text`);
+}
+for (const g of catalog) {
+  const lim = (x) => (x === undefined || x === null || x === -1 ? null : x);
+  const lo = lim(g.minLauncher), hi = lim(g.maxLauncher);
+  for (const [k, x] of [['minLauncher', lo], ['maxLauncher', hi]]) if (x !== null && !SEMVER.test(String(x))) repoExtra.push(`version.json ${g.id}: ${k} "${x}" is not x.y.z, null or -1`);
+  if (lo && hi && SEMVER.test(lo) && SEMVER.test(hi) && vc(lo, hi) > 0) repoExtra.push(`version.json ${g.id}: minLauncher ${lo} is greater than maxLauncher ${hi}`);
+}
+console.log(repoExtra.length ? 'FAIL  vendor licenses and launcher range' : 'PASS  vendor licenses and launcher range');
+repoExtra.forEach((p) => console.log(`        - ${p}`));
+let hard = (repo.length ? 1 : 0) + (repoExtra.length ? 1 : 0);
 for (const name of targets) {
   const problems = existsSync(join(ROOT, name)) ? appChecks(name) : [`no such app folder: ${name}`];
   if (!problems.length) {
