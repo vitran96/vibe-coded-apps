@@ -55,5 +55,5 @@ Five-in-a-row on a 30x30 board, against the computer or a second person on the s
 ## Notes
 
 - Code: `caro/src/` (`rules.js`, `ai-engine.js`, `game.js`, `renderer.js`, `storage.js`). Built file: `caro/index.html`.
-- Invariants and past bugs: `caro/FIXED_ISSUES.md`. `caro/AGENTS.md` lists the same invariants.
-- Spa music default is off (AGENTS rule 4).
+- Invariants and past bugs: `caro/FIXED_ISSUES.md`. `.claude/rules/caro.md` lists the same invariants.
+- Spa music default is off (CLAUDE.md rule 4).

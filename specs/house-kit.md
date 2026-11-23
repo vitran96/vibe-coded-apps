@@ -9,13 +9,13 @@ version-introduced: 2.2.0
 
 ## Goal
 
-Every app looks, sounds, stores data and behaves the same way, so an older player who knows one game can play the next. Source of the rules: root `AGENTS.md` hard rules 1-11.
+Every app looks, sounds, stores data and behaves the same way, so an older player who knows one game can play the next. Source of the rules: root `CLAUDE.md` hard rules 1-11.
 
 ## Requirements
 
 - R1 Plain web only: HTML, CSS, JavaScript, Three.js, Tone.js/Web Audio. No framework, no TypeScript, no server code.
 - R2 No network at runtime: every dependency is vendored in `shared/vendor/` with its version and license; the built `index.html` has no `http(s)://` except plain links.
-- R3 Each app builds to one `index.html` with CSS/JS/fonts inlined; the built file is committed.
+- R3 Each app builds to one `index.html` with CSS/JS/fonts inlined, plus a `files.txt` manifest (`<sha256>  <path>` lines: `index.html`, `LICENSE`, then `assets/**`; see `game-launcher-files-type`); both built files are committed. (R3 wording extended for `files.txt`; that part is draft until `game-launcher-files-type` is implemented.)
 - R4 Sub-route agnostic: only `./`-relative URLs; works at `/`, a renamed folder, `file://` and the launcher `srcdoc` iframe.
 - R5 Languages `vi` (default) and `en`; no hard-coded UI strings outside dictionaries; `<html lang>` follows the switch.
 - R6 Keyboard alone reaches every control; visible focus; Esc closes dialogs; text alternative for canvas boards; `aria-live` for results; contrast >= 4.5:1; reduced motion honoured; touch targets >= 44px.
@@ -49,4 +49,4 @@ Every app looks, sounds, stores data and behaves the same way, so an older playe
 ## Notes
 
 - Shared self-test: `node shared/house/self-test.mjs`.
-- Chess and Chinese chess have no `AGENTS.md`; this spec and root `AGENTS.md` are their rules.
+- Chess and Chinese chess have no `.claude/rules/<app>.md`; this spec and root `CLAUDE.md` are their rules.

@@ -13,8 +13,8 @@ One desktop app (Tauri 2 + Vite) that lists the games from the online catalog, i
 
 ## Requirements
 
-- R1 Reads the catalog from `version.json` on GitHub (`CATALOG_URL`); each entry has `id`, `name`, `names.vi`, `version`, `type`, `url`.
-- R2 `type: "html"` games are loaded with `srcdoc`; `type: "zip"` games are loaded from an `asset://` URL.
+- R1 Reads the catalog from `version.json` from `CATALOG_URL` (default: this repo’s GitHub Pages; may point to any host with the same structure, `game-launcher-hardening` R19); each entry has `id`, `name`, `names.vi`, `version`, `type`, `url`.
+- R2 `type: "html"` games are loaded with `srcdoc`; `type: "zip"` and `type: "files"` games are loaded from an `asset://` URL (`game-launcher-files-type`).
 - R3 Install and update download the game with a progress display; a game can be removed; "remove all" needs confirmation.
 - R4 Games run offline once installed.
 - R5 Update prompt when the catalog version differs from the installed version (update modal).
@@ -27,7 +27,7 @@ One desktop app (Tauri 2 + Vite) that lists the games from the online catalog, i
 ## Out of scope
 
 - Editing or publishing games from the launcher.
-- Auto-update of the launcher binary: TBD (release by `v*` tag only).
+- Auto-update of the launcher binary: see `specs/game-launcher-ota.md`.
 - Mobile builds: TBD.
 
 ## Acceptance
@@ -49,4 +49,4 @@ One desktop app (Tauri 2 + Vite) that lists the games from the online catalog, i
 
 - Code: `game-launcher/src/js/` (`main.js`, `gameManager.js`, `storageShim.js`, `updateModal.js`, `zipExtractor.js`, `i18n.js`). Tauri side: `game-launcher/src-tauri/`.
 - Not built by `shared/scripts/build.mjs`; `check.mjs --all` does not cover it.
-- Launcher uses npm, Vite, Tauri and Rust (AGENTS rule 10 exception). Downloads come from GitHub raw; the apps themselves never fetch at runtime.
+- Launcher uses npm, Vite, Tauri and Rust (CLAUDE.md rule 10 exception). Downloads come from GitHub raw; the apps themselves never fetch at runtime.

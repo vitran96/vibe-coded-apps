@@ -53,4 +53,4 @@ Extra tests run by hand: `node chinese-chess/scripts/run-rules-tests.mjs` (25 ru
 ## Notes
 
 - Code: `chinese-chess/src/` (`rules.js`, `engine.js`, `book.js`, `render.js`, `main.js`, `storage.js`). Built file: `chinese-chess/index.html`.
-- Past bugs and their invariants: `chinese-chess/FIXED_ISSUES.md` (19 entries). It has no `AGENTS.md`.
+- Past bugs and their invariants: `chinese-chess/FIXED_ISSUES.md` (19 entries). It has no `.claude/rules/chinese-chess.md`.

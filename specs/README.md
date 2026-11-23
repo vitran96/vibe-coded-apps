@@ -5,7 +5,7 @@ Specs are the source of truth for what an app or the repo must do. Code follows 
 ## Files
 
 - `specs/<app>.md` one spec per app (`caro`, `chess`, `chinese-chess`, `game-launcher`).
-- `specs/house-kit.md` repo-wide rules shared by every app (from the hard rules in root `AGENTS.md`).
+- `specs/house-kit.md` repo-wide rules shared by every app (from the hard rules in root `CLAUDE.md`).
 - `specs/_template.md` copy this for a new spec.
 
 ## Format
@@ -32,5 +32,5 @@ Existing baseline specs were reverse-written from the code and start at `impleme
 
 ## Rules
 
-- A spec never names files that do not exist; a spec never contradicts `AGENTS.md`. If a spec needs a rule the house kit forbids, the house kit wins.
+- A spec never names files that do not exist; a spec never contradicts `CLAUDE.md`. If a spec needs a rule the house kit forbids, the house kit wins.
 - Keep each spec at or under 80 lines.

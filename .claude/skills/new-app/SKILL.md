@@ -5,7 +5,7 @@ description: Create a new vibe-coded app or game folder in this repo from shared
 
 # New app
 
-Read the root `AGENTS.md` first. Every hard rule there applies; this skill is the procedure.
+Read the root `CLAUDE.md` first. Every hard rule there applies; this skill is the procedure.
 
 Spec first: write `specs/<app>.md` with `save-spec` (or confirm it exists) before scaffolding. `implement-spec` calls this skill for new apps.
 
@@ -14,7 +14,7 @@ Spec first: write `specs/<app>.md` with `save-spec` (or confirm it exists) befor
 - `id`: kebab-case folder name (`connect-four`). It is also the `version.json` id and the launcher cache name.
 - Storage prefix: short, Vietnamese-flavoured, ends in `_` (existing: `caro_`, `covua_`, `cotuong_`). Must not collide with an existing app.
 - Vietnamese name (default) and English name.
-- If the game rules (win condition, board size, turns) are unclear, ask once. Pick everything else yourself and record it in the app's `AGENTS.md`.
+- If the game rules (win condition, board size, turns) are unclear, ask once. Pick everything else yourself and record it in `.claude/rules/<id>.md`.
 
 ## 2. Scaffold from the template
 
@@ -27,7 +27,7 @@ The template is a working app: start screen, game screen with an `aria-live` sta
 - `src/main.js`: set `APP_VERSION` to the current repo version (see `version.json` top-level `version`) and `STORAGE_PREFIX` (`'<prefix>_'`). `check.mjs` compares both with `version.json` and the prefix.
 - `src/index.html`: `<title>` and the game's markup. Keep the Settings sections in order.
 - `src/i18n.js`: replace the template keys with the game's `game.*` keys. Every key needs both `vi` and `en`.
-- `AGENTS.md`: replace the stub with the app's rules and decisions.
+- `.claude/rules/<id>.md` (at the repo root, not in the app folder): copy `app-rules-template.md` from this skill, add the frontmatter `paths: ["<id>/**"]`, and replace the stub with the app's rules and decisions.
 - `FIXED_ISSUES.md`: keep the header only.
 - Game logic: pure rules in `src/rules.js` and wiring in `src/main.js`. Plain scripts, no `import` between local files. For Three.js or Tone.js, copy the import map and script tags from `chess/src/index.html`; they point at `../../shared/vendor/`, never a CDN.
 - Keep `scripts/test-smoke.mjs` or replace it with rule tests named `scripts/test-*.mjs`.
@@ -49,6 +49,8 @@ Add the entry to root `version.json`:
 
 `version` must equal the repo version (run `bump-version` if it moved).
 
+Keep `"type": "html"` unless the game cannot play without files beside `index.html` (put them in `<id>/assets/`); then use `"type": "files"` with the same folder `url`. The launcher reads `<url>/files.txt`, which the build writes.
+
 ## 4. Build and check
 
 Then the `playwright-test` skill step 6: copy `tools/e2e/specs/_template.spec.mjs` to `tools/e2e/specs/<id>.spec.mjs` and fill it in.
@@ -58,4 +60,4 @@ node shared/scripts/build.mjs <id>
 node shared/scripts/check.mjs <id>     # must print PASS
 ```
 
-Then run the `verify-app` skill (manual keyboard and sub-route pass) before committing.
+Commit `<id>/index.html`, `<id>/files.txt` and `<id>/LICENSE` (all built; a new vendored library needs its license file under `shared/vendor/` and a row in `VENDOR` in `shared/scripts/build.mjs`). Then run the `verify-app` skill (manual keyboard and sub-route pass) before committing.

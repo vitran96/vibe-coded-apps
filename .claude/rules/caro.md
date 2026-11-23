@@ -1,6 +1,11 @@
+---
+paths:
+  - "caro/**"
+---
+
 # Caro & Gomoku — app rules
 
-Root `AGENTS.md` applies and wins on conflict. This file lists what is specific to `caro/`.
+Root `CLAUDE.md` applies and wins on conflict. This file lists what is specific to `caro/`.
 
 ## Layout
 

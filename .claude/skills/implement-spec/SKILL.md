@@ -5,7 +5,7 @@ description: Implement an accepted spec in specs/<app>.md - diff each numbered r
 
 # Implement a spec
 
-Read `specs/README.md`, the app's `specs/<app>.md`, and its `AGENTS.md` and `FIXED_ISSUES.md` if present; keep every invariant.
+Read `specs/README.md`, the app's `specs/<app>.md`, and its `.claude/rules/<app>.md` and `FIXED_ISSUES.md` if present; keep every invariant.
 
 ## 1. Gate
 
@@ -23,7 +23,7 @@ List each R as `done` or `missing`, with its file, before coding.
 
 ## 3. Implement the missing Rs
 
-Edit `<app>/src/` only (never a built `index.html`), reuse `shared/house/`, follow root `AGENTS.md`.
+Edit `<app>/src/` only (never a built `index.html`), reuse `shared/house/`, follow root `CLAUDE.md`.
 
 ## 4. Build and check
 

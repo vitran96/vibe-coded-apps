@@ -49,5 +49,5 @@ Extra tests run by hand: `cd chess && node scripts/perft.mjs` (move generation),
 ## Notes
 
 - Code: `chess/src/` (`rules.js`, `ai.js`, `main.js`, `i18n.js`, `rulesdocs.js`). Built file: `chess/index.html`.
-- No `AGENTS.md` or `FIXED_ISSUES.md` yet; TBD if past bugs need logging.
+- No `.claude/rules/chess.md` or `FIXED_ISSUES.md` yet; TBD if past bugs need logging.
 - Storage prefix `covua_` (legacy `chess:`).

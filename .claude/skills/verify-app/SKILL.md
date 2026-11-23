@@ -14,9 +14,9 @@ node shared/scripts/build.mjs <app>
 node shared/scripts/check.mjs <app>     # must print PASS
 ```
 
-`check.mjs` covers: the committed `index.html` equals a fresh build; no network URL, root-absolute path or un-inlined file; `vi` and `en` keys match and every used key exists; storage keys and `House.store` use the app prefix, and there is no `localStorage.clear()`; `APP_VERSION` equals the `version.json` entry; static a11y (`<html lang>`, an `aria-live` region, labelled buttons, no `tabindex` > 0, no focus outline removed without `:focus-visible`); and every `scripts/test*.mjs` passes.
+`check.mjs` covers: the committed `index.html`, `files.txt` and `LICENSE` equal a fresh build; each vendored library has its license file; a catalog `minLauncher`/`maxLauncher` is x.y.z, null or -1 and min <= max and every path in `files.txt` exists with the listed sha256, and `version.json` `sha256`/`size` are current; no network URL, root-absolute path or un-inlined file; `vi` and `en` keys match and every used key exists; storage keys and `House.store` use the app prefix, and there is no `localStorage.clear()`; `APP_VERSION` equals the `version.json` entry; static a11y (`<html lang>`, an `aria-live` region, labelled buttons, no `tabindex` > 0, no focus outline removed without `:focus-visible`); and every `scripts/test*.mjs` passes.
 
-Also run the extra tests the root `AGENTS.md` lists for the app (chess perft, chinese-chess run-rules-tests).
+Also run the extra tests the root `CLAUDE.md` lists for the app (chess perft, chinese-chess run-rules-tests).
 
 UI, storage or keyboard change: then run the `playwright-test` skill (`cd tools/e2e && npx playwright test --grep @<app>`).
 
@@ -57,7 +57,7 @@ Do not touch the mouse. Play a full game:
 
 ## 7. Launcher
 
-The launcher runs `type: "html"` apps from `srcdoc`. If the app needs any file besides `index.html`, it must ship as `type: "zip"` instead. If you touched `game-launcher/`, run `npm test` there.
+The launcher runs `type: "html"` apps from `srcdoc`, so they get `index.html` alone. If the app needs any file besides `index.html`, it must ship as `type: "files"` (files under `assets/`, listed by the built `files.txt`) or `type: "zip"`. For `files`, open `<app>/files.txt` and confirm it lists only `index.html` and the needed `assets/` files, then install it in the launcher, go offline and play. If you touched `game-launcher/`, run `npm test` there.
 
 ## 8. Regression log
 
